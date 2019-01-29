@@ -1,0 +1,90 @@
+[
+  {
+    "id": 1,
+    "name": "rootDomain",
+    "description": "",
+    "services": [
+      {
+        "id": 1,
+        "name": "rootService",
+        "description": "",
+        "apps": [
+          {
+            "id": 1,
+            "name": "admin",
+            "description": "",
+            "type": "SYSTEM",
+            "tokens": [
+              {
+                "token": "{{ isp_service_admin_token }}",
+                "expireTime": -1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "citymodule",
+    "description": "",
+    "services": [
+      {
+        "id": 2,
+        "name": "citymodule_service",
+        "description": "",
+        "apps": [
+          {
+            "id": 2,
+            "name": "cityservice",
+            "description": "",
+            "type": "SYSTEM",
+            "tokens": [
+              {
+                "token": "{{ isp_service_cityservice_token }}",
+                "expireTime": -1
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "name": "citymodule",
+            "description": "",
+            "type": "MOBILE",
+            "tokens": [
+              {
+                "token": "{{ isp_service_citymodule_token }}",
+                "expireTime": -1
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "name": "cityservice_operator_ui",
+            "description": "",
+            "type": "SYSTEM",
+            "tokens": [
+              {
+                "token": "{{ isp_service_cityservice_operator_ui_token }}",
+                "expireTime": -1
+              }
+            ]
+          },
+          {
+            "id": 5,
+            "name": "cityservice_web_portal",
+            "description": "",
+            "type": "SYSTEM",
+            "tokens": [
+              {
+                "token": "{{ isp_service_cityservice_web_portal_token }}",
+                "expireTime": -1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
