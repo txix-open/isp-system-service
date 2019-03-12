@@ -17,7 +17,7 @@ type DomainRepository struct {
 }
 
 func (dr *DomainRepository) GetDomains(list []int32) ([]entity.Domain, error) {
-	var res []entity.Domain
+	res := make([]entity.Domain, 0)
 	q := dr.DB.Model(&res)
 	if len(res) > 0 {
 		q = q.Where("id IN (?)", pg.In(list))
@@ -27,7 +27,7 @@ func (dr *DomainRepository) GetDomains(list []int32) ([]entity.Domain, error) {
 }
 
 func (dr *DomainRepository) GetDomainsBySystemId(systemId int32) ([]entity.Domain, error) {
-	var res []entity.Domain
+	res := make([]entity.Domain, 0)
 	err := dr.DB.Model(&res).Where("system_id = ?", systemId).Order("created_at DESC").Select()
 	return res, err
 }

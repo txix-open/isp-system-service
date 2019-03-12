@@ -31,7 +31,7 @@ func (tr *TokenRepository) GetTokenById(id string) (*entity.Token, error) {
 }
 
 func (tr *TokenRepository) GetTokensByAppId(appId ...int32) ([]entity.Token, error) {
-	var res = make([]entity.Token, 0)
+	res := make([]entity.Token, 0)
 	err := tr.DB.Model(&res).Where("app_id IN (?)", pg.In(appId)).Order("created_at DESC").Select()
 	return res, err
 }

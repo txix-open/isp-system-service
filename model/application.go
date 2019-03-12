@@ -17,7 +17,7 @@ type AppRepository struct {
 }
 
 func (ar *AppRepository) GetApplications(list []int32) ([]entity.Application, error) {
-	var res []entity.Application
+	res := make([]entity.Application, 0)
 	q := ar.DB.Model(&res)
 	if len(res) > 0 {
 		q = q.Where("id IN (?)", pg.In(list))
@@ -27,7 +27,7 @@ func (ar *AppRepository) GetApplications(list []int32) ([]entity.Application, er
 }
 
 func (ar *AppRepository) GetApplicationsByServiceId(serviceId ...int32) ([]entity.Application, error) {
-	var res []entity.Application
+	res := make([]entity.Application, 0)
 	err := ar.DB.Model(&res).Where("service_id IN (?)", pg.In(serviceId)).Order("created_at DESC").Select()
 	return res, err
 }

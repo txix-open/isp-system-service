@@ -18,7 +18,7 @@ type SystemRepository struct {
 }
 
 func (sr *SystemRepository) GetSystems(list []int32) ([]entity.System, error) {
-	var res []entity.System
+	res := make([]entity.System, 0)
 	q := sr.DB.Model(&res)
 	if len(res) > 0 {
 		q = q.Where("id IN (?)", pg.In(list))

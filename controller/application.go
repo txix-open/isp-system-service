@@ -128,7 +128,7 @@ func GetSystemTree(md metadata.MD) ([]*DomainWithServices, error) {
 	res := make([]*DomainWithServices, l)
 	for i, d := range domains {
 		idList[i] = d.Id
-		dws := &DomainWithServices{Id: d.Id, Name: d.Name, Description: d.Description}
+		dws := &DomainWithServices{Id: d.Id, Name: d.Name, Description: d.Description, Services: make([]*ServiceWithApps, 0)}
 		domainsMap[d.Id] = dws
 		res[i] = dws
 	}
@@ -143,7 +143,7 @@ func GetSystemTree(md metadata.MD) ([]*DomainWithServices, error) {
 	for i, s := range services {
 		idList[i] = s.Id
 		d := domainsMap[s.DomainId]
-		swa := &ServiceWithApps{Id: s.Id, Name: s.Name, Description: s.Description}
+		swa := &ServiceWithApps{Id: s.Id, Name: s.Name, Description: s.Description, Apps: make([]*SimpleApp, 0)}
 		d.Services = append(d.Services, swa)
 		servicesMap[s.Id] = swa
 	}
@@ -158,6 +158,7 @@ func GetSystemTree(md metadata.MD) ([]*DomainWithServices, error) {
 			Name:        app.Name,
 			Type:        app.Type,
 			Description: app.Description,
+			Tokens:      make([]entity.Token, 0),
 		})
 	}
 
@@ -174,7 +175,7 @@ func enrichWithTokens(apps ...entity.Application) ([]*AppWithToken, error) {
 	enriched := make([]*AppWithToken, l)
 	for i, a := range apps {
 		idList[i] = a.Id
-		awt := &AppWithToken{App: a}
+		awt := &AppWithToken{App: a, Tokens: make([]entity.Token, 0)}
 		appMap[a.Id] = awt
 		enriched[i] = awt
 	}

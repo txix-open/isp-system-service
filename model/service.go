@@ -17,7 +17,7 @@ type ServiceRepository struct {
 }
 
 func (sr *ServiceRepository) GetServices(list []int32) ([]entity.Service, error) {
-	var res []entity.Service
+	res := make([]entity.Service, 0)
 	q := sr.DB.Model(&res)
 	if len(res) > 0 {
 		q = q.Where("id IN (?)", pg.In(list))
@@ -27,7 +27,7 @@ func (sr *ServiceRepository) GetServices(list []int32) ([]entity.Service, error)
 }
 
 func (sr *ServiceRepository) GetServicesByDomainId(domainId ...int32) ([]entity.Service, error) {
-	var res []entity.Service
+	res := make([]entity.Service, 0)
 	err := sr.DB.Model(&res).Where("domain_id IN (?)", pg.In(domainId)).Order("created_at DESC").Select()
 	return res, err
 }
