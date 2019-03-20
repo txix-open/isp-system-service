@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/integration-system/isp-lib/structure"
 	"os"
 
 	"isp-system-service/conf"
@@ -9,12 +10,10 @@ import (
 
 	_ "isp-system-service/migrations"
 
+	"context"
 	"github.com/integration-system/isp-lib/backend"
 	"github.com/integration-system/isp-lib/database"
 	"github.com/integration-system/isp-lib/metric"
-	"github.com/integration-system/isp-lib/socket"
-
-	"context"
 
 	"github.com/integration-system/isp-lib/bootstrap"
 	"github.com/integration-system/isp-lib/redis"
@@ -58,9 +57,9 @@ func main() {
 	}
 }*/
 
-func socketConfiguration(cfg interface{}) socket.SocketConfiguration {
+func socketConfiguration(cfg interface{}) structure.SocketConfiguration {
 	appConfig := cfg.(*conf.Configuration)
-	return socket.SocketConfiguration{
+	return structure.SocketConfiguration{
 		Host:   appConfig.ConfigServiceAddress.IP,
 		Port:   appConfig.ConfigServiceAddress.Port,
 		Secure: false,
@@ -78,7 +77,7 @@ func onShutdown(_ context.Context, _ os.Signal) {
 
 func onRemoteConfigReceive(remoteConfig, oldConfig *conf.RemoteConfig) {
 	if remoteConfig.RedisAddress.GetAddress() != oldConfig.RedisAddress.GetAddress() {
-		rd.InitClient(rd.RedisConfiguration{
+		rd.InitClient(structure.RedisConfiguration{
 			Address:   remoteConfig.RedisAddress,
 			DefaultDB: int(rd.ApplicationTokenDb),
 		})
