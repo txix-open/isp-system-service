@@ -2,7 +2,7 @@
   "dB": {
     "address": "127.0.0.1",
     "port": "5432",
-    "schema": "sma_service",
+    "schema": "system_service",
     "database": "name",
     "username": "name",
     "password": "password",
