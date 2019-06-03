@@ -1,0 +1,24 @@
+{
+  "dB": {
+    "address": "127.0.0.1",
+    "port": "5432",
+    "schema": "sma_service",
+    "database": "name",
+    "username": "name",
+    "password": "password",
+    "createSchema": true
+  },
+  "redisAddress": {
+    "ip": "address",
+    "port": "6379"
+  },
+  "metrics": {
+    "gc": true,
+    "memory": true,
+    "address": {
+      "ip": "0.0.0.0",
+      "path": "/metrics",
+      "port": "9555"
+    }
+  }
+}
