@@ -5,8 +5,8 @@ import (
 )
 
 type RemoteConfig struct {
-	DB                     structure.DBConfiguration      `schema:"Database"`
-	RedisAddress           structure.AddressConfiguration `schema:"Redis"`
-	DefaultTokenExpireTime int64                          `schema:"Default token expire time,In milliseconds"`
-	Metrics                structure.MetricConfiguration  `schema:"Metrics"`
+	DB                     structure.DBConfiguration      `schema:"Настройка базы данных"`
+	RedisAddress           structure.AddressConfiguration `schema:"Настройка Redis"`
+	DefaultTokenExpireTime int64                          `schema:"Время жизни токена по умолчанию,время жизни токена в миллисекундах с момента его создания. если = -1 - время жизни неограниченно"`
+	Metrics                structure.MetricConfiguration  `schema:"Настройка метрик"`
 }
