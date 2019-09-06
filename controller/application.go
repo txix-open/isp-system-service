@@ -5,12 +5,23 @@ import (
 	"isp-system-service/model"
 
 	"github.com/integration-system/isp-lib/database"
+	_ "github.com/integration-system/isp-lib/structure"
 	"github.com/integration-system/isp-lib/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
+// GetApplications godoc
+// @Tags application
+// @Summary Получить список приложений
+// @Description Возвращает массив приложений с токенами по их идентификаторам
+// @Accept  json
+// @Produce  json
+// @Param body body []integer false "Массив идентификаторов приложений"
+// @Success 200 {array} controller.AppWithToken
+// @Failure 500 {object} structure.GrpcError
+// @Router /application/get_applications [POST]
 func GetApplications(list []int32) ([]*AppWithToken, error) {
 	res, err := model.AppRep.GetApplications(list)
 	if err != nil {
@@ -19,6 +30,16 @@ func GetApplications(list []int32) ([]*AppWithToken, error) {
 	return enrichWithTokens(res...)
 }
 
+// GetApplicationsByServiceId godoc
+// @Tags application
+// @Summary Получить список приложений по идентификатору сервиса
+// @Description Возвращает список приложений по запрошенныму идентификатору сервиса
+// @Accept  json
+// @Produce  json
+// @Param body body controller.Identity true "Идентификатор серсиса"
+// @Success 200 {array} controller.AppWithToken
+// @Failure 500 {object} structure.GrpcError
+// @Router /application/get_applications_by_service_id [POST]
 func GetApplicationsByServiceId(identity Identity) ([]*AppWithToken, error) {
 	arr, err := model.AppRep.GetApplicationsByServiceId(identity.Id)
 	if err != nil {
@@ -27,6 +48,19 @@ func GetApplicationsByServiceId(identity Identity) ([]*AppWithToken, error) {
 	return enrichWithTokens(arr...)
 }
 
+// CreateUpdateApplication godoc
+// @Tags application
+// @Summary Создать/обновить приложение
+// @Description Если приложение с такими идентификатором существует, то обновляет данные, если нет, то добавляет данные в базу
+// @Accept  json
+// @Produce  json
+// @Param body body entity.Application true "Объект приложения"
+// @Success 200 {object} controller.AppWithToken
+// @Failure 400 {object} structure.GrpcError
+// @Failure 404 {object} structure.GrpcError
+// @Failure 409 {object} structure.GrpcError
+// @Failure 500 {object} structure.GrpcError
+// @Router /application/create_update_application [POST]
 func CreateUpdateApplication(app entity.Application) (*AppWithToken, error) {
 	existed, err := model.AppRep.GetApplicationByNameAndServiceId(app.Name, app.ServiceId)
 	if err != nil {
@@ -69,6 +103,18 @@ func CreateUpdateApplication(app entity.Application) (*AppWithToken, error) {
 	}
 }
 
+// GetApplicationById godoc
+// @Tags application
+// @Summary Получить приложение по идентификатору
+// @Description  Возвращает описание приложения по его идентификатору
+// @Accept  json
+// @Produce  json
+// @Param body body controller.Identity true "Идентификатор приложения"
+// @Success 200 {object} controller.AppWithToken
+// @Failure 400 {object} structure.GrpcError
+// @Failure 404 {object} structure.GrpcError
+// @Failure 500 {object} structure.GrpcError
+// @Router /application/get_application_by_id [POST]
 func GetApplicationById(identity Identity) (*AppWithToken, error) {
 	application, err := model.AppRep.GetApplicationById(identity.Id)
 	if err != nil {
@@ -84,6 +130,17 @@ func GetApplicationById(identity Identity) (*AppWithToken, error) {
 	return arr[0], nil
 }
 
+// DeleteApplications godoc
+// @Tags application
+// @Summary Удалить приложения
+// @Description Удаляет приложения по списку их идентификаторов, возвращает количество удаленных приложений
+// @Accept  json
+// @Produce  json
+// @Param body body []integer false "Массив идентификаторов приложений"
+// @Success 200 {object} controller.AppWithToken
+// @Failure 400 {object} structure.GrpcError
+// @Failure 500 {object} structure.GrpcError
+// @Router /application/delete_applications [POST]
 func DeleteApplications(list []int32) (DeleteResponse, error) {
 	if len(list) == 0 {
 		return DeleteResponse{}, status.Errorf(codes.InvalidArgument, "At least one id are required")
@@ -109,6 +166,15 @@ func DeleteApplications(list []int32) (DeleteResponse, error) {
 	return DeleteResponse{Deleted: count}, nil
 }
 
+// GetSystemTree godoc
+// @Tags application
+// @Summary Метод получения системного дерева
+// @Description Возвращает описание взаимосвязей сервисов и приложений
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} controller.DomainWithServices
+// @Failure 500 {object} structure.GrpcError
+// @Router /application/get_system_tree [POST]
 func GetSystemTree(md metadata.MD) ([]*DomainWithServices, error) {
 	sysId, err := utils.ResolveMetadataIdentity(utils.SystemIdHeader, md)
 	if err != nil {

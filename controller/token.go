@@ -31,6 +31,16 @@ type BoolResponse struct {
 	Ok bool
 }
 
+// CreateToken godoc
+// @Tags token
+// @Summary Создать токен
+// @Description Созддает токен и привязывает его к приложению
+// @Accept  json
+// @Produce  json
+// @Param body body controller.CreateTokenRequest true "Объект создания токена"
+// @Success 200 {object} controller.AppWithToken
+// @Failure 500 {object} structure.GrpcError
+// @Router /token/create_token [POST]
 func CreateToken(req CreateTokenRequest) (*AppWithToken, error) {
 	m, err, app := GetIdMap(req.AppId)
 	if err != nil {
@@ -81,6 +91,16 @@ func CreateToken(req CreateTokenRequest) (*AppWithToken, error) {
 	return arr[0], nil
 }
 
+// RevokeTokens godoc
+// @Tags token
+// @Summary Отозвать токены
+// @Description Отвязывает токены от приложений и удялет их
+// @Accept  json
+// @Produce  json
+// @Param body body controller.RevokeTokensRequest true "Объект отзыва токенов"
+// @Success 200 {object} controller.AppWithToken
+// @Failure 500 {object} structure.GrpcError
+// @Router /token/revoke_tokens [POST]
 func RevokeTokens(req RevokeTokensRequest) (*AppWithToken, error) {
 	app, err := model.AppRep.GetApplicationById(req.AppId)
 	if err != nil {
@@ -97,10 +117,30 @@ func RevokeTokens(req RevokeTokensRequest) (*AppWithToken, error) {
 	return res[0], nil
 }
 
+// RevokeTokensForApp godoc
+// @Tags token
+// @Summary Отозвать токены для приложения
+// @Description Отвязывает токены от приложений и удаляет их по идентификатору приложения
+// @Accept  json
+// @Produce  json
+// @Param body body controller.Identity true "Идентификатор приложения"
+// @Success 200 {object} controller.DeleteResponse
+// @Failure 500 {object} structure.GrpcError
+// @Router /token/revoke_tokens_for_app [POST]
 func RevokeTokensForApp(identity Identity) (*DeleteResponse, error) {
 	return revokeTokensForApp(identity, &model.TokenRep)
 }
 
+// GetTokensByAppId godoc
+// @Tags token
+// @Summary Получить токены по идентификаотру приложения
+// @Description Возвращает список токенов, привязанных к приложению
+// @Accept  json
+// @Produce  json
+// @Param body body controller.Identity true "Идентификатор приложения"
+// @Success 200 {array} entity.Token
+// @Failure 500 {object} structure.GrpcError
+// @Router /token/get_tokens_by_app_id [POST]
 func GetTokensByAppId(identity Identity) ([]entity.Token, error) {
 	return model.TokenRep.GetTokensByAppId(identity.Id)
 }

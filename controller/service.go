@@ -8,6 +8,16 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// GetService godoc
+// @Tags service
+// @Summary Получить список сервисов
+// @Description Возвращает список сервисов по их идентификаторам
+// @Accept  json
+// @Produce  json
+// @Param body body []integer false "Массив идентификаторов сервисов"
+// @Success 200 {array} entity.Service
+// @Failure 500 {object} structure.GrpcError
+// @Router /service/get_service [POST]
 func GetService(list []int32) ([]entity.Service, error) {
 	res, err := model.ServiceRep.GetServices(list)
 	if err != nil {
@@ -16,10 +26,33 @@ func GetService(list []int32) ([]entity.Service, error) {
 	return res, nil
 }
 
+// GetServicesByDomainId godoc
+// @Tags service
+// @Summary Получить список сервисов по идентификатору домена
+// @Description Возвращает список сервисов по идентификатору домена
+// @Accept  json
+// @Produce  json
+// @Param body body controller.Identity true "Идентификатор домена"
+// @Success 200 {array} entity.Service
+// @Failure 500 {object} structure.GrpcError
+// @Router /service/get_services_by_domain_id [POST]
 func GetServicesByDomainId(identity Identity) ([]entity.Service, error) {
 	return model.ServiceRep.GetServicesByDomainId(identity.Id)
 }
 
+// CreateUpdateService godoc
+// @Tags service
+// @Summary Создать/обновить сервис
+// @Description Если сервис с такими идентификатором существует, то обновляет данные, если нет, то добавляет данные в базу
+// @Accept  json
+// @Produce  json
+// @Param body body entity.Service true "Объект сервиса"
+// @Success 200 {object} entity.Service
+// @Failure 400 {object} structure.GrpcError
+// @Failure 404 {object} structure.GrpcError
+// @Failure 409 {object} structure.GrpcError
+// @Failure 500 {object} structure.GrpcError
+// @Router /service/create_update_service [POST]
 func CreateUpdateService(service entity.Service) (*entity.Service, error) {
 	existed, err := model.ServiceRep.GetServiceByNameAndDomainId(service.Name, service.DomainId)
 	if err != nil {
@@ -54,6 +87,17 @@ func CreateUpdateService(service entity.Service) (*entity.Service, error) {
 	}
 }
 
+// GetServiceById godoc
+// @Tags service
+// @Summary Получить сервис по идентификатору
+// @Description Возвращает описание сервиса по его идентификатору
+// @Accept  json
+// @Produce  json
+// @Param body body controller.Identity true "Идентификатор сервиса"
+// @Success 200 {object} entity.Service
+// @Failure 404 {object} structure.GrpcError
+// @Failure 500 {object} structure.GrpcError
+// @Router /service/get_service_by_id [POST]
 func GetServiceById(identity Identity) (*entity.Service, error) {
 	service, err := model.ServiceRep.GetServiceById(identity.Id)
 	if err != nil {
@@ -65,6 +109,17 @@ func GetServiceById(identity Identity) (*entity.Service, error) {
 	return service, err
 }
 
+// DeleteService godoc
+// @Tags service
+// @Summary Удалить сервисы
+// @Description Удаляет сервисов по списку их идентификаторов, возвращает количество удаленных сервисов
+// @Accept  json
+// @Produce  json
+// @Param body body []integer true "Массив идентификаторов сервисов"
+// @Success 200 {object} controller.DeleteResponse
+// @Failure 400 {object} structure.GrpcError
+// @Failure 500 {object} structure.GrpcError
+// @Router /service/delete_service [POST]
 func DeleteService(list []int32) (DeleteResponse, error) {
 	if len(list) == 0 {
 		return DeleteResponse{Deleted: 0}, status.Error(codes.InvalidArgument, "At least one id are required")

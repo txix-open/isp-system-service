@@ -63,7 +63,7 @@
   version = "v8.0.6"
 
 [[projects]]
-  digest = "1:6bafc5f7351645dce4cd04ec4db791bdb421d43da13c3fcef8b90cca01ba7621"
+  digest = "1:61a8ca58fee5891ccd5e9e0503d3cb0636fe15505a7b758d51fe38d38bfce32f"
   name = "github.com/go-redis/redis"
   packages = [
     ".",
@@ -75,8 +75,8 @@
     "internal/util",
   ]
   pruneopts = "UT"
-  revision = "c5c4ad6a4cae24f3867af1a0513709fc944a87f3"
-  version = "v6.15.4"
+  revision = "17c058513b3e03c5e23136c18582fdd8ac8a3645"
+  version = "v6.15.5"
 
 [[projects]]
   digest = "1:07f4fafe81587b642166199f41c3edcca12929fcfcc0261b00be5dea2f968f44"
@@ -154,7 +154,7 @@
   revision = "5959fcea049facd9441fff9de976191accd3cf9f"
 
 [[projects]]
-  digest = "1:599d185ab2aead7369ede6a373627138866c6320337699fd58b8b8cb3bb031e6"
+  digest = "1:ce525c04629add45b86c81172111ae0a770f841f4400082851d1e7dfe28dfc8d"
   name = "github.com/integration-system/isp-lib"
   packages = [
     "backend",
@@ -173,8 +173,8 @@
     "utils",
   ]
   pruneopts = "UT"
-  revision = "50b5d5bd59eaeacc2fd0b63a3b2daae4bbbca563"
-  version = "v1.6.1"
+  revision = "ec379c1305f381a22a2934d406f4e3c3e20ef0c2"
+  version = "v1.6.2"
 
 [[projects]]
   branch = "master"
@@ -212,8 +212,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "7a422a2abf4b2f2905a961d3b6926e4e21dab4bb"
-  version = "v1.8.0"
+  revision = "fdc46f09595ea8241b9bfe291bbc868a7af19e10"
+  version = "v1.8.2"
 
 [[projects]]
   digest = "1:923c4d7194b42e054b2eb8a6c62824ac55e23ececc1c7e48d4da69c971c55954"
@@ -340,15 +340,15 @@
   revision = "cac0b30c2563378d434b5af411844adff8e32960"
 
 [[projects]]
-  digest = "1:f5139e9f4441369ffb5d44fa9fae62b921457d4dc09cd873ed0fd44511cc87ee"
+  digest = "1:ab1672baf07ee80c988e369e5633bcac459342e8e00d0c38a799056395fe9dba"
   name = "github.com/shirou/gopsutil"
   packages = [
     "cpu",
     "internal/common",
   ]
   pruneopts = "UT"
-  revision = "d80c43f9c984a48783daf22f4bd9278006ae483a"
-  version = "v2.19.7"
+  revision = "e4ec7b275ada47ca32799106c2dba142d96aaf93"
+  version = "v2.19.8"
 
 [[projects]]
   digest = "1:04457f9f6f3ffc5fea48e71d62f2ca256637dee0a04d710288e27e05c8b41976"
@@ -419,7 +419,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:30fe8021645a9d9966fcede2a59c2e2f498d433687fc5cddd7de85a6a0a44c28"
+  digest = "1:b97ba937497c9b282245aa8f633212c96fcaa1b4cc30e9ab6ae41a0168e32c35"
   name = "github.com/valyala/fasthttp"
   packages = [
     ".",
@@ -427,7 +427,7 @@
     "stackless",
   ]
   pruneopts = "UT"
-  revision = "1241ed7a910a835656961bf69fb8f1fa9cc8b88e"
+  revision = "8713335f548d2c18effe36c9686f5a88b65eefce"
 
 [[projects]]
   digest = "1:39a425f98fb19427061a693fe6bf0683c9bddec4b25b17067e34fdb465e39cb9"
@@ -446,11 +446,11 @@
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "60c769a6c58655dab1b9adac0d58967dd517cfba"
+  revision = "9756ffdc24725223350eb3266ffb92590d28f278"
 
 [[projects]]
   branch = "master"
-  digest = "1:082ed090a1aedec21b660263f98f72582e431b56e8e27b88cc00faa1510fde14"
+  digest = "1:8c8471f63317e39731853a4f55d5d8ff43a142aa425a666a0554bdba0a8b7f8b"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -462,18 +462,18 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "74dc4d7220e7acc4e100824340f3e66577424772"
+  revision = "ba9fcec4b297b415637633c5a6e8fa592e4a16c3"
 
 [[projects]]
   branch = "master"
-  digest = "1:13d49ebdcb9d09dd5b445e274059b59705e09327df54b221a853d6a8192182ad"
+  digest = "1:4f9cc50343843f7c58c1a1aecf17c226ea0e855f4d3293e796701ae985111e0d"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "fb81701db80f1745f51259b1f286de3fe2ec80c8"
+  revision = "749cb33beabd9aa6d3178e3de05bcc914f70b2bf"
 
 [[projects]]
   digest = "1:8d8faad6b12a3a4c819a3f9618cb6ee1fa1cfc33253abeeea8b55336721e3405"
@@ -509,7 +509,7 @@
     "googleapis/rpc/status",
   ]
   pruneopts = "UT"
-  revision = "24fa4b261c55da65468f2abfdae2b024eef27dfb"
+  revision = "92dd089d5514cecde7a465f807541f83dfd486d5"
 
 [[projects]]
   digest = "1:3b97661db2e5d4c87f7345e875ea28f911e54c715ba0a74be08e1649d67e05cd"
