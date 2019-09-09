@@ -1,3 +1,5 @@
+### v1.1.2
+* add document generation
 ### v1.1.1
 * update config description
 * update lib

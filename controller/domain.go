@@ -4,6 +4,7 @@ import (
 	"isp-system-service/entity"
 	"isp-system-service/model"
 
+	_ "github.com/integration-system/isp-lib/structure"
 	"github.com/integration-system/isp-lib/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -18,6 +19,16 @@ import (
 	return res, nil
 }*/
 
+// GetDomainsBySystemId godoc
+// @Tags domain
+// @Summary Получить домены по идентификатору системы
+// @Description Возвращает список доменов по системному идентификатору
+// @Accept  json
+// @Produce  json
+// @Param body body integer false "Идентификатор системы"
+// @Success 200 {array} entity.Domain
+// @Failure 500 {object} structure.GrpcError
+// @Router /domain/get_domains_by_system_id [POST]
 func GetDomainsBySystemId(md metadata.MD) ([]entity.Domain, error) {
 	sysId, err := utils.ResolveMetadataIdentity(utils.SystemIdHeader, md)
 	if err != nil {
@@ -26,6 +37,16 @@ func GetDomainsBySystemId(md metadata.MD) ([]entity.Domain, error) {
 	return model.DomainRep.GetDomainsBySystemId(int32(sysId))
 }
 
+// CreateUpdateDomain godoc
+// @Tags domain
+// @Summary Создать/обновить домен
+// @Description Если домен с такими идентификатором существует, то обновляет данные, если нет, то добавляет данные в базу
+// @Accept  json
+// @Produce  json
+// @Param body body entity.Domain true "Объект домена"
+// @Success 200 {object} entity.Domain
+// @Failure 500 {object} structure.GrpcError
+// @Router /domain/create_update_domain [POST]
 func CreateUpdateDomain(domain entity.Domain, md metadata.MD) (*entity.Domain, error) {
 	existed, err := model.DomainRep.GetDomainByNameAndSystemId(domain.Name, domain.SystemId)
 	if err != nil {
@@ -67,6 +88,17 @@ func CreateUpdateDomain(domain entity.Domain, md metadata.MD) (*entity.Domain, e
 	}
 }
 
+// GetDomainById godoc
+// @Tags domain
+// @Summary Получить домен по идентификатору
+// @Description Возвращает описание домена по его идентификатору
+// @Accept  json
+// @Produce  json
+// @Param body body controller.Identity true "Идентификатор домена"
+// @Success 200 {object} entity.Domain
+// @Failure 404 {object} structure.GrpcError
+// @Failure 500 {object} structure.GrpcError
+// @Router /domain/get_domain_by_id [POST]
 func GetDomainById(identity Identity) (*entity.Domain, error) {
 	domain, err := model.DomainRep.GetDomainById(identity.Id)
 	if err != nil {
@@ -78,6 +110,17 @@ func GetDomainById(identity Identity) (*entity.Domain, error) {
 	return domain, err
 }
 
+// DeleteDomains godoc
+// @Tags domain
+// @Summary Удаление доменов
+// @Description Удаляет домены по списку их идентификаторов, возвращает количество удаленных доменов
+// @Accept  json
+// @Produce  json
+// @Param body body []integer false "Массив идентификаторов доменов"
+// @Success 200 {object} controller.DeleteResponse
+// @Failure 400 {object} structure.GrpcError
+// @Failure 500 {object} structure.GrpcError
+// @Router /domain/delete_domains [POST]
 func DeleteDomains(list []int32) (DeleteResponse, error) {
 	if len(list) == 0 {
 		return DeleteResponse{Deleted: 0}, status.Errorf(codes.InvalidArgument, "At least one id are required")
