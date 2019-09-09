@@ -26,13 +26,13 @@ var (
 )
 
 // @title ISP system service
-// @version 1.2.0
+// @version 1.1.2
 // @description Сервис управления реестром внешних приложений и токенами аутентификации
 
 // @license.name GNU GPL v3.0
 
-// @host localhost:9001
-// @BasePath /api/service
+// @host localhost:9003
+// @BasePath /api/system
 func main() {
 	bootstrap.
 		ServiceBootstrap(&conf.Configuration{}, &conf.RemoteConfig{}).
