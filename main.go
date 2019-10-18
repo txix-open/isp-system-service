@@ -92,8 +92,7 @@ func onRemoteConfigReceive(remoteConfig, oldConfig *conf.RemoteConfig) {
 			DefaultDB: int(rd.ApplicationTokenDb),
 		})
 	}
-	database.InitDb(remoteConfig.DB)
-	model.InitDbManager(database.GetDBManager())
+	model.DbClient.ReceiveConfiguration(remoteConfig.DB)
 	metric.InitCollectors(remoteConfig.Metrics, oldConfig.Metrics)
 	metric.InitHttpServer(remoteConfig.Metrics)
 	//ensureRootToken()

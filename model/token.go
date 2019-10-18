@@ -1,45 +1,51 @@
 package model
 
 import (
+	"github.com/integration-system/isp-lib/database"
 	"isp-system-service/entity"
 
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
 )
 
+var emptyToken = (*entity.Token)(nil)
+
 type TokenRepository struct {
-	DB orm.DB
+	DB       orm.DB
+	rxClient *database.RxDbClient
 }
 
-var (
-	emptyToken = &entity.Token{}
-	TokenRep   TokenRepository
-)
-
-func (tr *TokenRepository) SaveToken(token entity.Token) (entity.Token, error) {
-	_, err := tr.DB.Model(&token).Insert()
+func (r *TokenRepository) SaveToken(token entity.Token) (entity.Token, error) {
+	_, err := r.getDb().Model(&token).Insert()
 	return token, err
 }
 
-func (tr *TokenRepository) GetTokenById(id string) (*entity.Token, error) {
+func (r *TokenRepository) GetTokenById(id string) (*entity.Token, error) {
 	token := &entity.Token{Token: id}
-	err := tr.DB.Select(token)
+	err := r.getDb().Select(token)
 	if err == pg.ErrNoRows {
 		return nil, nil
 	}
 	return token, err
 }
 
-func (tr *TokenRepository) GetTokensByAppId(appId ...int32) ([]entity.Token, error) {
+func (r *TokenRepository) GetTokensByAppId(appId ...int32) ([]entity.Token, error) {
 	res := make([]entity.Token, 0)
-	err := tr.DB.Model(&res).Where("app_id IN (?)", pg.In(appId)).Order("created_at DESC").Select()
+	err := r.getDb().Model(&res).Where("app_id IN (?)", pg.In(appId)).Order("created_at DESC").Select()
 	return res, err
 }
 
-func (tr *TokenRepository) DeleteTokens(tokens []string) (int, error) {
-	res, err := tr.DB.Model(emptyToken).Where("token IN (?)", pg.In(tokens)).Delete()
+func (r *TokenRepository) DeleteTokens(tokens []string) (int, error) {
+	res, err := r.getDb().Model(emptyToken).Where("token IN (?)", pg.In(tokens)).Delete()
 	if err != nil {
 		return 0, err
 	}
 	return res.RowsAffected(), nil
+}
+
+func (r *TokenRepository) getDb() orm.DB {
+	if r.DB != nil {
+		return r.DB
+	}
+	return r.rxClient.Unsafe()
 }
