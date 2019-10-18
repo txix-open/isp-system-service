@@ -13,7 +13,6 @@ import (
 
 	"context"
 	"github.com/integration-system/isp-lib/backend"
-	"github.com/integration-system/isp-lib/database"
 	"github.com/integration-system/isp-lib/metric"
 
 	"github.com/integration-system/isp-lib/bootstrap"
@@ -82,7 +81,7 @@ func socketConfiguration(cfg interface{}) structure.SocketConfiguration {
 
 func onShutdown(_ context.Context, _ os.Signal) {
 	backend.StopGrpcServer()
-	database.Close()
+	_ = model.DbClient.Close()
 }
 
 func onRemoteConfigReceive(remoteConfig, oldConfig *conf.RemoteConfig) {
