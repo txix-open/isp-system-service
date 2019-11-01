@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/integration-system/isp-lib/config/schema"
 	"github.com/integration-system/isp-lib/structure"
+	"isp-system-service/invoker"
 	"os"
 
 	"isp-system-service/conf"
@@ -82,15 +83,14 @@ func socketConfiguration(cfg interface{}) structure.SocketConfiguration {
 func onShutdown(_ context.Context, _ os.Signal) {
 	backend.StopGrpcServer()
 	_ = model.DbClient.Close()
+	_ = invoker.RedisClient.Close()
 }
 
 func onRemoteConfigReceive(remoteConfig, oldConfig *conf.RemoteConfig) {
-	if remoteConfig.RedisAddress.GetAddress() != oldConfig.RedisAddress.GetAddress() {
-		rd.InitClient(structure.RedisConfiguration{
-			Address:   remoteConfig.RedisAddress,
-			DefaultDB: int(rd.ApplicationTokenDb),
-		})
-	}
+	invoker.RedisClient.ReceiveConfiguration(structure.RedisConfiguration{
+		Address:   remoteConfig.RedisAddress,
+		DefaultDB: int(redis.ApplicationTokenDb),
+	})
 	model.DbClient.ReceiveConfiguration(remoteConfig.DB)
 	metric.InitCollectors(remoteConfig.Metrics, oldConfig.Metrics)
 	metric.InitHttpServer(remoteConfig.Metrics)

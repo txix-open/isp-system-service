@@ -29,7 +29,7 @@ func init() {
 }
 
 func Up(tx *sql.Tx) error {
-	path := path2.Join(database.ResolveMigrationsDirectrory(), initFile)
+	path := path2.Join(database.ResolveMigrationsDirectory(), initFile)
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err

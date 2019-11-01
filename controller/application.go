@@ -4,7 +4,6 @@ import (
 	"isp-system-service/entity"
 	"isp-system-service/model"
 
-	"github.com/integration-system/isp-lib/database"
 	_ "github.com/integration-system/isp-lib/structure"
 	"github.com/integration-system/isp-lib/utils"
 	"google.golang.org/grpc/codes"
@@ -146,7 +145,7 @@ func DeleteApplications(list []int32) (DeleteResponse, error) {
 		return DeleteResponse{}, status.Errorf(codes.InvalidArgument, "At least one id are required")
 	}
 	var count = 0
-	err := database.RunInTransaction(func(appRep model.AppRepository, tokenRep model.TokenRepository) error {
+	err := model.DbClient.RunInTransaction(func(appRep model.AppRepository, tokenRep model.TokenRepository) error {
 		for _, appId := range list {
 			_, err := revokeTokensForApp(Identity{appId}, &tokenRep)
 			if err != nil {
