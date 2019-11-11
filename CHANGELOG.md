@@ -1,5 +1,5 @@
-### v2.0.0
-* update to new isp-lib & config service
+### v1.2.0
+* add `access list` methods
 ### v1.1.3
 * update to new log
 * migrate to new db client

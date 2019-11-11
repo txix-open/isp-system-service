@@ -58,3 +58,10 @@ type Token struct {
 	ExpireTime int64
 	CreatedAt  time.Time
 }
+
+type AccessList struct {
+	TableName string `sql:"system_service.access_list" json:"-"`
+	AppId     int32  `sql:",pk"`
+	Method    string `sql:",pk"`
+	Value     bool
+}

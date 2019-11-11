@@ -8,9 +8,12 @@
     "password": "password",
     "createSchema": true
   },
-  "redisAddress": {
-    "ip": "address",
-    "port": "6379"
+  "redis": {
+    "address": {
+      "ip": "127.0.0.1",
+      "port": "6379"
+    },
+    "defaultDB": 0
   },
   "metrics": {
     "gc": true,

@@ -8,6 +8,10 @@ type DeleteResponse struct {
 	Deleted int
 }
 
+type CountResponse struct {
+	Count int
+}
+
 type Identity struct {
 	Id int32 `json:"id" valid:"required~Required"`
 }
@@ -43,7 +47,20 @@ type RevokeTokensRequest struct {
 	AppId  int32 `valid:"required~Required"`
 	Tokens []string
 }
+
 type CreateTokenRequest struct {
 	AppId        int32 `valid:"required~Required"`
 	ExpireTimeMs int64
+}
+
+type ModuleMethods map[string][]MethodInfo
+
+type MethodInfo struct {
+	Method string
+	Value  bool
+}
+
+type SetListRequest struct {
+	AppId   int32
+	Methods []MethodInfo
 }

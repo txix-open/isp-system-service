@@ -1,0 +1,1021 @@
+basePath: /api/system
+definitions:
+  controller.AppWithToken:
+    properties:
+      app:
+        $ref: '#/definitions/entity.Application'
+        type: object
+      tokens:
+        items:
+          $ref: '#/definitions/entity.Token'
+        type: array
+    type: object
+  controller.CountResponse:
+    properties:
+      count:
+        type: integer
+    type: object
+  controller.CreateTokenRequest:
+    properties:
+      appId:
+        type: integer
+      expireTimeMs:
+        type: integer
+    required:
+    - appId
+    type: object
+  controller.DeleteResponse:
+    properties:
+      deleted:
+        type: integer
+    type: object
+  controller.DomainWithServices:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      services:
+        items:
+          $ref: '#/definitions/controller.ServiceWithApps'
+        type: array
+    type: object
+  controller.Identity:
+    properties:
+      id:
+        type: integer
+    required:
+    - id
+    type: object
+  controller.MethodInfo:
+    properties:
+      method:
+        type: string
+      value:
+        type: boolean
+    type: object
+  controller.ModuleMethods:
+    additionalProperties:
+      items:
+        properties:
+          method:
+            type: string
+          value:
+            type: boolean
+        type: object
+      type: array
+    type: object
+  controller.RevokeTokensRequest:
+    properties:
+      appId:
+        type: integer
+      tokens:
+        items:
+          type: string
+        type: array
+    required:
+    - appId
+    type: object
+  controller.ServiceWithApps:
+    properties:
+      apps:
+        items:
+          $ref: '#/definitions/controller.SimpleApp'
+        type: array
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  controller.SetListRequest:
+    properties:
+      appId:
+        type: integer
+      methods:
+        items:
+          $ref: '#/definitions/controller.MethodInfo'
+        type: array
+    type: object
+  controller.SimpleApp:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      tokens:
+        items:
+          $ref: '#/definitions/entity.Token'
+        type: array
+      type:
+        type: string
+    type: object
+  entity.AccessList:
+    properties:
+      appId:
+        type: integer
+      method:
+        type: string
+      value:
+        type: boolean
+    type: object
+  entity.Application:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      serviceId:
+        type: integer
+      type:
+        enum:
+        - SYSTEM
+        - MOBILE
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - name
+    - serviceId
+    - type
+    type: object
+  entity.Domain:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      systemId:
+        type: integer
+      updatedAt:
+        type: string
+    required:
+    - name
+    type: object
+  entity.Service:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      domainId:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - domainId
+    - name
+    type: object
+  entity.System:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - name
+    type: object
+  entity.Token:
+    properties:
+      appId:
+        type: integer
+      createdAt:
+        type: string
+      expireTime:
+        type: integer
+      token:
+        type: string
+    required:
+    - appId
+    - token
+    type: object
+  structure.GrpcError:
+    properties:
+      details:
+        items:
+          type: object
+        type: array
+      errorCode:
+        type: string
+      errorMessage:
+        type: string
+    type: object
+host: localhost:9003
+info:
+  contact: {}
+  description: Сервис управления реестром внешних приложений и токенами аутентификации
+  license:
+    name: GNU GPL v3.0
+  title: ISP system service
+  version: 1.1.2
+paths:
+  /access_list/get_by_id:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает список методов для приложения, для которых заданы настройки
+        доступа
+      parameters:
+      - description: идентификатор приложения
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/controller.Identity'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: список методов по названию модуля
+          schema:
+            items:
+              $ref: '#/definitions/controller.ModuleMethods'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Получить список доступности методов для приложения
+      tags:
+      - accessList
+  /access_list/set_list:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает массив приложений с токенами по их идентификаторам
+      parameters:
+      - description: объект настройки доступа
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/controller.SetListRequest'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: количество добавленных строк
+          schema:
+            $ref: '#/definitions/controller.CountResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Настройть доступность списка методов для приложения
+      tags:
+      - accessList
+  /access_list/set_one:
+    post:
+      consumes:
+      - application/json
+      description: Настраивает достуность
+      parameters:
+      - description: объект для настройки доступа
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/entity.AccessList'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: количество измененных строк
+          schema:
+            $ref: '#/definitions/controller.CountResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Настроить доступность метода для приложения
+      tags:
+      - accessList
+  /application/create_update_application:
+    post:
+      consumes:
+      - application/json
+      description: Если приложение с такими идентификатором существует, то обновляет
+        данные, если нет, то добавляет данные в базу
+      parameters:
+      - description: Объект приложения
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Application'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.AppWithToken'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Создать/обновить приложение
+      tags:
+      - application
+  /application/delete_applications:
+    post:
+      consumes:
+      - application/json
+      description: Удаляет приложения по списку их идентификаторов, возвращает количество
+        удаленных приложений
+      parameters:
+      - description: Массив идентификаторов приложений
+        in: body
+        name: body
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.AppWithToken'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Удалить приложения
+      tags:
+      - application
+  /application/get_application_by_id:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает описание приложения по его идентификатору
+      parameters:
+      - description: Идентификатор приложения
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.Identity'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.AppWithToken'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Получить приложение по идентификатору
+      tags:
+      - application
+  /application/get_applications:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает массив приложений с токенами по их идентификаторам
+      parameters:
+      - description: Массив идентификаторов приложений
+        in: body
+        name: body
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controller.AppWithToken'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Получить список приложений
+      tags:
+      - application
+  /application/get_applications_by_service_id:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает список приложений по запрошенныму идентификатору сервиса
+      parameters:
+      - description: Идентификатор серсиса
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.Identity'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controller.AppWithToken'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Получить список приложений по идентификатору сервиса
+      tags:
+      - application
+  /application/get_system_tree:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает описание взаимосвязей сервисов и приложений
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controller.DomainWithServices'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Метод получения системного дерева
+      tags:
+      - application
+  /domain/create_update_domain:
+    post:
+      consumes:
+      - application/json
+      description: Если домен с такими идентификатором существует, то обновляет данные,
+        если нет, то добавляет данные в базу
+      parameters:
+      - description: Объект домена
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Domain'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Domain'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Создать/обновить домен
+      tags:
+      - domain
+  /domain/delete_domains:
+    post:
+      consumes:
+      - application/json
+      description: Удаляет домены по списку их идентификаторов, возвращает количество
+        удаленных доменов
+      parameters:
+      - description: Массив идентификаторов доменов
+        in: body
+        name: body
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.DeleteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Удаление доменов
+      tags:
+      - domain
+  /domain/get_domain_by_id:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает описание домена по его идентификатору
+      parameters:
+      - description: Идентификатор домена
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.Identity'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Domain'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Получить домен по идентификатору
+      tags:
+      - domain
+  /domain/get_domains_by_system_id:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает список доменов по системному идентификатору
+      parameters:
+      - description: Идентификатор системы
+        in: body
+        name: body
+        schema:
+          type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entity.Domain'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Получить домены по идентификатору системы
+      tags:
+      - domain
+  /service/create_update_service:
+    post:
+      consumes:
+      - application/json
+      description: Если сервис с такими идентификатором существует, то обновляет данные,
+        если нет, то добавляет данные в базу
+      parameters:
+      - description: Объект сервиса
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Service'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Service'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Создать/обновить сервис
+      tags:
+      - service
+  /service/delete_service:
+    post:
+      consumes:
+      - application/json
+      description: Удаляет сервисов по списку их идентификаторов, возвращает количество
+        удаленных сервисов
+      parameters:
+      - description: Массив идентификаторов сервисов
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.DeleteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Удалить сервисы
+      tags:
+      - service
+  /service/get_service:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает список сервисов по их идентификаторам
+      parameters:
+      - description: Массив идентификаторов сервисов
+        in: body
+        name: body
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entity.Service'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Получить список сервисов
+      tags:
+      - service
+  /service/get_service_by_id:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает описание сервиса по его идентификатору
+      parameters:
+      - description: Идентификатор сервиса
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.Identity'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Service'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Получить сервис по идентификатору
+      tags:
+      - service
+  /service/get_services_by_domain_id:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает список сервисов по идентификатору домена
+      parameters:
+      - description: Идентификатор домена
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.Identity'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entity.Service'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Получить список сервисов по идентификатору домена
+      tags:
+      - service
+  /system/create_update_system:
+    post:
+      consumes:
+      - application/json
+      description: Если система с такими идентификатором существует, то обновляет
+        данные, если нет, то добавляет данные в базу
+      parameters:
+      - description: Объект системы
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/entity.System'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.System'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Создать/обновить систему
+      tags:
+      - system
+  /system/delete_systems:
+    post:
+      consumes:
+      - application/json
+      description: Удаляет системы по списку их идентификаторов, возвращает количество
+        удаленных систем
+      parameters:
+      - description: Массив идентификаторов систем
+        in: body
+        name: body
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.DeleteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Удалить системы
+      tags:
+      - system
+  /system/get_system_by_id:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает описание системы по ее идентификатору
+      parameters:
+      - description: Идентификатор системы
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.Identity'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.System'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Получить систему по идентификатору
+      tags:
+      - system
+  /system/get_systems:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает список систем по их идентификаторам
+      parameters:
+      - description: Массив идентификаторов систем
+        in: body
+        name: body
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entity.System'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Получить список систем
+      tags:
+      - system
+  /token/create_token:
+    post:
+      consumes:
+      - application/json
+      description: Созддает токен и привязывает его к приложению
+      parameters:
+      - description: Объект создания токена
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.CreateTokenRequest'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.AppWithToken'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Создать токен
+      tags:
+      - token
+  /token/get_tokens_by_app_id:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает список токенов, привязанных к приложению
+      parameters:
+      - description: Идентификатор приложения
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.Identity'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entity.Token'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Получить токены по идентификаотру приложения
+      tags:
+      - token
+  /token/revoke_tokens:
+    post:
+      consumes:
+      - application/json
+      description: Отвязывает токены от приложений и удялет их
+      parameters:
+      - description: Объект отзыва токенов
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RevokeTokensRequest'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.AppWithToken'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Отозвать токены
+      tags:
+      - token
+  /token/revoke_tokens_for_app:
+    post:
+      consumes:
+      - application/json
+      description: Отвязывает токены от приложений и удаляет их по идентификатору
+        приложения
+      parameters:
+      - description: Идентификатор приложения
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.Identity'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.DeleteResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
+      summary: Отозвать токены для приложения
+      tags:
+      - token
+swagger: "2.0"

@@ -1,14 +1,17 @@
 package controller
 
 import (
-	"isp-system-service/entity"
-	"isp-system-service/model"
-
+	"fmt"
+	rd "github.com/go-redis/redis"
+	rdLib "github.com/integration-system/isp-lib/redis"
 	_ "github.com/integration-system/isp-lib/structure"
 	"github.com/integration-system/isp-lib/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"isp-system-service/entity"
+	"isp-system-service/model"
+	"isp-system-service/redis"
 )
 
 // GetApplications godoc
@@ -144,25 +147,54 @@ func DeleteApplications(list []int32) (DeleteResponse, error) {
 	if len(list) == 0 {
 		return DeleteResponse{}, status.Errorf(codes.InvalidArgument, "At least one id are required")
 	}
-	var count = 0
-	err := model.DbClient.RunInTransaction(func(appRep model.AppRepository, tokenRep model.TokenRepository) error {
+
+	var (
+		count = 0
+		err   error
+	)
+
+	if err = model.DbClient.RunInTransaction(func(
+		appRep model.AppRepository, tokenRep model.TokenRepository, accessRep model.AccessListRepository) error {
+
 		for _, appId := range list {
-			_, err := revokeTokensForApp(Identity{appId}, &tokenRep)
-			if err != nil {
+			if _, err := revokeTokensForApp(Identity{appId}, &tokenRep); err != nil {
 				return err
 			}
 		}
-		res, err := appRep.DeleteApplications(list)
-		if err != nil {
+
+		if count, err = appRep.DeleteApplications(list); err != nil {
 			return err
 		}
-		count = res
+
+		redisDelRequest := make([]string, 0)
+		for _, id := range list {
+			accessList, err := accessRep.DeleteById(id)
+			if err != nil {
+				return err
+			}
+			redisDelArray := make([]string, len(accessList))
+			for i, access := range accessList {
+				redisDelArray[i] = fmt.Sprintf("%d|%s", id, access.Method)
+			}
+			redisDelRequest = append(redisDelRequest, redisDelArray...)
+		}
+		if len(redisDelRequest) > 0 {
+			if _, err := redis.Client.Get().UseDb(rdLib.ApplicationPermissionDb, func(p rd.Pipeliner) error {
+				if _, err := p.Del(redisDelRequest...).Result(); err != nil {
+					return err
+				} else {
+					return nil
+				}
+			}); err != nil {
+				return err
+			}
+		}
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		return DeleteResponse{}, err
+	} else {
+		return DeleteResponse{Deleted: count}, nil
 	}
-	return DeleteResponse{Deleted: count}, nil
 }
 
 // GetSystemTree godoc

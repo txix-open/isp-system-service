@@ -1,20 +1,18 @@
 package controller
 
 import (
-	"isp-system-service/invoker"
-	"time"
-
-	"isp-system-service/conf"
-	"isp-system-service/entity"
-	"isp-system-service/model"
-
 	"fmt"
-	"github.com/go-redis/redis"
+	rd "github.com/go-redis/redis"
 	"github.com/integration-system/isp-lib/config"
-	rd "github.com/integration-system/isp-lib/redis"
+	redisLib "github.com/integration-system/isp-lib/redis"
 	"github.com/integration-system/isp-lib/token-gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"isp-system-service/conf"
+	"isp-system-service/entity"
+	"isp-system-service/model"
+	"isp-system-service/redis"
+	"time"
 )
 
 const (
@@ -79,7 +77,7 @@ func CreateToken(req CreateTokenRequest) (*AppWithToken, error) {
 
 	token, err = model.TokenRep.SaveToken(token)
 	if err != nil {
-		invoker.RedisClient.Del(token.Token)
+		redis.Client.Get().Del(token.Token)
 		return nil, err
 	}
 
@@ -147,7 +145,7 @@ func GetTokensByAppId(identity Identity) ([]entity.Token, error) {
 
 func SetIdentityMapForTokenV2(token string, expireTime int64, idMap map[string]interface{}) error {
 	cfg := config.Get().(*conf.Configuration)
-	_, e := invoker.RedisClient.UseDbTx(rd.ApplicationTokenDb, func(p redis.Pipeliner) error {
+	_, e := redis.Client.Get().UseDbTx(redisLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
 		t := fmt.Sprintf("%s|%s", token, cfg.InstanceUuid)
 		stat := p.HMSet(t, idMap)
 		err := stat.Err()
@@ -228,7 +226,7 @@ func revokeTokens(tokens []string, tokenRep *model.TokenRepository) (*DeleteResp
 	if len(tokens) == 0 {
 		return &DeleteResponse{0}, nil
 	}
-	_, e := invoker.RedisClient.UseDbTx(rd.ApplicationTokenDb, func(p redis.Pipeliner) error {
+	_, e := redis.Client.Get().UseDbTx(redisLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
 		deleted, err := tokenRep.DeleteTokens(tokens)
 		count = deleted
 		if err != nil {
