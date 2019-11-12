@@ -25,7 +25,19 @@ func (r *AccessListRepository) GetByAppId(appId int32) ([]entity.AccessList, err
 
 func (r *AccessListRepository) DeleteById(id int32) ([]entity.AccessList, error) {
 	model := make([]entity.AccessList, 0)
-	if _, err := r.getDb().Model(&model).Where("app_id = ?", id).Delete(); err != nil {
+	if _, err := r.getDb().Model(&model).Where("app_id = ?", id).Returning("*").Delete(); err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	} else {
+		return model, nil
+	}
+}
+
+func (r *AccessListRepository) DeleteByIdList(list []int32) ([]entity.AccessList, error) {
+	model := make([]entity.AccessList, 0)
+	if _, err := r.getDb().Model(&model).Where("app_id IN (?)", pg.In(list)).Returning("*").Delete(); err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
 		}

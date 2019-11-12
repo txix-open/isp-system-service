@@ -4,6 +4,7 @@ import (
 	"fmt"
 	rd "github.com/go-redis/redis"
 	rdLib "github.com/integration-system/isp-lib/redis"
+	"isp-system-service/domain"
 	"isp-system-service/entity"
 	"isp-system-service/model"
 	"isp-system-service/redis"
@@ -19,11 +20,11 @@ type accessListController struct{}
 // @Description Возвращает список методов для приложения, для которых заданы настройки доступа
 // @Accept  json
 // @Produce  json
-// @Param body body controller.Identity false "идентификатор приложения"
-// @Success 200 {array} controller.ModuleMethods "список методов по названию модуля"
+// @Param body body domain.Identity false "идентификатор приложения"
+// @Success 200 {array} domain.ModuleMethods "список методов по названию модуля"
 // @Failure 500 {object} structure.GrpcError
 // @Router /access_list/get_by_id [POST]
-func (a accessListController) GetById(req Identity) (ModuleMethods, error) {
+func (a accessListController) GetById(req domain.Identity) (domain.ModuleMethods, error) {
 	if accessList, err := model.AccessListRep.GetByAppId(req.Id); err != nil {
 		return nil, err
 	} else {
@@ -38,10 +39,10 @@ func (a accessListController) GetById(req Identity) (ModuleMethods, error) {
 // @Accept  json
 // @Produce  json
 // @Param body body entity.AccessList false "объект для настройки доступа"
-// @Success 200 {object} controller.CountResponse "количество измененных строк"
+// @Success 200 {object} domain.CountResponse "количество измененных строк"
 // @Failure 500 {object} structure.GrpcError
 // @Router /access_list/set_one [POST]
-func (c accessListController) SetOne(request entity.AccessList) (*CountResponse, error) {
+func (c accessListController) SetOne(request entity.AccessList) (*domain.CountResponse, error) {
 	var (
 		resp = 0
 		err  error
@@ -65,7 +66,7 @@ func (c accessListController) SetOne(request entity.AccessList) (*CountResponse,
 	}); err != nil {
 		return nil, err
 	} else {
-		return &CountResponse{Count: resp}, nil
+		return &domain.CountResponse{Count: resp}, nil
 	}
 }
 
@@ -75,11 +76,11 @@ func (c accessListController) SetOne(request entity.AccessList) (*CountResponse,
 // @Description Возвращает массив приложений с токенами по их идентификаторам
 // @Accept  json
 // @Produce  json
-// @Param body body controller.SetListRequest false "объект настройки доступа"
-// @Success 200 {object} controller.CountResponse "количество добавленных строк"
+// @Param body body domain.SetListRequest false "объект настройки доступа"
+// @Success 200 {object} domain.CountResponse "количество добавленных строк"
 // @Failure 500 {object} structure.GrpcError
 // @Router /access_list/set_list [POST]
-func (c accessListController) SetList(request SetListRequest) (*CountResponse, error) {
+func (c accessListController) SetList(request domain.SetListRequest) (*domain.CountResponse, error) {
 	resp := 0
 	if err := model.DbClient.RunInTransaction(func(repository model.AccessListRepository) error {
 
@@ -127,18 +128,18 @@ func (c accessListController) SetList(request SetListRequest) (*CountResponse, e
 	}); err != nil {
 		return nil, err
 	} else {
-		return &CountResponse{Count: resp}, nil
+		return &domain.CountResponse{Count: resp}, nil
 	}
 }
 
-func (c accessListController) convertAccessList(accessLists []entity.AccessList) ModuleMethods {
-	response := make(map[string][]MethodInfo)
+func (c accessListController) convertAccessList(accessLists []entity.AccessList) domain.ModuleMethods {
+	response := make(map[string][]domain.MethodInfo)
 	for _, access := range accessLists {
 		moduleName, method := c.extractModuleName(access.Method)
 		if methodStore, ok := response[moduleName]; ok {
-			response[moduleName] = append(methodStore, MethodInfo{Value: access.Value, Method: method})
+			response[moduleName] = append(methodStore, domain.MethodInfo{Value: access.Value, Method: method})
 		} else {
-			response[moduleName] = []MethodInfo{{Value: access.Value, Method: method}}
+			response[moduleName] = []domain.MethodInfo{{Value: access.Value, Method: method}}
 		}
 	}
 	return response

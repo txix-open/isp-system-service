@@ -1,6 +1,6 @@
 basePath: /api/system
 definitions:
-  controller.AppWithToken:
+  domain.AppWithToken:
     properties:
       app:
         $ref: '#/definitions/entity.Application'
@@ -10,12 +10,12 @@ definitions:
           $ref: '#/definitions/entity.Token'
         type: array
     type: object
-  controller.CountResponse:
+  domain.CountResponse:
     properties:
       count:
         type: integer
     type: object
-  controller.CreateTokenRequest:
+  domain.CreateTokenRequest:
     properties:
       appId:
         type: integer
@@ -24,12 +24,12 @@ definitions:
     required:
     - appId
     type: object
-  controller.DeleteResponse:
+  domain.DeleteResponse:
     properties:
       deleted:
         type: integer
     type: object
-  controller.DomainWithServices:
+  domain.DomainWithServices:
     properties:
       description:
         type: string
@@ -39,24 +39,24 @@ definitions:
         type: string
       services:
         items:
-          $ref: '#/definitions/controller.ServiceWithApps'
+          $ref: '#/definitions/domain.ServiceWithApps'
         type: array
     type: object
-  controller.Identity:
+  domain.Identity:
     properties:
       id:
         type: integer
     required:
     - id
     type: object
-  controller.MethodInfo:
+  domain.MethodInfo:
     properties:
       method:
         type: string
       value:
         type: boolean
     type: object
-  controller.ModuleMethods:
+  domain.ModuleMethods:
     additionalProperties:
       items:
         properties:
@@ -67,7 +67,7 @@ definitions:
         type: object
       type: array
     type: object
-  controller.RevokeTokensRequest:
+  domain.RevokeTokensRequest:
     properties:
       appId:
         type: integer
@@ -78,11 +78,11 @@ definitions:
     required:
     - appId
     type: object
-  controller.ServiceWithApps:
+  domain.ServiceWithApps:
     properties:
       apps:
         items:
-          $ref: '#/definitions/controller.SimpleApp'
+          $ref: '#/definitions/domain.SimpleApp'
         type: array
       description:
         type: string
@@ -91,16 +91,16 @@ definitions:
       name:
         type: string
     type: object
-  controller.SetListRequest:
+  domain.SetListRequest:
     properties:
       appId:
         type: integer
       methods:
         items:
-          $ref: '#/definitions/controller.MethodInfo'
+          $ref: '#/definitions/domain.MethodInfo'
         type: array
     type: object
-  controller.SimpleApp:
+  domain.SimpleApp:
     properties:
       description:
         type: string
@@ -243,7 +243,7 @@ paths:
         in: body
         name: body
         schema:
-          $ref: '#/definitions/controller.Identity'
+          $ref: '#/definitions/domain.Identity'
           type: object
       produces:
       - application/json
@@ -252,7 +252,7 @@ paths:
           description: список методов по названию модуля
           schema:
             items:
-              $ref: '#/definitions/controller.ModuleMethods'
+              $ref: '#/definitions/domain.ModuleMethods'
             type: array
         "500":
           description: Internal Server Error
@@ -271,7 +271,7 @@ paths:
         in: body
         name: body
         schema:
-          $ref: '#/definitions/controller.SetListRequest'
+          $ref: '#/definitions/domain.SetListRequest'
           type: object
       produces:
       - application/json
@@ -279,7 +279,7 @@ paths:
         "200":
           description: количество добавленных строк
           schema:
-            $ref: '#/definitions/controller.CountResponse'
+            $ref: '#/definitions/domain.CountResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -305,7 +305,7 @@ paths:
         "200":
           description: количество измененных строк
           schema:
-            $ref: '#/definitions/controller.CountResponse'
+            $ref: '#/definitions/domain.CountResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -333,7 +333,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.AppWithToken'
+            $ref: '#/definitions/domain.AppWithToken'
         "400":
           description: Bad Request
           schema:
@@ -373,7 +373,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.AppWithToken'
+            $ref: '#/definitions/domain.DeleteResponse'
         "400":
           description: Bad Request
           schema:
@@ -396,7 +396,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/controller.Identity'
+          $ref: '#/definitions/domain.Identity'
           type: object
       produces:
       - application/json
@@ -404,7 +404,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.AppWithToken'
+            $ref: '#/definitions/domain.AppWithToken'
         "400":
           description: Bad Request
           schema:
@@ -440,7 +440,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controller.AppWithToken'
+              $ref: '#/definitions/domain.AppWithToken'
             type: array
         "500":
           description: Internal Server Error
@@ -460,7 +460,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/controller.Identity'
+          $ref: '#/definitions/domain.Identity'
           type: object
       produces:
       - application/json
@@ -469,7 +469,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controller.AppWithToken'
+              $ref: '#/definitions/domain.AppWithToken'
             type: array
         "500":
           description: Internal Server Error
@@ -490,7 +490,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controller.DomainWithServices'
+              $ref: '#/definitions/domain.DomainWithServices'
             type: array
         "500":
           description: Internal Server Error
@@ -547,7 +547,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.DeleteResponse'
+            $ref: '#/definitions/domain.DeleteResponse'
         "400":
           description: Bad Request
           schema:
@@ -570,7 +570,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/controller.Identity'
+          $ref: '#/definitions/domain.Identity'
           type: object
       produces:
       - application/json
@@ -678,7 +678,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.DeleteResponse'
+            $ref: '#/definitions/domain.DeleteResponse'
         "400":
           description: Bad Request
           schema:
@@ -730,7 +730,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/controller.Identity'
+          $ref: '#/definitions/domain.Identity'
           type: object
       produces:
       - application/json
@@ -761,7 +761,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/controller.Identity'
+          $ref: '#/definitions/domain.Identity'
           type: object
       produces:
       - application/json
@@ -835,7 +835,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.DeleteResponse'
+            $ref: '#/definitions/domain.DeleteResponse'
         "400":
           description: Bad Request
           schema:
@@ -858,7 +858,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/controller.Identity'
+          $ref: '#/definitions/domain.Identity'
           type: object
       produces:
       - application/json
@@ -918,7 +918,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/controller.CreateTokenRequest'
+          $ref: '#/definitions/domain.CreateTokenRequest'
           type: object
       produces:
       - application/json
@@ -926,7 +926,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.AppWithToken'
+            $ref: '#/definitions/domain.AppWithToken'
         "500":
           description: Internal Server Error
           schema:
@@ -945,7 +945,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/controller.Identity'
+          $ref: '#/definitions/domain.Identity'
           type: object
       produces:
       - application/json
@@ -974,7 +974,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/controller.RevokeTokensRequest'
+          $ref: '#/definitions/domain.RevokeTokensRequest'
           type: object
       produces:
       - application/json
@@ -982,7 +982,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.AppWithToken'
+            $ref: '#/definitions/domain.AppWithToken'
         "500":
           description: Internal Server Error
           schema:
@@ -1002,7 +1002,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/controller.Identity'
+          $ref: '#/definitions/domain.Identity'
           type: object
       produces:
       - application/json
@@ -1010,7 +1010,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.DeleteResponse'
+            $ref: '#/definitions/domain.DeleteResponse'
         "500":
           description: Internal Server Error
           schema:
