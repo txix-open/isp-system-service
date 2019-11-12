@@ -5,7 +5,6 @@ import (
 	rd "github.com/go-redis/redis"
 	"github.com/integration-system/isp-lib/config"
 	redisLib "github.com/integration-system/isp-lib/redis"
-	"github.com/integration-system/isp-lib/token-gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"isp-system-service/conf"
@@ -13,6 +12,7 @@ import (
 	"isp-system-service/entity"
 	"isp-system-service/model"
 	"isp-system-service/redis"
+	"isp-system-service/service"
 	"time"
 )
 
@@ -23,10 +23,7 @@ const (
 	ApplicationIdentityFieldInDb = "4"
 )
 
-var (
-	Token     tokenController
-	generator = tg.NewGenerator(tg.DefaultAlphabet)
-)
+var Token tokenController
 
 type tokenController struct{}
 
@@ -46,38 +43,29 @@ func (c tokenController) CreateToken(req domain.CreateTokenRequest) (*domain.App
 		return nil, err
 	}
 
-	cfg := config.GetRemote().(*conf.RemoteConfig)
-
-	var id string
-	var existed = true
-	for existed {
-		id = generator.Next(tg.DefaultTokenLength)
-		t, err := model.TokenRep.GetTokenById(id)
-		if err != nil {
-			return nil, err
-		}
-		existed = t != nil
-	}
-
 	expTime := req.ExpireTimeMs
 	if expTime == 0 {
-		expTime = cfg.DefaultTokenExpireTime
+		expTime = config.GetRemote().(*conf.RemoteConfig).DefaultTokenExpireTime
 	}
-	token := entity.Token{
-		Token:      id,
+	token, err := service.Jwt.Generate(req.AppId, expTime)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenInfo := entity.Token{
+		Token:      token,
 		ExpireTime: expTime,
 		AppId:      req.AppId,
 		CreatedAt:  time.Now(),
 	}
 
-	err = c.setIdentityMapForToken(token, m)
-	if err != nil {
-		return nil, err
-	}
-
-	token, err = model.TokenRep.SaveToken(token)
-	if err != nil {
-		redis.Client.Get().Del(token.Token)
+	if err := model.DbClient.RunInTransaction(func(repository model.TokenRepository) error {
+		tokenInfo, err = repository.SaveToken(tokenInfo)
+		if err != nil {
+			return err
+		}
+		return c.setIdentityMapForToken(tokenInfo, m)
+	}); err != nil {
 		return nil, err
 	}
 
@@ -104,14 +92,17 @@ func (c tokenController) RevokeTokens(req domain.RevokeTokensRequest) (*domain.A
 	if err != nil {
 		return nil, err
 	}
+
 	_, err = c.revokeTokens(req.Tokens, &model.TokenRep)
 	if err != nil {
 		return nil, err
 	}
+
 	res, err := Application.enrichWithTokens(*app)
 	if err != nil {
 		return nil, err
 	}
+
 	return res[0], nil
 }
 
@@ -148,10 +139,10 @@ func (c tokenController) setIdentityMapForToken(token entity.Token, idMap map[st
 }
 
 func (tokenController) SetIdentityMapForTokenV2(token string, expireTime int64, idMap map[string]interface{}) error {
-	cfg := config.Get().(*conf.Configuration)
+	instanceUuid := config.Get().(*conf.Configuration).InstanceUuid
 	_, e := redis.Client.Get().UseDbTx(redisLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
-		t := fmt.Sprintf("%s|%s", token, cfg.InstanceUuid)
-		stat := p.HMSet(t, idMap)
+		key := fmt.Sprintf("%s|%s", token, instanceUuid)
+		stat := p.HMSet(key, idMap)
 		err := stat.Err()
 		if err != nil {
 			return err
@@ -165,44 +156,44 @@ func (tokenController) SetIdentityMapForTokenV2(token string, expireTime int64, 
 }
 
 func (tokenController) getIdMap(appId int32) (map[string]interface{}, error, *entity.Application) {
-	app, err := model.AppRep.GetApplicationById(appId)
+	appInfo, err := model.AppRep.GetApplicationById(appId)
 	if err != nil {
 		return nil, err, nil
 	}
-	if app == nil {
+	if appInfo == nil {
 		return nil, status.Errorf(codes.NotFound, "Application with id %d not found", appId), nil
 	}
 
-	service, err := model.ServiceRep.GetServiceById(app.ServiceId)
+	serviceInfo, err := model.ServiceRep.GetServiceById(appInfo.ServiceId)
 	if err != nil {
-		return nil, err, app
+		return nil, err, appInfo
 	}
-	if service == nil {
-		return nil, status.Errorf(codes.NotFound, "Service with id %d not found", app.ServiceId), app
+	if serviceInfo == nil {
+		return nil, status.Errorf(codes.NotFound, "Service with id %d not found", appInfo.ServiceId), appInfo
 	}
 
-	domainInfo, err := model.DomainRep.GetDomainById(service.DomainId)
+	domainInfo, err := model.DomainRep.GetDomainById(serviceInfo.DomainId)
 	if err != nil {
-		return nil, err, app
+		return nil, err, appInfo
 	}
 	if domainInfo == nil {
-		return nil, status.Errorf(codes.NotFound, "Domain with id %d not found", service.DomainId), app
+		return nil, status.Errorf(codes.NotFound, "Domain with id %d not found", serviceInfo.DomainId), appInfo
 	}
 
-	system, err := model.SystemRep.GetSystemById(domainInfo.SystemId)
+	systemInfo, err := model.SystemRep.GetSystemById(domainInfo.SystemId)
 	if err != nil {
-		return nil, err, app
+		return nil, err, appInfo
 	}
-	if system == nil {
-		return nil, status.Errorf(codes.NotFound, "System with id %d not found", domainInfo.SystemId), app
+	if systemInfo == nil {
+		return nil, status.Errorf(codes.NotFound, "System with id %d not found", domainInfo.SystemId), appInfo
 	}
 
 	return map[string]interface{}{
-		SystemIdentityFieldInDb:      system.Id,
+		SystemIdentityFieldInDb:      systemInfo.Id,
 		DomainIdentityFieldInDb:      domainInfo.Id,
-		ServiceIdentityFieldInDb:     service.Id,
-		ApplicationIdentityFieldInDb: app.Id,
-	}, nil, app
+		ServiceIdentityFieldInDb:     serviceInfo.Id,
+		ApplicationIdentityFieldInDb: appInfo.Id,
+	}, nil, appInfo
 }
 
 func (c tokenController) revokeTokensForApp(identity domain.Identity, tokenRep *model.TokenRepository) (*domain.DeleteResponse, error) {
@@ -222,18 +213,28 @@ func (c tokenController) revokeTokensForApp(identity domain.Identity, tokenRep *
 }
 
 func (tokenController) revokeTokens(tokens []string, tokenRep *model.TokenRepository) (*domain.DeleteResponse, error) {
-	var count = 0
 	if len(tokens) == 0 {
 		return &domain.DeleteResponse{Deleted: 0}, nil
 	}
+
+	instanceUuid := config.Get().(*conf.Configuration).InstanceUuid
+	var count = 0
+	keys := make([]string, len(tokens))
+	for i, token := range tokens {
+		keys[i] = fmt.Sprintf("%s|%s", token, instanceUuid)
+	}
+
 	_, e := redis.Client.Get().UseDbTx(redisLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
-		deleted, err := tokenRep.DeleteTokens(tokens)
-		count = deleted
-		if err != nil {
+		if _, err := p.Del(keys...).Result(); err != nil {
 			return err
 		}
-		res := p.Del(tokens...)
-		return res.Err()
+
+		if deleted, err := tokenRep.DeleteTokens(tokens); err != nil {
+			return err
+		} else {
+			count = deleted
+			return nil
+		}
 	})
 	if e != nil {
 		return nil, e

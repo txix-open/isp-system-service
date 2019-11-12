@@ -4,6 +4,8 @@ import (
 	"fmt"
 	rd "github.com/go-redis/redis"
 	rdLib "github.com/integration-system/isp-lib/redis"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
 	"isp-system-service/model"
@@ -21,14 +23,21 @@ type accessListController struct{}
 // @Accept  json
 // @Produce  json
 // @Param body body domain.Identity false "идентификатор приложения"
-// @Success 200 {array} domain.ModuleMethods "список методов по названию модуля"
+// @Success 200 {array} domain.MethodInfo "список доступности методов"
+// @Failure 404 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /access_list/get_by_id [POST]
-func (a accessListController) GetById(req domain.Identity) (domain.ModuleMethods, error) {
+func (c accessListController) GetById(req domain.Identity) ([]domain.MethodInfo, error) {
+	if app, err := model.AppRep.GetApplicationById(req.Id); err != nil {
+		return nil, err
+	} else if app == nil {
+		return nil, status.Errorf(codes.NotFound, "application '%d' not found", req.Id)
+	}
+
 	if accessList, err := model.AccessListRep.GetByAppId(req.Id); err != nil {
 		return nil, err
 	} else {
-		return a.convertAccessList(accessList), nil
+		return c.convertAccessList(accessList), nil
 	}
 }
 
@@ -40,9 +49,16 @@ func (a accessListController) GetById(req domain.Identity) (domain.ModuleMethods
 // @Produce  json
 // @Param body body entity.AccessList false "объект для настройки доступа"
 // @Success 200 {object} domain.CountResponse "количество измененных строк"
+// @Failure 404 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /access_list/set_one [POST]
 func (c accessListController) SetOne(request entity.AccessList) (*domain.CountResponse, error) {
+	if app, err := model.AppRep.GetApplicationById(request.AppId); err != nil {
+		return nil, err
+	} else if app == nil {
+		return nil, status.Errorf(codes.NotFound, "application '%d' not found", request.AppId)
+	}
+
 	var (
 		resp = 0
 		err  error
@@ -78,9 +94,16 @@ func (c accessListController) SetOne(request entity.AccessList) (*domain.CountRe
 // @Produce  json
 // @Param body body domain.SetListRequest false "объект настройки доступа"
 // @Success 200 {object} domain.CountResponse "количество добавленных строк"
+// @Failure 404 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /access_list/set_list [POST]
 func (c accessListController) SetList(request domain.SetListRequest) (*domain.CountResponse, error) {
+	if app, err := model.AppRep.GetApplicationById(request.AppId); err != nil {
+		return nil, err
+	} else if app == nil {
+		return nil, status.Errorf(codes.NotFound, "application '%d' not found", request.AppId)
+	}
+
 	resp := 0
 	if err := model.DbClient.RunInTransaction(func(repository model.AccessListRepository) error {
 
@@ -132,29 +155,13 @@ func (c accessListController) SetList(request domain.SetListRequest) (*domain.Co
 	}
 }
 
-func (c accessListController) convertAccessList(accessLists []entity.AccessList) domain.ModuleMethods {
-	response := make(map[string][]domain.MethodInfo)
-	for _, access := range accessLists {
-		moduleName, method := c.extractModuleName(access.Method)
-		if methodStore, ok := response[moduleName]; ok {
-			response[moduleName] = append(methodStore, domain.MethodInfo{Value: access.Value, Method: method})
-		} else {
-			response[moduleName] = []domain.MethodInfo{{Value: access.Value, Method: method}}
+func (accessListController) convertAccessList(accessLists []entity.AccessList) []domain.MethodInfo {
+	methodInfos := make([]domain.MethodInfo, len(accessLists))
+	for i, access := range accessLists {
+		methodInfos[i] = domain.MethodInfo{
+			Method: access.Method,
+			Value:  access.Value,
 		}
 	}
-	return response
-}
-
-func (accessListController) extractModuleName(method string) (string, string) {
-	firstFound := false
-	for i, value := range method {
-		if value == '/' {
-			if firstFound {
-				return method[:i], method[i:]
-			} else {
-				firstFound = true
-			}
-		}
-	}
-	return method, ""
+	return methodInfos
 }

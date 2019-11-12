@@ -23,5 +23,6 @@
       "path": "/metrics",
       "port": "9555"
     }
-  }
+  },
+  "secretKey": "SECRET_ACCESS_KEY"
 }

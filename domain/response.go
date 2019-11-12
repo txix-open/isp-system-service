@@ -38,8 +38,6 @@ type (
 		Tokens      []entity.Token
 	}
 
-	ModuleMethods map[string][]MethodInfo
-
 	MethodInfo struct {
 		Method string
 		Value  bool

@@ -162,7 +162,7 @@ func (applicationController) DeleteApplications(list []int32) (domain.DeleteResp
 		appRep model.AppRepository, tokenRep model.TokenRepository, accessRep model.AccessListRepository) error {
 
 		for _, appId := range list {
-			if _, err := Token.revokeTokensForApp(domain.Identity{appId}, &tokenRep); err != nil {
+			if _, err := Token.revokeTokensForApp(domain.Identity{Id: appId}, &tokenRep); err != nil {
 				return err
 			}
 		}

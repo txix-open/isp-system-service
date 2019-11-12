@@ -56,17 +56,6 @@ definitions:
       value:
         type: boolean
     type: object
-  domain.ModuleMethods:
-    additionalProperties:
-      items:
-        properties:
-          method:
-            type: string
-          value:
-            type: boolean
-        type: object
-      type: array
-    type: object
   domain.RevokeTokensRequest:
     properties:
       appId:
@@ -249,11 +238,15 @@ paths:
       - application/json
       responses:
         "200":
-          description: список методов по названию модуля
+          description: список доступности методов
           schema:
             items:
-              $ref: '#/definitions/domain.ModuleMethods'
+              $ref: '#/definitions/domain.MethodInfo'
             type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
         "500":
           description: Internal Server Error
           schema:
@@ -280,6 +273,10 @@ paths:
           description: количество добавленных строк
           schema:
             $ref: '#/definitions/domain.CountResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
         "500":
           description: Internal Server Error
           schema:
@@ -306,6 +303,10 @@ paths:
           description: количество измененных строк
           schema:
             $ref: '#/definitions/domain.CountResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/structure.GrpcError'
         "500":
           description: Internal Server Error
           schema:
