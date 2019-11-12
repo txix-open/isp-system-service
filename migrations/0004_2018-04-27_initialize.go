@@ -41,7 +41,7 @@ func Up(tx *sql.Tx) error {
 		return err
 	}
 
-	schema := config.GetRemote().(*conf.RemoteConfig).DB.Schema
+	schema := config.GetRemote().(*conf.RemoteConfig).Database.Schema
 	lastDomainId := int64(0)
 	lastServiceId := int64(0)
 	lastAppId := int64(0)

@@ -101,7 +101,7 @@ func onShutdown(_ context.Context, _ os.Signal) {
 
 func onRemoteConfigReceive(remoteConfig, oldConfig *conf.RemoteConfig) {
 	redis.Client.ReceiveConfiguration(remoteConfig.Redis)
-	model.DbClient.ReceiveConfiguration(remoteConfig.DB)
+	model.DbClient.ReceiveConfiguration(remoteConfig.Database)
 	metric.InitCollectors(remoteConfig.Metrics, oldConfig.Metrics)
 	metric.InitHttpServer(remoteConfig.Metrics)
 	//ensureRootToken()
