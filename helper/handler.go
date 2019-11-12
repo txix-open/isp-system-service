@@ -47,7 +47,7 @@ type TokenHandler struct {
 }
 
 type AccessListHandler struct {
-	GetById func(domain.Identity) (domain.ModuleMethods, error)        `method:"get_by_id" group:"access_list" inner:"true"`
+	GetById func(domain.Identity) ([]domain.MethodInfo, error)         `method:"get_by_id" group:"access_list" inner:"true"`
 	SetOne  func(entity.AccessList) (*domain.CountResponse, error)     `method:"set_one" group:"access_list" inner:"true"`
 	SetList func(domain.SetListRequest) (*domain.CountResponse, error) `method:"set_list" group:"access_list" inner:"true"`
 }
