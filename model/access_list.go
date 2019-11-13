@@ -47,7 +47,8 @@ func (r *AccessListRepository) DeleteByIdList(list []int32) ([]entity.AccessList
 	}
 }
 
-func (r *AccessListRepository) Insert(model []entity.AccessList) (int, error) {
+func (r *AccessListRepository) UpsertArray(model []entity.AccessList) (int, error) {
+	_, _ = r.getDb().Model(&model).WherePK().Delete()
 	if result, err := r.getDb().Model(&model).Insert(); err != nil {
 		if err == pg.ErrNoRows {
 			return 0, nil

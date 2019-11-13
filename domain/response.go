@@ -44,7 +44,8 @@ type (
 	}
 
 	SetListRequest struct {
-		AppId   int32
-		Methods []MethodInfo
+		AppId     int32
+		RemoveOld bool
+		Methods   []MethodInfo
 	}
 )

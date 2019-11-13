@@ -34,17 +34,13 @@ func (c accessListController) GetById(req domain.Identity) ([]domain.MethodInfo,
 		return nil, status.Errorf(codes.NotFound, "application '%d' not found", req.Id)
 	}
 
-	if accessList, err := model.AccessListRep.GetByAppId(req.Id); err != nil {
-		return nil, err
-	} else {
-		return c.convertAccessList(accessList), nil
-	}
+	return c.getAccessListById(req.Id)
 }
 
 // SetOne godoc
 // @Tags accessList
 // @Summary Настроить доступность метода для приложения
-// @Description Настраивает достуность
+// @Description Возвращает количество изменных строк
 // @Accept  json
 // @Produce  json
 // @Param body body entity.AccessList false "объект для настройки доступа"
@@ -89,33 +85,39 @@ func (c accessListController) SetOne(request entity.AccessList) (*domain.CountRe
 // SetList godoc
 // @Tags accessList
 // @Summary Настройть доступность списка методов для приложения
-// @Description Возвращает массив приложений с токенами по их идентификаторам
+// @Description Возвращает список методов для приложения, для которых заданы настройки доступа
 // @Accept  json
 // @Produce  json
 // @Param body body domain.SetListRequest false "объект настройки доступа"
-// @Success 200 {object} domain.CountResponse "количество добавленных строк"
+// @Success 200 {array} domain.MethodInfo "список доступности методов"
 // @Failure 404 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /access_list/set_list [POST]
-func (c accessListController) SetList(request domain.SetListRequest) (*domain.CountResponse, error) {
+func (c accessListController) SetList(request domain.SetListRequest) ([]domain.MethodInfo, error) {
 	if app, err := model.AppRep.GetApplicationById(request.AppId); err != nil {
 		return nil, err
 	} else if app == nil {
 		return nil, status.Errorf(codes.NotFound, "application '%d' not found", request.AppId)
 	}
 
-	resp := 0
-	if err := model.DbClient.RunInTransaction(func(repository model.AccessListRepository) error {
+	var (
+		resp          = 0
+		oldAccessList = make([]entity.AccessList, 0)
+		err           error
+	)
 
-		oldAccessList, err := repository.DeleteById(request.AppId)
-		if err != nil {
-			return err
+	if err := model.DbClient.RunInTransaction(func(repository model.AccessListRepository) error {
+		if request.RemoveOld == true {
+			oldAccessList, err = repository.DeleteById(request.AppId)
+			if err != nil {
+				return err
+			}
 		}
 
-		insertRequest := make([]entity.AccessList, len(request.Methods))
+		newAccessList := make([]entity.AccessList, len(request.Methods))
 		redisMsetRequest := make([]interface{}, 0)
 		for i, m := range request.Methods {
-			insertRequest[i] = entity.AccessList{
+			newAccessList[i] = entity.AccessList{
 				AppId:  request.AppId,
 				Method: m.Method,
 				Value:  m.Value,
@@ -128,7 +130,7 @@ func (c accessListController) SetList(request domain.SetListRequest) (*domain.Co
 			redisDelRequest[i] = fmt.Sprintf("%d|%s", request.AppId, access.Method)
 		}
 
-		if resp, err = repository.Insert(insertRequest); err != nil {
+		if resp, err = repository.UpsertArray(newAccessList); err != nil {
 			return err
 		}
 
@@ -151,7 +153,15 @@ func (c accessListController) SetList(request domain.SetListRequest) (*domain.Co
 	}); err != nil {
 		return nil, err
 	} else {
-		return &domain.CountResponse{Count: resp}, nil
+		return c.getAccessListById(request.AppId)
+	}
+}
+
+func (c accessListController) getAccessListById(id int32) ([]domain.MethodInfo, error) {
+	if accessList, err := model.AccessListRep.GetByAppId(id); err != nil {
+		return nil, err
+	} else {
+		return c.convertAccessList(accessList), nil
 	}
 }
 

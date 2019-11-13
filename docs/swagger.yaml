@@ -88,6 +88,8 @@ definitions:
         items:
           $ref: '#/definitions/domain.MethodInfo'
         type: array
+      removeOld:
+        type: boolean
     type: object
   domain.SimpleApp:
     properties:
@@ -258,7 +260,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Возвращает массив приложений с токенами по их идентификаторам
+      description: Возвращает список методов для приложения, для которых заданы настройки
+        доступа
       parameters:
       - description: объект настройки доступа
         in: body
@@ -270,9 +273,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: количество добавленных строк
+          description: список доступности методов
           schema:
-            $ref: '#/definitions/domain.CountResponse'
+            items:
+              $ref: '#/definitions/domain.MethodInfo'
+            type: array
         "404":
           description: Not Found
           schema:
@@ -288,7 +293,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Настраивает достуность
+      description: Возвращает количество изменных строк
       parameters:
       - description: объект для настройки доступа
         in: body
