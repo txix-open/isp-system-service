@@ -130,8 +130,10 @@ func (c accessListController) SetList(request domain.SetListRequest) ([]domain.M
 			redisDelRequest[i] = fmt.Sprintf("%d|%s", request.AppId, access.Method)
 		}
 
-		if resp, err = repository.UpsertArray(newAccessList); err != nil {
-			return err
+		if len(newAccessList) > 0 {
+			if resp, err = repository.UpsertArray(newAccessList); err != nil {
+				return err
+			}
 		}
 
 		if _, err := redis.Client.Get().UseDb(rdLib.ApplicationPermissionDb, func(p rd.Pipeliner) error {
@@ -140,9 +142,10 @@ func (c accessListController) SetList(request domain.SetListRequest) ([]domain.M
 					return err
 				}
 			}
-
-			if _, err := p.MSet(redisMsetRequest...).Result(); err != nil {
-				return err
+			if len(redisMsetRequest) > 0 {
+				if _, err := p.MSet(redisMsetRequest...).Result(); err != nil {
+					return err
+				}
 			}
 			return nil
 		}); err != nil {

@@ -17,11 +17,11 @@ var Jwt jwtService
 
 type jwtService struct{}
 
-func (s jwtService) Generate(appId int32, expTime int64) (string, error) {
+func (s jwtService) CreateApplication(appId int32, expTime int64) (string, error) {
 	var (
 		claims  = jwt.MapClaims{}
 		created = time.Now()
-		secret  = config.GetRemote().(*conf.RemoteConfig).SecretKey
+		secret  = config.GetRemote().(*conf.RemoteConfig).ApplicationSecret
 	)
 
 	claims["appId"] = appId

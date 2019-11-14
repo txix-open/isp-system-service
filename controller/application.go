@@ -3,12 +3,14 @@ package controller
 import (
 	"fmt"
 	rd "github.com/go-redis/redis"
+	"github.com/integration-system/isp-lib/config"
 	rdLib "github.com/integration-system/isp-lib/redis"
 	_ "github.com/integration-system/isp-lib/structure"
 	"github.com/integration-system/isp-lib/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"isp-system-service/conf"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
 	"isp-system-service/model"
@@ -154,45 +156,61 @@ func (applicationController) DeleteApplications(list []int32) (domain.DeleteResp
 	}
 
 	var (
-		count = 0
-		err   error
+		count        = 0
+		instanceUuid = config.Get().(*conf.Configuration).InstanceUuid
 	)
 
-	if err = model.DbClient.RunInTransaction(func(
-		appRep model.AppRepository, tokenRep model.TokenRepository, accessRep model.AccessListRepository) error {
+	if _, err := redis.Client.Get().UseDb(rdLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
+		return model.DbClient.RunInTransaction(func(
+			appRep model.AppRepository, tokenRep model.TokenRepository, accessRep model.AccessListRepository) error {
 
-		for _, appId := range list {
-			if _, err := Token.revokeTokensForApp(domain.Identity{Id: appId}, &tokenRep); err != nil {
+			accessList, err := accessRep.GetByAppIdList(list)
+			if err != nil {
 				return err
 			}
-		}
 
-		if count, err = appRep.DeleteApplications(list); err != nil {
-			return err
-		}
+			redisDelRequest := make([]string, len(accessList))
+			for i, access := range accessList {
+				redisDelRequest[i] = fmt.Sprintf("%d|%s", access.AppId, access.Method)
+			}
 
-		accessList, err := accessRep.DeleteByIdList(list)
-		if err != nil {
-			return err
-		}
+			tokens, err := tokenRep.GetTokensByAppId(list...)
+			if err != nil {
+				return err
+			}
 
-		redisDelRequest := make([]string, len(accessList))
-		for i, access := range accessList {
-			redisDelRequest[i] = fmt.Sprintf("%d|%s", access.AppId, access.Method)
-		}
+			tokenIdList := make([]string, len(tokens))
+			for i, t := range tokens {
+				tokenIdList[i] = t.Token
+			}
 
-		if len(redisDelRequest) > 0 {
-			if _, err := redis.Client.Get().UseDb(rdLib.ApplicationPermissionDb, func(p rd.Pipeliner) error {
-				if _, err := p.Del(redisDelRequest...).Result(); err != nil {
-					return err
-				} else {
-					return nil
+			if len(tokenIdList) != 0 {
+				keys := make([]string, len(tokens))
+				for i, token := range tokenIdList {
+					keys[i] = fmt.Sprintf("%s|%s", token, instanceUuid)
 				}
-			}); err != nil {
+				if _, err := p.Del(keys...).Result(); err != nil {
+					return err
+				}
+			}
+
+			if count, err = appRep.DeleteApplications(list); err != nil {
 				return err
 			}
-		}
-		return nil
+
+			if len(redisDelRequest) > 0 {
+				if _, err := redis.Client.Get().UseDb(rdLib.ApplicationPermissionDb, func(p rd.Pipeliner) error {
+					if _, err := p.Del(redisDelRequest...).Result(); err != nil {
+						return err
+					} else {
+						return nil
+					}
+				}); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
 	}); err != nil {
 		return domain.DeleteResponse{}, err
 	} else {

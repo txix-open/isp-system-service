@@ -47,7 +47,7 @@ func (c tokenController) CreateToken(req domain.CreateTokenRequest) (*domain.App
 	if expTime == 0 {
 		expTime = config.GetRemote().(*conf.RemoteConfig).DefaultTokenExpireTime
 	}
-	token, err := service.Jwt.Generate(req.AppId, expTime)
+	token, err := service.Jwt.CreateApplication(req.AppId, expTime)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (c tokenController) RevokeTokens(req domain.RevokeTokensRequest) (*domain.A
 		return nil, err
 	}
 
-	_, err = c.revokeTokens(req.Tokens, &model.TokenRep)
+	_, err = c.revokeTokens(req.Tokens)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (c tokenController) RevokeTokens(req domain.RevokeTokensRequest) (*domain.A
 // @Failure 500 {object} structure.GrpcError
 // @Router /token/revoke_tokens_for_app [POST]
 func (c tokenController) RevokeTokensForApp(identity domain.Identity) (*domain.DeleteResponse, error) {
-	return c.revokeTokensForApp(identity, &model.TokenRep)
+	return c.revokeTokensForApp(identity)
 }
 
 // GetTokensByAppId godoc
@@ -196,48 +196,49 @@ func (tokenController) getIdMap(appId int32) (map[string]interface{}, error, *en
 	}, nil, appInfo
 }
 
-func (c tokenController) revokeTokensForApp(identity domain.Identity, tokenRep *model.TokenRepository) (*domain.DeleteResponse, error) {
-	tokens, err := c.GetTokensByAppId(identity)
+func (c tokenController) revokeTokensForApp(identity domain.Identity) (*domain.DeleteResponse, error) {
+	tokens, err := model.TokenRep.GetTokensByAppId(identity.Id)
 	if err != nil {
 		return nil, err
 	}
-	l := len(tokens)
-	if l == 0 {
-		return &domain.DeleteResponse{Deleted: 0}, nil
-	}
-	tokenIdList := make([]string, l)
+
+	tokenIdList := make([]string, len(tokens))
 	for i, t := range tokens {
 		tokenIdList[i] = t.Token
 	}
-	return c.revokeTokens(tokenIdList, tokenRep)
+	return c.revokeTokens(tokenIdList)
 }
 
-func (tokenController) revokeTokens(tokens []string, tokenRep *model.TokenRepository) (*domain.DeleteResponse, error) {
+func (tokenController) revokeTokens(tokens []string) (*domain.DeleteResponse, error) {
 	if len(tokens) == 0 {
 		return &domain.DeleteResponse{Deleted: 0}, nil
 	}
 
-	instanceUuid := config.Get().(*conf.Configuration).InstanceUuid
-	var count = 0
+	var (
+		count        = 0
+		instanceUuid = config.Get().(*conf.Configuration).InstanceUuid
+	)
+
 	keys := make([]string, len(tokens))
 	for i, token := range tokens {
 		keys[i] = fmt.Sprintf("%s|%s", token, instanceUuid)
 	}
 
-	_, e := redis.Client.Get().UseDbTx(redisLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
-		if _, err := p.Del(keys...).Result(); err != nil {
-			return err
-		}
-
-		if deleted, err := tokenRep.DeleteTokens(tokens); err != nil {
+	if err := model.DbClient.RunInTransaction(func(rep model.TokenRepository) error {
+		if deleted, err := rep.DeleteTokens(tokens); err != nil {
 			return err
 		} else {
 			count = deleted
-			return nil
 		}
-	})
-	if e != nil {
-		return nil, e
+
+		_, err := redis.Client.Get().UseDbTx(redisLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
+			_, err := p.Del(keys...).Result()
+			return err
+		})
+		return err
+	}); err != nil {
+		return nil, err
+	} else {
+		return &domain.DeleteResponse{Deleted: count}, nil
 	}
-	return &domain.DeleteResponse{Deleted: count}, nil
 }
