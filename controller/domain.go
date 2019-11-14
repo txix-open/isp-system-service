@@ -1,23 +1,19 @@
 package controller
 
 import (
-	"isp-system-service/entity"
-	"isp-system-service/model"
-
 	_ "github.com/integration-system/isp-lib/structure"
 	"github.com/integration-system/isp-lib/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"isp-system-service/domain"
+	"isp-system-service/entity"
+	"isp-system-service/model"
 )
 
-/*func GetDomains(list []int32) ([]entity.Domain, error) {
-	res, err := model.DomainRep.GetDomains(list)
-	if err != nil {
-		return res, err
-	}
-	return res, nil
-}*/
+var Domain domainController
+
+type domainController struct{}
 
 // GetDomainsBySystemId godoc
 // @Tags domain
@@ -29,7 +25,7 @@ import (
 // @Success 200 {array} entity.Domain
 // @Failure 500 {object} structure.GrpcError
 // @Router /domain/get_domains_by_system_id [POST]
-func GetDomainsBySystemId(md metadata.MD) ([]entity.Domain, error) {
+func (domainController) GetDomainsBySystemId(md metadata.MD) ([]entity.Domain, error) {
 	sysId, err := utils.ResolveMetadataIdentity(utils.SystemIdHeader, md)
 	if err != nil {
 		return nil, err
@@ -47,7 +43,7 @@ func GetDomainsBySystemId(md metadata.MD) ([]entity.Domain, error) {
 // @Success 200 {object} entity.Domain
 // @Failure 500 {object} structure.GrpcError
 // @Router /domain/create_update_domain [POST]
-func CreateUpdateDomain(domain entity.Domain, md metadata.MD) (*entity.Domain, error) {
+func (domainController) CreateUpdateDomain(domain entity.Domain, md metadata.MD) (*entity.Domain, error) {
 	existed, err := model.DomainRep.GetDomainByNameAndSystemId(domain.Name, domain.SystemId)
 	if err != nil {
 		return nil, err
@@ -94,12 +90,12 @@ func CreateUpdateDomain(domain entity.Domain, md metadata.MD) (*entity.Domain, e
 // @Description Возвращает описание домена по его идентификатору
 // @Accept  json
 // @Produce  json
-// @Param body body controller.Identity true "Идентификатор домена"
+// @Param body body domain.Identity true "Идентификатор домена"
 // @Success 200 {object} entity.Domain
 // @Failure 404 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /domain/get_domain_by_id [POST]
-func GetDomainById(identity Identity) (*entity.Domain, error) {
+func (domainController) GetDomainById(identity domain.Identity) (*entity.Domain, error) {
 	domain, err := model.DomainRep.GetDomainById(identity.Id)
 	if err != nil {
 		return nil, err
@@ -117,14 +113,14 @@ func GetDomainById(identity Identity) (*entity.Domain, error) {
 // @Accept  json
 // @Produce  json
 // @Param body body []integer false "Массив идентификаторов доменов"
-// @Success 200 {object} controller.DeleteResponse
+// @Success 200 {object} domain.DeleteResponse
 // @Failure 400 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /domain/delete_domains [POST]
-func DeleteDomains(list []int32) (DeleteResponse, error) {
+func (domainController) DeleteDomains(list []int32) (domain.DeleteResponse, error) {
 	if len(list) == 0 {
-		return DeleteResponse{Deleted: 0}, status.Errorf(codes.InvalidArgument, "At least one id are required")
+		return domain.DeleteResponse{Deleted: 0}, status.Errorf(codes.InvalidArgument, "At least one id are required")
 	}
 	res, err := model.DomainRep.DeleteDomains(list)
-	return DeleteResponse{Deleted: res}, err
+	return domain.DeleteResponse{Deleted: res}, err
 }

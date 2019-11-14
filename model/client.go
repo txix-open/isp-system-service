@@ -15,9 +15,10 @@ var (
 			log.Error(log_code.ErrorDatabaseClient, err)
 		}))
 
-	AppRep     = AppRepository{rxClient: DbClient}
-	DomainRep  = DomainRepository{rxClient: DbClient}
-	ServiceRep = ServiceRepository{rxClient: DbClient}
-	SystemRep  = SystemRepository{rxClient: DbClient}
-	TokenRep   = TokenRepository{rxClient: DbClient}
+	AppRep        = AppRepository{rxClient: DbClient}
+	DomainRep     = DomainRepository{rxClient: DbClient}
+	ServiceRep    = ServiceRepository{rxClient: DbClient}
+	SystemRep     = SystemRepository{rxClient: DbClient}
+	TokenRep      = TokenRepository{rxClient: DbClient}
+	AccessListRep = AccessListRepository{rxClient: DbClient}
 )

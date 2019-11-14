@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"isp-system-service/conf"
 	"isp-system-service/controller"
+	"isp-system-service/domain"
 	path2 "path"
 )
 
@@ -29,31 +30,31 @@ func init() {
 }
 
 func Up(tx *sql.Tx) error {
-	path := path2.Join(database.ResolveMigrationsDirectrory(), initFile)
+	path := path2.Join(database.ResolveMigrationsDirectory(), initFile)
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
 
-	var list []controller.DomainWithServices
+	var list []domain.DomainWithServices
 	if err := json.Unmarshal(bytes, &list); err != nil {
 		return err
 	}
 
-	schema := config.GetRemote().(*conf.RemoteConfig).DB.Schema
+	schema := config.GetRemote().(*conf.RemoteConfig).Database.Schema
 	lastDomainId := int64(0)
 	lastServiceId := int64(0)
 	lastAppId := int64(0)
-	for _, domain := range list {
+	for _, domainInfo := range list {
 		domainId := int64(0)
-		if domainId, err = insertNode(tx, insertDomain, true, schema, domain.Id, domain.Name, domain.Description, 1); err != nil {
+		if domainId, err = insertNode(tx, insertDomain, true, schema, domainInfo.Id, domainInfo.Name, domainInfo.Description, 1); err != nil {
 			return err
 		}
 		if domainId > lastDomainId {
 			lastDomainId = domainId
 		}
 
-		for _, service := range domain.Services {
+		for _, service := range domainInfo.Services {
 			serviceId := int64(0)
 			if serviceId, err = insertNode(tx, insertService, true, schema, service.Id, service.Name, service.Description, domainId); err != nil {
 				return err
@@ -81,7 +82,7 @@ func Up(tx *sql.Tx) error {
 							controller.ServiceIdentityFieldInDb:     serviceId,
 							controller.ApplicationIdentityFieldInDb: appId,
 						}
-						if err := controller.SetIdentityMapForTokenV2(t.Token, t.ExpireTime, idMap); err != nil {
+						if err := controller.Token.SetIdentityMapForTokenV2(t.Token, t.ExpireTime, idMap); err != nil {
 							return err
 						}
 					}
@@ -107,14 +108,12 @@ func Down(tx *sql.Tx) error {
 
 func insertNode(tx *sql.Tx, query string, scan bool, args ...interface{}) (int64, error) {
 	var id int64
-	var err error
 	query = fmt.Sprintf(query, args...)
 	row := tx.QueryRow(query)
 	if scan {
-		row.Scan(&id)
-	}
-	if err != nil {
-		return 0, err
+		if err := row.Scan(&id); err != nil {
+			return 0, err
+		}
 	}
 	return id, nil
 }

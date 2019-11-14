@@ -2,14 +2,17 @@ package controller
 
 import (
 	"fmt"
-
 	_ "github.com/integration-system/isp-lib/structure"
-	"isp-system-service/entity"
-	"isp-system-service/model"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"isp-system-service/domain"
+	"isp-system-service/entity"
+	"isp-system-service/model"
 )
+
+var System systemController
+
+type systemController struct{}
 
 // GetSystems godoc
 // @Tags system
@@ -21,7 +24,7 @@ import (
 // @Success 200 {array} entity.System
 // @Failure 500 {object} structure.GrpcError
 // @Router /system/get_systems [POST]
-func GetSystems(list []int32) ([]entity.System, error) {
+func (systemController) GetSystems(list []int32) ([]entity.System, error) {
 	res, err := model.SystemRep.GetSystems(list)
 	if err != nil {
 		return res, err
@@ -41,7 +44,7 @@ func GetSystems(list []int32) ([]entity.System, error) {
 // @Failure 409 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /system/create_update_system [POST]
-func CreateUpdateSystem(system entity.System) (*entity.System, error) {
+func (systemController) CreateUpdateSystem(system entity.System) (*entity.System, error) {
 	existed, err := model.SystemRep.GetSystemByName(system.Name)
 	if err != nil {
 		return nil, err
@@ -74,12 +77,12 @@ func CreateUpdateSystem(system entity.System) (*entity.System, error) {
 // @Description Возвращает описание системы по ее идентификатору
 // @Accept  json
 // @Produce  json
-// @Param body body controller.Identity true "Идентификатор системы"
+// @Param body body domain.Identity true "Идентификатор системы"
 // @Success 200 {object} entity.System
 // @Failure 404 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /system/get_system_by_id [POST]
-func GetSystemById(identity Identity) (*entity.System, error) {
+func (systemController) GetSystemById(identity domain.Identity) (*entity.System, error) {
 	sys, err := model.SystemRep.GetSystemById(identity.Id)
 	if err != nil {
 		return nil, err
@@ -97,14 +100,14 @@ func GetSystemById(identity Identity) (*entity.System, error) {
 // @Accept  json
 // @Produce  json
 // @Param body body []integer false "Массив идентификаторов систем"
-// @Success 200 {object} controller.DeleteResponse
+// @Success 200 {object} domain.DeleteResponse
 // @Failure 400 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /system/delete_systems [POST]
-func DeleteSystems(list []int32) (DeleteResponse, error) {
+func (systemController) DeleteSystems(list []int32) (domain.DeleteResponse, error) {
 	if len(list) == 0 {
-		return DeleteResponse{}, status.Error(codes.InvalidArgument, "At least one id are required")
+		return domain.DeleteResponse{}, status.Error(codes.InvalidArgument, "At least one id are required")
 	}
 	res, err := model.SystemRep.DeleteSystems(list)
-	return DeleteResponse{Deleted: res}, err
+	return domain.DeleteResponse{Deleted: res}, err
 }
