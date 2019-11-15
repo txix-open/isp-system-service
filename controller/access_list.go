@@ -101,7 +101,6 @@ func (c accessListController) SetList(request domain.SetListRequest) ([]domain.M
 	}
 
 	var (
-		resp          = 0
 		oldAccessList = make([]entity.AccessList, 0)
 		err           error
 	)
@@ -131,7 +130,7 @@ func (c accessListController) SetList(request domain.SetListRequest) ([]domain.M
 		}
 
 		if len(newAccessList) > 0 {
-			if resp, err = repository.UpsertArray(newAccessList); err != nil {
+			if _, err := repository.UpsertArray(newAccessList); err != nil {
 				return err
 			}
 		}
