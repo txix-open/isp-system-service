@@ -1,5 +1,5 @@
 {
-  "dB": {
+  "database": {
     "address": "127.0.0.1",
     "port": "5432",
     "schema": "system_service",
@@ -8,9 +8,12 @@
     "password": "password",
     "createSchema": true
   },
-  "redisAddress": {
-    "ip": "address",
-    "port": "6379"
+  "redis": {
+    "address": {
+      "ip": "127.0.0.1",
+      "port": "6379"
+    },
+    "defaultDB": 0
   },
   "metrics": {
     "gc": true,
@@ -20,5 +23,6 @@
       "path": "/metrics",
       "port": "9555"
     }
-  }
+  },
+  "applicationSecret": "SECRET_ACCESS_KEY"
 }

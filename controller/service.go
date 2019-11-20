@@ -1,12 +1,16 @@
 package controller
 
 import (
-	"isp-system-service/entity"
-	"isp-system-service/model"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"isp-system-service/domain"
+	"isp-system-service/entity"
+	"isp-system-service/model"
 )
+
+var Service serviceController
+
+type serviceController struct{}
 
 // GetService godoc
 // @Tags service
@@ -18,7 +22,7 @@ import (
 // @Success 200 {array} entity.Service
 // @Failure 500 {object} structure.GrpcError
 // @Router /service/get_service [POST]
-func GetService(list []int32) ([]entity.Service, error) {
+func (serviceController) GetService(list []int32) ([]entity.Service, error) {
 	res, err := model.ServiceRep.GetServices(list)
 	if err != nil {
 		return res, err
@@ -32,11 +36,11 @@ func GetService(list []int32) ([]entity.Service, error) {
 // @Description Возвращает список сервисов по идентификатору домена
 // @Accept  json
 // @Produce  json
-// @Param body body controller.Identity true "Идентификатор домена"
+// @Param body body domain.Identity true "Идентификатор домена"
 // @Success 200 {array} entity.Service
 // @Failure 500 {object} structure.GrpcError
 // @Router /service/get_services_by_domain_id [POST]
-func GetServicesByDomainId(identity Identity) ([]entity.Service, error) {
+func (serviceController) GetServicesByDomainId(identity domain.Identity) ([]entity.Service, error) {
 	return model.ServiceRep.GetServicesByDomainId(identity.Id)
 }
 
@@ -53,7 +57,7 @@ func GetServicesByDomainId(identity Identity) ([]entity.Service, error) {
 // @Failure 409 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /service/create_update_service [POST]
-func CreateUpdateService(service entity.Service) (*entity.Service, error) {
+func (serviceController) CreateUpdateService(service entity.Service) (*entity.Service, error) {
 	existed, err := model.ServiceRep.GetServiceByNameAndDomainId(service.Name, service.DomainId)
 	if err != nil {
 		return nil, err
@@ -93,12 +97,12 @@ func CreateUpdateService(service entity.Service) (*entity.Service, error) {
 // @Description Возвращает описание сервиса по его идентификатору
 // @Accept  json
 // @Produce  json
-// @Param body body controller.Identity true "Идентификатор сервиса"
+// @Param body body domain.Identity true "Идентификатор сервиса"
 // @Success 200 {object} entity.Service
 // @Failure 404 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /service/get_service_by_id [POST]
-func GetServiceById(identity Identity) (*entity.Service, error) {
+func (serviceController) GetServiceById(identity domain.Identity) (*entity.Service, error) {
 	service, err := model.ServiceRep.GetServiceById(identity.Id)
 	if err != nil {
 		return nil, err
@@ -116,14 +120,14 @@ func GetServiceById(identity Identity) (*entity.Service, error) {
 // @Accept  json
 // @Produce  json
 // @Param body body []integer true "Массив идентификаторов сервисов"
-// @Success 200 {object} controller.DeleteResponse
+// @Success 200 {object} domain.DeleteResponse
 // @Failure 400 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /service/delete_service [POST]
-func DeleteService(list []int32) (DeleteResponse, error) {
+func (serviceController) DeleteService(list []int32) (domain.DeleteResponse, error) {
 	if len(list) == 0 {
-		return DeleteResponse{Deleted: 0}, status.Error(codes.InvalidArgument, "At least one id are required")
+		return domain.DeleteResponse{Deleted: 0}, status.Error(codes.InvalidArgument, "At least one id are required")
 	}
 	res, err := model.ServiceRep.DeleteServices(list)
-	return DeleteResponse{Deleted: res}, err
+	return domain.DeleteResponse{Deleted: res}, err
 }

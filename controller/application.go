@@ -1,15 +1,25 @@
 package controller
 
 import (
-	"isp-system-service/entity"
-	"isp-system-service/model"
-
+	"fmt"
+	rd "github.com/go-redis/redis"
+	"github.com/integration-system/isp-lib/config"
+	rdLib "github.com/integration-system/isp-lib/redis"
 	_ "github.com/integration-system/isp-lib/structure"
 	"github.com/integration-system/isp-lib/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"isp-system-service/conf"
+	"isp-system-service/domain"
+	"isp-system-service/entity"
+	"isp-system-service/model"
+	"isp-system-service/redis"
 )
+
+var Application applicationController
+
+type applicationController struct{}
 
 // GetApplications godoc
 // @Tags application
@@ -18,15 +28,15 @@ import (
 // @Accept  json
 // @Produce  json
 // @Param body body []integer false "Массив идентификаторов приложений"
-// @Success 200 {array} controller.AppWithToken
+// @Success 200 {array} domain.AppWithToken
 // @Failure 500 {object} structure.GrpcError
 // @Router /application/get_applications [POST]
-func GetApplications(list []int32) ([]*AppWithToken, error) {
+func (c applicationController) GetApplications(list []int32) ([]*domain.AppWithToken, error) {
 	res, err := model.AppRep.GetApplications(list)
 	if err != nil {
 		return nil, err
 	}
-	return enrichWithTokens(res...)
+	return c.enrichWithTokens(res...)
 }
 
 // GetApplicationsByServiceId godoc
@@ -35,16 +45,16 @@ func GetApplications(list []int32) ([]*AppWithToken, error) {
 // @Description Возвращает список приложений по запрошенныму идентификатору сервиса
 // @Accept  json
 // @Produce  json
-// @Param body body controller.Identity true "Идентификатор серсиса"
-// @Success 200 {array} controller.AppWithToken
+// @Param body body domain.Identity true "Идентификатор серсиса"
+// @Success 200 {array} domain.AppWithToken
 // @Failure 500 {object} structure.GrpcError
 // @Router /application/get_applications_by_service_id [POST]
-func GetApplicationsByServiceId(identity Identity) ([]*AppWithToken, error) {
+func (c applicationController) GetApplicationsByServiceId(identity domain.Identity) ([]*domain.AppWithToken, error) {
 	arr, err := model.AppRep.GetApplicationsByServiceId(identity.Id)
 	if err != nil {
 		return nil, err
 	}
-	return enrichWithTokens(arr...)
+	return c.enrichWithTokens(arr...)
 }
 
 // CreateUpdateApplication godoc
@@ -54,13 +64,13 @@ func GetApplicationsByServiceId(identity Identity) ([]*AppWithToken, error) {
 // @Accept  json
 // @Produce  json
 // @Param body body entity.Application true "Объект приложения"
-// @Success 200 {object} controller.AppWithToken
+// @Success 200 {object} domain.AppWithToken
 // @Failure 400 {object} structure.GrpcError
 // @Failure 404 {object} structure.GrpcError
 // @Failure 409 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /application/create_update_application [POST]
-func CreateUpdateApplication(app entity.Application) (*AppWithToken, error) {
+func (c applicationController) CreateUpdateApplication(app entity.Application) (*domain.AppWithToken, error) {
 	existed, err := model.AppRep.GetApplicationByNameAndServiceId(app.Name, app.ServiceId)
 	if err != nil {
 		return nil, err
@@ -77,8 +87,8 @@ func CreateUpdateApplication(app entity.Application) (*AppWithToken, error) {
 			return nil, status.Errorf(codes.AlreadyExists, "Application with name %s already exists", app.Name)
 		}
 		app, e := model.AppRep.CreateApplication(app)
-		enrichWithTokens(app)
-		return &AppWithToken{App: app, Tokens: []entity.Token{}}, e
+		_, _ = c.enrichWithTokens(app)
+		return &domain.AppWithToken{App: app, Tokens: []entity.Token{}}, e
 	} else {
 		if existed != nil && existed.Id != app.Id {
 			return nil, status.Errorf(codes.AlreadyExists, "Application with name %s already exists", app.Name)
@@ -94,7 +104,7 @@ func CreateUpdateApplication(app entity.Application) (*AppWithToken, error) {
 		if e != nil {
 			return nil, e
 		}
-		arr, err := enrichWithTokens(app)
+		arr, err := c.enrichWithTokens(app)
 		if err != nil {
 			return nil, err
 		}
@@ -108,13 +118,13 @@ func CreateUpdateApplication(app entity.Application) (*AppWithToken, error) {
 // @Description  Возвращает описание приложения по его идентификатору
 // @Accept  json
 // @Produce  json
-// @Param body body controller.Identity true "Идентификатор приложения"
-// @Success 200 {object} controller.AppWithToken
+// @Param body body domain.Identity true "Идентификатор приложения"
+// @Success 200 {object} domain.AppWithToken
 // @Failure 400 {object} structure.GrpcError
 // @Failure 404 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /application/get_application_by_id [POST]
-func GetApplicationById(identity Identity) (*AppWithToken, error) {
+func (c applicationController) GetApplicationById(identity domain.Identity) (*domain.AppWithToken, error) {
 	application, err := model.AppRep.GetApplicationById(identity.Id)
 	if err != nil {
 		return nil, err
@@ -122,7 +132,7 @@ func GetApplicationById(identity Identity) (*AppWithToken, error) {
 	if application == nil {
 		return nil, status.Errorf(codes.NotFound, "Application with id %d not found", identity.Id)
 	}
-	arr, err := enrichWithTokens(*application)
+	arr, err := c.enrichWithTokens(*application)
 	if err != nil {
 		return nil, err
 	}
@@ -136,33 +146,76 @@ func GetApplicationById(identity Identity) (*AppWithToken, error) {
 // @Accept  json
 // @Produce  json
 // @Param body body []integer false "Массив идентификаторов приложений"
-// @Success 200 {object} controller.AppWithToken
+// @Success 200 {object} domain.DeleteResponse
 // @Failure 400 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /application/delete_applications [POST]
-func DeleteApplications(list []int32) (DeleteResponse, error) {
+func (applicationController) DeleteApplications(list []int32) (domain.DeleteResponse, error) {
 	if len(list) == 0 {
-		return DeleteResponse{}, status.Errorf(codes.InvalidArgument, "At least one id are required")
+		return domain.DeleteResponse{}, status.Errorf(codes.InvalidArgument, "At least one id are required")
 	}
-	var count = 0
-	err := model.DbClient.RunInTransaction(func(appRep model.AppRepository, tokenRep model.TokenRepository) error {
-		for _, appId := range list {
-			_, err := revokeTokensForApp(Identity{appId}, &tokenRep)
+
+	var (
+		count        = 0
+		instanceUuid = config.Get().(*conf.Configuration).InstanceUuid
+	)
+
+	if _, err := redis.Client.Get().UseDb(rdLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
+		return model.DbClient.RunInTransaction(func(
+			appRep model.AppRepository, tokenRep model.TokenRepository, accessRep model.AccessListRepository) error {
+
+			accessList, err := accessRep.GetByAppIdList(list)
 			if err != nil {
 				return err
 			}
-		}
-		res, err := appRep.DeleteApplications(list)
-		if err != nil {
-			return err
-		}
-		count = res
-		return nil
-	})
-	if err != nil {
-		return DeleteResponse{}, err
+
+			redisDelRequest := make([]string, len(accessList))
+			for i, access := range accessList {
+				redisDelRequest[i] = fmt.Sprintf("%d|%s", access.AppId, access.Method)
+			}
+
+			tokens, err := tokenRep.GetTokensByAppId(list...)
+			if err != nil {
+				return err
+			}
+
+			tokenIdList := make([]string, len(tokens))
+			for i, t := range tokens {
+				tokenIdList[i] = t.Token
+			}
+
+			if len(tokenIdList) != 0 {
+				keys := make([]string, len(tokens))
+				for i, token := range tokenIdList {
+					keys[i] = fmt.Sprintf("%s|%s", token, instanceUuid)
+				}
+				if _, err := p.Del(keys...).Result(); err != nil {
+					return err
+				}
+			}
+
+			if count, err = appRep.DeleteApplications(list); err != nil {
+				return err
+			}
+
+			if len(redisDelRequest) > 0 {
+				if _, err := redis.Client.Get().UseDb(rdLib.ApplicationPermissionDb, func(p rd.Pipeliner) error {
+					if _, err := p.Del(redisDelRequest...).Result(); err != nil {
+						return err
+					} else {
+						return nil
+					}
+				}); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+	}); err != nil {
+		return domain.DeleteResponse{}, err
+	} else {
+		return domain.DeleteResponse{Deleted: count}, nil
 	}
-	return DeleteResponse{Deleted: count}, nil
 }
 
 // GetSystemTree godoc
@@ -171,10 +224,10 @@ func DeleteApplications(list []int32) (DeleteResponse, error) {
 // @Description Возвращает описание взаимосвязей сервисов и приложений
 // @Accept  json
 // @Produce  json
-// @Success 200 {array} controller.DomainWithServices
+// @Success 200 {array} domain.DomainWithServices
 // @Failure 500 {object} structure.GrpcError
 // @Router /application/get_system_tree [POST]
-func GetSystemTree(md metadata.MD) ([]*DomainWithServices, error) {
+func (applicationController) GetSystemTree(md metadata.MD) ([]*domain.DomainWithServices, error) {
 	sysId, err := utils.ResolveMetadataIdentity(utils.SystemIdHeader, md)
 	if err != nil {
 		return nil, err
@@ -186,14 +239,14 @@ func GetSystemTree(md metadata.MD) ([]*DomainWithServices, error) {
 
 	l := len(domains)
 	if l == 0 {
-		return []*DomainWithServices{}, nil
+		return []*domain.DomainWithServices{}, nil
 	}
 	idList := make([]int32, l)
-	domainsMap := make(map[int32]*DomainWithServices, l)
-	res := make([]*DomainWithServices, l)
+	domainsMap := make(map[int32]*domain.DomainWithServices, l)
+	res := make([]*domain.DomainWithServices, l)
 	for i, d := range domains {
 		idList[i] = d.Id
-		dws := &DomainWithServices{Id: d.Id, Name: d.Name, Description: d.Description, Services: make([]*ServiceWithApps, 0)}
+		dws := &domain.DomainWithServices{Id: d.Id, Name: d.Name, Description: d.Description, Services: make([]*domain.ServiceWithApps, 0)}
 		domainsMap[d.Id] = dws
 		res[i] = dws
 	}
@@ -204,11 +257,11 @@ func GetSystemTree(md metadata.MD) ([]*DomainWithServices, error) {
 
 	l = len(services)
 	idList = make([]int32, l)
-	servicesMap := make(map[int32]*ServiceWithApps, l)
+	servicesMap := make(map[int32]*domain.ServiceWithApps, l)
 	for i, s := range services {
 		idList[i] = s.Id
 		d := domainsMap[s.DomainId]
-		swa := &ServiceWithApps{Id: s.Id, Name: s.Name, Description: s.Description, Apps: make([]*SimpleApp, 0)}
+		swa := &domain.ServiceWithApps{Id: s.Id, Name: s.Name, Description: s.Description, Apps: make([]*domain.SimpleApp, 0)}
 		d.Services = append(d.Services, swa)
 		servicesMap[s.Id] = swa
 	}
@@ -219,7 +272,7 @@ func GetSystemTree(md metadata.MD) ([]*DomainWithServices, error) {
 
 	for _, app := range apps {
 		s := servicesMap[app.ServiceId]
-		s.Apps = append(s.Apps, &SimpleApp{Id: app.Id,
+		s.Apps = append(s.Apps, &domain.SimpleApp{Id: app.Id,
 			Name:        app.Name,
 			Type:        app.Type,
 			Description: app.Description,
@@ -230,17 +283,17 @@ func GetSystemTree(md metadata.MD) ([]*DomainWithServices, error) {
 	return res, nil
 }
 
-func enrichWithTokens(apps ...entity.Application) ([]*AppWithToken, error) {
+func (applicationController) enrichWithTokens(apps ...entity.Application) ([]*domain.AppWithToken, error) {
 	l := len(apps)
 	if len(apps) == 0 {
-		return []*AppWithToken{}, nil
+		return []*domain.AppWithToken{}, nil
 	}
 	idList := make([]int32, l)
-	appMap := make(map[int32]*AppWithToken, l)
-	enriched := make([]*AppWithToken, l)
+	appMap := make(map[int32]*domain.AppWithToken, l)
+	enriched := make([]*domain.AppWithToken, l)
 	for i, a := range apps {
 		idList[i] = a.Id
-		awt := &AppWithToken{App: a, Tokens: make([]entity.Token, 0)}
+		awt := &domain.AppWithToken{App: a, Tokens: make([]entity.Token, 0)}
 		appMap[a.Id] = awt
 		enriched[i] = awt
 	}
@@ -253,5 +306,4 @@ func enrichWithTokens(apps ...entity.Application) ([]*AppWithToken, error) {
 		app.Tokens = append(app.Tokens, v)
 	}
 	return enriched, nil
-
 }

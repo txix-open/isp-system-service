@@ -3,7 +3,9 @@ package main
 import (
 	"github.com/integration-system/isp-lib/config/schema"
 	"github.com/integration-system/isp-lib/structure"
-	"isp-system-service/invoker"
+	log "github.com/integration-system/isp-log"
+	"github.com/integration-system/isp-log/stdcodes"
+	"isp-system-service/redis"
 	"os"
 
 	"isp-system-service/conf"
@@ -17,7 +19,6 @@ import (
 	"github.com/integration-system/isp-lib/metric"
 
 	"github.com/integration-system/isp-lib/bootstrap"
-	"github.com/integration-system/isp-lib/redis"
 )
 
 var (
@@ -42,6 +43,8 @@ func main() {
 		DeclareMe(routesData).
 		OnRemoteConfigReceive(onRemoteConfigReceive).
 		OnShutdown(onShutdown).
+		OnSocketErrorReceive(onRemoteErrorReceive).
+		OnConfigErrorReceive(onRemoteConfigErrorReceive).
 		Run()
 }
 
@@ -67,6 +70,16 @@ func main() {
 	}
 }*/
 
+func onRemoteErrorReceive(errorMessage map[string]interface{}) {
+	log.WithMetadata(errorMessage).Error(stdcodes.ReceiveErrorFromConfig, "error from config service")
+}
+
+func onRemoteConfigErrorReceive(errorMessage string) {
+	log.WithMetadata(map[string]interface{}{
+		"message": errorMessage,
+	}).Error(stdcodes.ReceiveErrorOnGettingConfigFromConfig, "error on getting remote configuration")
+}
+
 func socketConfiguration(cfg interface{}) structure.SocketConfiguration {
 	appConfig := cfg.(*conf.Configuration)
 	return structure.SocketConfiguration{
@@ -83,15 +96,12 @@ func socketConfiguration(cfg interface{}) structure.SocketConfiguration {
 func onShutdown(_ context.Context, _ os.Signal) {
 	backend.StopGrpcServer()
 	_ = model.DbClient.Close()
-	_ = invoker.RedisClient.Close()
+	redis.Client.Close()
 }
 
 func onRemoteConfigReceive(remoteConfig, oldConfig *conf.RemoteConfig) {
-	invoker.RedisClient.ReceiveConfiguration(structure.RedisConfiguration{
-		Address:   remoteConfig.RedisAddress,
-		DefaultDB: int(redis.ApplicationTokenDb),
-	})
-	model.DbClient.ReceiveConfiguration(remoteConfig.DB)
+	redis.Client.ReceiveConfiguration(remoteConfig.Redis)
+	model.DbClient.ReceiveConfiguration(remoteConfig.Database)
 	metric.InitCollectors(remoteConfig.Metrics, oldConfig.Metrics)
 	metric.InitHttpServer(remoteConfig.Metrics)
 	//ensureRootToken()

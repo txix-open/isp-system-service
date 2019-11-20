@@ -1,20 +1,19 @@
 package controller
 
 import (
-	"isp-system-service/invoker"
-	"time"
-
-	"isp-system-service/conf"
-	"isp-system-service/entity"
-	"isp-system-service/model"
-
 	"fmt"
-	"github.com/go-redis/redis"
+	rd "github.com/go-redis/redis"
 	"github.com/integration-system/isp-lib/config"
-	rd "github.com/integration-system/isp-lib/redis"
-	"github.com/integration-system/isp-lib/token-gen"
+	redisLib "github.com/integration-system/isp-lib/redis"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"isp-system-service/conf"
+	"isp-system-service/domain"
+	"isp-system-service/entity"
+	"isp-system-service/model"
+	"isp-system-service/redis"
+	"isp-system-service/service"
+	"time"
 )
 
 const (
@@ -24,13 +23,9 @@ const (
 	ApplicationIdentityFieldInDb = "4"
 )
 
-var (
-	generator = tg.NewGenerator(tg.DefaultAlphabet)
-)
+var Token tokenController
 
-type BoolResponse struct {
-	Ok bool
-}
+type tokenController struct{}
 
 // CreateToken godoc
 // @Tags token
@@ -38,52 +33,43 @@ type BoolResponse struct {
 // @Description Созддает токен и привязывает его к приложению
 // @Accept  json
 // @Produce  json
-// @Param body body controller.CreateTokenRequest true "Объект создания токена"
-// @Success 200 {object} controller.AppWithToken
+// @Param body body domain.CreateTokenRequest true "Объект создания токена"
+// @Success 200 {object} domain.AppWithToken
 // @Failure 500 {object} structure.GrpcError
 // @Router /token/create_token [POST]
-func CreateToken(req CreateTokenRequest) (*AppWithToken, error) {
-	m, err, app := GetIdMap(req.AppId)
+func (c tokenController) CreateToken(req domain.CreateTokenRequest) (*domain.AppWithToken, error) {
+	m, err, app := c.getIdMap(req.AppId)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg := config.GetRemote().(*conf.RemoteConfig)
-
-	var id string
-	var existed = true
-	for existed {
-		id = generator.Next(tg.DefaultTokenLength)
-		t, err := model.TokenRep.GetTokenById(id)
-		if err != nil {
-			return nil, err
-		}
-		existed = t != nil
-	}
-
 	expTime := req.ExpireTimeMs
 	if expTime == 0 {
-		expTime = cfg.DefaultTokenExpireTime
+		expTime = config.GetRemote().(*conf.RemoteConfig).DefaultTokenExpireTime
 	}
-	token := entity.Token{
-		Token:      id,
+	token, err := service.Jwt.CreateApplication(req.AppId, expTime)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenInfo := entity.Token{
+		Token:      token,
 		ExpireTime: expTime,
 		AppId:      req.AppId,
 		CreatedAt:  time.Now(),
 	}
 
-	err = SetIdentityMapForToken(token, m)
-	if err != nil {
+	if err := model.DbClient.RunInTransaction(func(repository model.TokenRepository) error {
+		tokenInfo, err = repository.SaveToken(tokenInfo)
+		if err != nil {
+			return err
+		}
+		return c.setIdentityMapForToken(tokenInfo, m)
+	}); err != nil {
 		return nil, err
 	}
 
-	token, err = model.TokenRep.SaveToken(token)
-	if err != nil {
-		invoker.RedisClient.Del(token.Token)
-		return nil, err
-	}
-
-	arr, err := enrichWithTokens(*app)
+	arr, err := Application.enrichWithTokens(*app)
 	if err != nil {
 		return nil, err
 	}
@@ -97,23 +83,26 @@ func CreateToken(req CreateTokenRequest) (*AppWithToken, error) {
 // @Description Отвязывает токены от приложений и удялет их
 // @Accept  json
 // @Produce  json
-// @Param body body controller.RevokeTokensRequest true "Объект отзыва токенов"
-// @Success 200 {object} controller.AppWithToken
+// @Param body body domain.RevokeTokensRequest true "Объект отзыва токенов"
+// @Success 200 {object} domain.AppWithToken
 // @Failure 500 {object} structure.GrpcError
 // @Router /token/revoke_tokens [POST]
-func RevokeTokens(req RevokeTokensRequest) (*AppWithToken, error) {
+func (c tokenController) RevokeTokens(req domain.RevokeTokensRequest) (*domain.AppWithToken, error) {
 	app, err := model.AppRep.GetApplicationById(req.AppId)
 	if err != nil {
 		return nil, err
 	}
-	_, err = revokeTokens(req.Tokens, &model.TokenRep)
+
+	_, err = c.revokeTokens(req.Tokens)
 	if err != nil {
 		return nil, err
 	}
-	res, err := enrichWithTokens(*app)
+
+	res, err := Application.enrichWithTokens(*app)
 	if err != nil {
 		return nil, err
 	}
+
 	return res[0], nil
 }
 
@@ -123,12 +112,12 @@ func RevokeTokens(req RevokeTokensRequest) (*AppWithToken, error) {
 // @Description Отвязывает токены от приложений и удаляет их по идентификатору приложения
 // @Accept  json
 // @Produce  json
-// @Param body body controller.Identity true "Идентификатор приложения"
-// @Success 200 {object} controller.DeleteResponse
+// @Param body body domain.Identity true "Идентификатор приложения"
+// @Success 200 {object} domain.DeleteResponse
 // @Failure 500 {object} structure.GrpcError
 // @Router /token/revoke_tokens_for_app [POST]
-func RevokeTokensForApp(identity Identity) (*DeleteResponse, error) {
-	return revokeTokensForApp(identity, &model.TokenRep)
+func (c tokenController) RevokeTokensForApp(identity domain.Identity) (*domain.DeleteResponse, error) {
+	return c.revokeTokensForApp(identity)
 }
 
 // GetTokensByAppId godoc
@@ -137,19 +126,23 @@ func RevokeTokensForApp(identity Identity) (*DeleteResponse, error) {
 // @Description Возвращает список токенов, привязанных к приложению
 // @Accept  json
 // @Produce  json
-// @Param body body controller.Identity true "Идентификатор приложения"
+// @Param body body domain.Identity true "Идентификатор приложения"
 // @Success 200 {array} entity.Token
 // @Failure 500 {object} structure.GrpcError
 // @Router /token/get_tokens_by_app_id [POST]
-func GetTokensByAppId(identity Identity) ([]entity.Token, error) {
+func (tokenController) GetTokensByAppId(identity domain.Identity) ([]entity.Token, error) {
 	return model.TokenRep.GetTokensByAppId(identity.Id)
 }
 
-func SetIdentityMapForTokenV2(token string, expireTime int64, idMap map[string]interface{}) error {
-	cfg := config.Get().(*conf.Configuration)
-	_, e := invoker.RedisClient.UseDbTx(rd.ApplicationTokenDb, func(p redis.Pipeliner) error {
-		t := fmt.Sprintf("%s|%s", token, cfg.InstanceUuid)
-		stat := p.HMSet(t, idMap)
+func (c tokenController) setIdentityMapForToken(token entity.Token, idMap map[string]interface{}) error {
+	return c.SetIdentityMapForTokenV2(token.Token, token.ExpireTime, idMap)
+}
+
+func (tokenController) SetIdentityMapForTokenV2(token string, expireTime int64, idMap map[string]interface{}) error {
+	instanceUuid := config.Get().(*conf.Configuration).InstanceUuid
+	_, e := redis.Client.Get().UseDbTx(redisLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
+		key := fmt.Sprintf("%s|%s", token, instanceUuid)
+		stat := p.HMSet(key, idMap)
 		err := stat.Err()
 		if err != nil {
 			return err
@@ -162,83 +155,90 @@ func SetIdentityMapForTokenV2(token string, expireTime int64, idMap map[string]i
 	return e
 }
 
-func SetIdentityMapForToken(token entity.Token, idMap map[string]interface{}) error {
-	return SetIdentityMapForTokenV2(token.Token, token.ExpireTime, idMap)
-}
-
-func GetIdMap(appId int32) (map[string]interface{}, error, *entity.Application) {
-	app, err := model.AppRep.GetApplicationById(appId)
+func (tokenController) getIdMap(appId int32) (map[string]interface{}, error, *entity.Application) {
+	appInfo, err := model.AppRep.GetApplicationById(appId)
 	if err != nil {
 		return nil, err, nil
 	}
-	if app == nil {
+	if appInfo == nil {
 		return nil, status.Errorf(codes.NotFound, "Application with id %d not found", appId), nil
 	}
 
-	service, err := model.ServiceRep.GetServiceById(app.ServiceId)
+	serviceInfo, err := model.ServiceRep.GetServiceById(appInfo.ServiceId)
 	if err != nil {
-		return nil, err, app
+		return nil, err, appInfo
 	}
-	if service == nil {
-		return nil, status.Errorf(codes.NotFound, "Service with id %d not found", app.ServiceId), app
+	if serviceInfo == nil {
+		return nil, status.Errorf(codes.NotFound, "Service with id %d not found", appInfo.ServiceId), appInfo
 	}
 
-	domain, err := model.DomainRep.GetDomainById(service.DomainId)
+	domainInfo, err := model.DomainRep.GetDomainById(serviceInfo.DomainId)
 	if err != nil {
-		return nil, err, app
+		return nil, err, appInfo
 	}
-	if domain == nil {
-		return nil, status.Errorf(codes.NotFound, "Domain with id %d not found", service.DomainId), app
+	if domainInfo == nil {
+		return nil, status.Errorf(codes.NotFound, "Domain with id %d not found", serviceInfo.DomainId), appInfo
 	}
 
-	system, err := model.SystemRep.GetSystemById(domain.SystemId)
+	systemInfo, err := model.SystemRep.GetSystemById(domainInfo.SystemId)
 	if err != nil {
-		return nil, err, app
+		return nil, err, appInfo
 	}
-	if system == nil {
-		return nil, status.Errorf(codes.NotFound, "System with id %d not found", domain.SystemId), app
+	if systemInfo == nil {
+		return nil, status.Errorf(codes.NotFound, "System with id %d not found", domainInfo.SystemId), appInfo
 	}
 
 	return map[string]interface{}{
-		SystemIdentityFieldInDb:      system.Id,
-		DomainIdentityFieldInDb:      domain.Id,
-		ServiceIdentityFieldInDb:     service.Id,
-		ApplicationIdentityFieldInDb: app.Id,
-	}, nil, app
+		SystemIdentityFieldInDb:      systemInfo.Id,
+		DomainIdentityFieldInDb:      domainInfo.Id,
+		ServiceIdentityFieldInDb:     serviceInfo.Id,
+		ApplicationIdentityFieldInDb: appInfo.Id,
+	}, nil, appInfo
 }
 
-func revokeTokensForApp(identity Identity, tokenRep *model.TokenRepository) (*DeleteResponse, error) {
-	tokens, err := GetTokensByAppId(identity)
+func (c tokenController) revokeTokensForApp(identity domain.Identity) (*domain.DeleteResponse, error) {
+	tokens, err := model.TokenRep.GetTokensByAppId(identity.Id)
 	if err != nil {
 		return nil, err
 	}
-	l := len(tokens)
-	if l == 0 {
-		return &DeleteResponse{0}, nil
-	}
-	tokenIdList := make([]string, l)
+
+	tokenIdList := make([]string, len(tokens))
 	for i, t := range tokens {
 		tokenIdList[i] = t.Token
 	}
-	return revokeTokens(tokenIdList, tokenRep)
+	return c.revokeTokens(tokenIdList)
 }
 
-func revokeTokens(tokens []string, tokenRep *model.TokenRepository) (*DeleteResponse, error) {
-	var count = 0
+func (tokenController) revokeTokens(tokens []string) (*domain.DeleteResponse, error) {
 	if len(tokens) == 0 {
-		return &DeleteResponse{0}, nil
+		return &domain.DeleteResponse{Deleted: 0}, nil
 	}
-	_, e := invoker.RedisClient.UseDbTx(rd.ApplicationTokenDb, func(p redis.Pipeliner) error {
-		deleted, err := tokenRep.DeleteTokens(tokens)
-		count = deleted
-		if err != nil {
+
+	var (
+		count        = 0
+		instanceUuid = config.Get().(*conf.Configuration).InstanceUuid
+	)
+
+	keys := make([]string, len(tokens))
+	for i, token := range tokens {
+		keys[i] = fmt.Sprintf("%s|%s", token, instanceUuid)
+	}
+
+	if err := model.DbClient.RunInTransaction(func(rep model.TokenRepository) error {
+		if deleted, err := rep.DeleteTokens(tokens); err != nil {
 			return err
+		} else {
+			count = deleted
 		}
-		res := p.Del(tokens...)
-		return res.Err()
-	})
-	if e != nil {
-		return nil, e
+
+		_, err := redis.Client.Get().UseDbTx(redisLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
+			_, err := p.Del(keys...).Result()
+			return err
+		})
+		return err
+	}); err != nil {
+		return nil, err
+	} else {
+		return &domain.DeleteResponse{Deleted: count}, nil
 	}
-	return &DeleteResponse{count}, nil
 }
