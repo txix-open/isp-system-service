@@ -1,3 +1,5 @@
+### v2.1.0
+* update to go mod
 ### v2.0.0
 * update `isp-lib` to 2.0.0
 ### v1.2.0

@@ -1,8 +1,8 @@
 package controller
 
 import (
-	_ "github.com/integration-system/isp-lib/structure"
-	"github.com/integration-system/isp-lib/utils"
+	_ "github.com/integration-system/isp-lib/v2/structure"
+	"github.com/integration-system/isp-lib/v2/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"

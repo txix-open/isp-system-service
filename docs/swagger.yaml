@@ -235,7 +235,6 @@ paths:
         name: body
         schema:
           $ref: '#/definitions/domain.Identity'
-          type: object
       produces:
       - application/json
       responses:
@@ -268,7 +267,6 @@ paths:
         name: body
         schema:
           $ref: '#/definitions/domain.SetListRequest'
-          type: object
       produces:
       - application/json
       responses:
@@ -300,7 +298,6 @@ paths:
         name: body
         schema:
           $ref: '#/definitions/entity.AccessList'
-          type: object
       produces:
       - application/json
       responses:
@@ -332,7 +329,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/entity.Application'
-          type: object
       produces:
       - application/json
       responses:
@@ -403,7 +399,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/domain.Identity'
-          type: object
       produces:
       - application/json
       responses:
@@ -467,7 +462,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/domain.Identity'
-          type: object
       produces:
       - application/json
       responses:
@@ -518,7 +512,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/entity.Domain'
-          type: object
       produces:
       - application/json
       responses:
@@ -577,7 +570,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/domain.Identity'
-          type: object
       produces:
       - application/json
       responses:
@@ -636,7 +628,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/entity.Service'
-          type: object
       produces:
       - application/json
       responses:
@@ -737,7 +728,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/domain.Identity'
-          type: object
       produces:
       - application/json
       responses:
@@ -768,7 +758,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/domain.Identity'
-          type: object
       produces:
       - application/json
       responses:
@@ -798,7 +787,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/entity.System'
-          type: object
       produces:
       - application/json
       responses:
@@ -865,7 +853,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/domain.Identity'
-          type: object
       produces:
       - application/json
       responses:
@@ -925,7 +912,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/domain.CreateTokenRequest'
-          type: object
       produces:
       - application/json
       responses:
@@ -952,7 +938,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/domain.Identity'
-          type: object
       produces:
       - application/json
       responses:
@@ -981,7 +966,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/domain.RevokeTokensRequest'
-          type: object
       produces:
       - application/json
       responses:
@@ -1009,7 +993,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/domain.Identity'
-          type: object
       produces:
       - application/json
       responses:

@@ -2,9 +2,11 @@ package controller
 
 import (
 	"fmt"
+	"time"
+
 	rd "github.com/go-redis/redis"
-	"github.com/integration-system/isp-lib/config"
-	redisLib "github.com/integration-system/isp-lib/redis"
+	"github.com/integration-system/isp-lib/v2/config"
+	redisLib "github.com/integration-system/isp-lib/v2/redis"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"isp-system-service/conf"
@@ -13,7 +15,6 @@ import (
 	"isp-system-service/model"
 	"isp-system-service/redis"
 	"isp-system-service/service"
-	"time"
 )
 
 const (

@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/integration-system/isp-lib/database"
+	"github.com/integration-system/isp-lib/v2/database"
 	log "github.com/integration-system/isp-log"
 	"isp-system-service/log_code"
 )

@@ -1,9 +1,9 @@
 package model
 
 import (
-	"github.com/go-pg/pg"
-	"github.com/go-pg/pg/orm"
-	"github.com/integration-system/isp-lib/database"
+	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v9/orm"
+	"github.com/integration-system/isp-lib/v2/database"
 	"isp-system-service/entity"
 )
 

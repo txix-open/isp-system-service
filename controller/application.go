@@ -2,11 +2,12 @@ package controller
 
 import (
 	"fmt"
+
 	rd "github.com/go-redis/redis"
-	"github.com/integration-system/isp-lib/config"
-	rdLib "github.com/integration-system/isp-lib/redis"
-	_ "github.com/integration-system/isp-lib/structure"
-	"github.com/integration-system/isp-lib/utils"
+	"github.com/integration-system/isp-lib/v2/config"
+	rdLib "github.com/integration-system/isp-lib/v2/redis"
+	_ "github.com/integration-system/isp-lib/v2/structure"
+	"github.com/integration-system/isp-lib/v2/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"

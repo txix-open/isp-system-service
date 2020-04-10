@@ -2,8 +2,9 @@ package controller
 
 import (
 	"fmt"
+
 	rd "github.com/go-redis/redis"
-	rdLib "github.com/integration-system/isp-lib/redis"
+	rdLib "github.com/integration-system/isp-lib/v2/redis"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"isp-system-service/domain"
