@@ -2,7 +2,8 @@ package controller
 
 import (
 	"fmt"
-	_ "github.com/integration-system/isp-lib/structure"
+
+	_ "github.com/integration-system/isp-lib/v2/structure"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"isp-system-service/domain"

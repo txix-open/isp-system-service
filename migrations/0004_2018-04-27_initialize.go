@@ -4,14 +4,15 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/integration-system/isp-lib/config"
-	"github.com/integration-system/isp-lib/database"
-	"github.com/pressly/goose"
 	"io/ioutil"
+	path2 "path"
+
+	"github.com/integration-system/isp-lib/v2/config"
+	"github.com/integration-system/isp-lib/v2/database"
+	"github.com/pressly/goose"
 	"isp-system-service/conf"
 	"isp-system-service/controller"
 	"isp-system-service/domain"
-	path2 "path"
 )
 
 const (

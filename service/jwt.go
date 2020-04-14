@@ -2,11 +2,12 @@ package service
 
 import (
 	"encoding/hex"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/integration-system/isp-lib/config"
-	"isp-system-service/conf"
 	"math/rand"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/integration-system/isp-lib/v2/config"
+	"isp-system-service/conf"
 )
 
 func init() {

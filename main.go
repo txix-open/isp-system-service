@@ -1,29 +1,26 @@
 package main
 
 import (
-	"github.com/integration-system/isp-lib/config/schema"
-	"github.com/integration-system/isp-lib/structure"
-	log "github.com/integration-system/isp-log"
-	"github.com/integration-system/isp-log/stdcodes"
-	"isp-system-service/redis"
+	"context"
 	"os"
 
 	"isp-system-service/conf"
 	"isp-system-service/helper"
-	"isp-system-service/model"
-
 	_ "isp-system-service/migrations"
+	"isp-system-service/model"
+	"isp-system-service/redis"
 
-	"context"
-	"github.com/integration-system/isp-lib/backend"
-	"github.com/integration-system/isp-lib/metric"
-
-	"github.com/integration-system/isp-lib/bootstrap"
+	"github.com/integration-system/isp-lib/v2/backend"
+	"github.com/integration-system/isp-lib/v2/bootstrap"
+	"github.com/integration-system/isp-lib/v2/config/schema"
+	"github.com/integration-system/isp-lib/v2/metric"
+	"github.com/integration-system/isp-lib/v2/structure"
+	log "github.com/integration-system/isp-log"
+	"github.com/integration-system/isp-log/stdcodes"
 )
 
 var (
 	version = "0.1.0"
-	date    = "undefined"
 )
 
 // @title ISP system service
@@ -34,6 +31,9 @@ var (
 
 // @host localhost:9003
 // @BasePath /api/system
+
+//go:generate swag init --parseDependency
+//go:generate rm -f docs/docs.go docs/swagger.json
 func main() {
 	bootstrap.
 		ServiceBootstrap(&conf.Configuration{}, &conf.RemoteConfig{}).
