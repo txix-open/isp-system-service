@@ -74,8 +74,6 @@ github.com/go-pg/urlstruct v0.4.0 h1:3lmbUGYQclB3UOx9akDs2T251zwkKQuPkvPTmCm07+A
 github.com/go-pg/urlstruct v0.4.0/go.mod h1:/XKyiUOUUS3onjF+LJxbfmSywYAdl6qMfVbX33Q8rgg=
 github.com/go-pg/zerochecker v0.1.1 h1:av77Qe7Gs+1oYGGh51k0sbZ0bUaxJEdeP0r8YE64Dco=
 github.com/go-pg/zerochecker v0.1.1/go.mod h1:NJZ4wKL0NmTtz0GKCoJ8kym6Xn/EQzXRl2OnAe7MmDo=
-github.com/go-redis/redis v6.15.6+incompatible h1:H9evprGPLI8+ci7fxQx6WNZHJSb7be8FqJQRhdQZ5Sg=
-github.com/go-redis/redis v6.15.6+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
 github.com/go-redis/redis/v8 v8.0.0-beta.2 h1:9S28J9QMBotgI3tGgXbX1Wk9i8QYC3Orw4bTLoPrQeI=
 github.com/go-redis/redis/v8 v8.0.0-beta.2/go.mod h1:o1M7JtsgfDYyv3o+gBn/jJ1LkqpnCrmil7PSppZGBak=
 github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
