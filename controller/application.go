@@ -1,9 +1,10 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 
-	rd "github.com/go-redis/redis"
+	rd "github.com/go-redis/redis/v8"
 	"github.com/integration-system/isp-lib/v2/config"
 	rdLib "github.com/integration-system/isp-lib/v2/redis"
 	_ "github.com/integration-system/isp-lib/v2/structure"
@@ -76,41 +77,56 @@ func (c applicationController) CreateUpdateApplication(app entity.Application) (
 	if err != nil {
 		return nil, err
 	}
-	s, e := model.ServiceRep.GetServiceById(app.ServiceId)
-	if e != nil {
-		return nil, e
+
+	s, err := model.ServiceRep.GetServiceById(app.ServiceId)
+	if err != nil {
+		return nil, err
 	}
 	if s == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Service with id %d not found", app.ServiceId)
 	}
+
 	if app.Id == 0 {
 		if existed != nil {
 			return nil, status.Errorf(codes.AlreadyExists, "Application with name %s already exists", app.Name)
 		}
-		app, e := model.AppRep.CreateApplication(app)
-		_, _ = c.enrichWithTokens(app)
-		return &domain.AppWithToken{App: app, Tokens: []entity.Token{}}, e
-	} else {
-		if existed != nil && existed.Id != app.Id {
-			return nil, status.Errorf(codes.AlreadyExists, "Application with name %s already exists", app.Name)
-		}
-		existed, err = model.AppRep.GetApplicationById(app.Id)
+
+		app, err = model.AppRep.CreateApplication(app)
 		if err != nil {
 			return nil, err
 		}
-		if existed == nil {
-			return nil, status.Errorf(codes.NotFound, "Application with id %d not found", app.Id)
-		}
-		app, e := model.AppRep.UpdateApplication(app)
-		if e != nil {
-			return nil, e
-		}
-		arr, err := c.enrichWithTokens(app)
+
+		_, err = c.enrichWithTokens(app)
 		if err != nil {
 			return nil, err
 		}
-		return arr[0], nil
+
+		return &domain.AppWithToken{App: app, Tokens: []entity.Token{}}, nil
 	}
+
+	if existed != nil && existed.Id != app.Id {
+		return nil, status.Errorf(codes.AlreadyExists, "Application with name %s already exists", app.Name)
+	}
+
+	existed, err = model.AppRep.GetApplicationById(app.Id)
+	if err != nil {
+		return nil, err
+	}
+	if existed == nil {
+		return nil, status.Errorf(codes.NotFound, "Application with id %d not found", app.Id)
+	}
+
+	app, err = model.AppRep.UpdateApplication(app)
+	if err != nil {
+		return nil, err
+	}
+	arr, err := c.enrichWithTokens(app)
+	if err != nil {
+		return nil, err
+	}
+
+	return arr[0], nil
+
 }
 
 // GetApplicationById godoc
@@ -133,6 +149,7 @@ func (c applicationController) GetApplicationById(identity domain.Identity) (*do
 	if application == nil {
 		return nil, status.Errorf(codes.NotFound, "Application with id %d not found", identity.Id)
 	}
+
 	arr, err := c.enrichWithTokens(*application)
 	if err != nil {
 		return nil, err
@@ -160,8 +177,7 @@ func (applicationController) DeleteApplications(list []int32) (domain.DeleteResp
 		count        = 0
 		instanceUuid = config.Get().(*conf.Configuration).InstanceUuid
 	)
-
-	if _, err := redis.Client.Get().UseDb(rdLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
+	_, err := redis.Client.Get().UseDb(rdLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
 		return model.DbClient.RunInTransaction(func(
 			appRep model.AppRepository, tokenRep model.TokenRepository, accessRep model.AccessListRepository) error {
 
@@ -190,33 +206,34 @@ func (applicationController) DeleteApplications(list []int32) (domain.DeleteResp
 				for i, token := range tokenIdList {
 					keys[i] = fmt.Sprintf("%s|%s", token, instanceUuid)
 				}
-				if _, err := p.Del(keys...).Result(); err != nil {
+
+				_, err := p.Del(context.Background(), keys...).Result()
+				if err != nil {
 					return err
 				}
 			}
 
-			if count, err = appRep.DeleteApplications(list); err != nil {
+			count, err = appRep.DeleteApplications(list)
+			if err != nil {
 				return err
 			}
 
 			if len(redisDelRequest) > 0 {
-				if _, err := redis.Client.Get().UseDb(rdLib.ApplicationPermissionDb, func(p rd.Pipeliner) error {
-					if _, err := p.Del(redisDelRequest...).Result(); err != nil {
-						return err
-					} else {
-						return nil
-					}
-				}); err != nil {
+				_, err := redis.Client.Get().UseDb(rdLib.ApplicationPermissionDb, func(p rd.Pipeliner) error {
+					_, err := p.Del(context.Background(), redisDelRequest...).Result()
+					return err
+				})
+				if err != nil {
 					return err
 				}
 			}
 			return nil
 		})
-	}); err != nil {
+	})
+	if err != nil {
 		return domain.DeleteResponse{}, err
-	} else {
-		return domain.DeleteResponse{Deleted: count}, nil
 	}
+	return domain.DeleteResponse{Deleted: count}, nil
 }
 
 // GetSystemTree godoc
@@ -302,6 +319,7 @@ func (applicationController) enrichWithTokens(apps ...entity.Application) ([]*do
 	if err != nil {
 		return nil, err
 	}
+
 	for _, v := range tokens {
 		app := appMap[v.AppId]
 		app.Tokens = append(app.Tokens, v)

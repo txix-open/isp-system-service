@@ -1,9 +1,10 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 
-	rd "github.com/go-redis/redis"
+	rd "github.com/go-redis/redis/v8"
 	rdLib "github.com/integration-system/isp-lib/v2/redis"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,14 +29,13 @@ type accessListController struct{}
 // @Failure 404 {object} structure.GrpcError
 // @Failure 500 {object} structure.GrpcError
 // @Router /access_list/get_by_id [POST]
-func (c accessListController) GetById(req domain.Identity) ([]domain.MethodInfo, error) {
-	if app, err := model.AppRep.GetApplicationById(req.Id); err != nil {
+func (c accessListController) GetById(request domain.Identity) ([]domain.MethodInfo, error) {
+	err := c.checkAppById(request.Id)
+	if err != nil {
 		return nil, err
-	} else if app == nil {
-		return nil, status.Errorf(codes.NotFound, "application '%d' not found", req.Id)
 	}
 
-	return c.getAccessListById(req.Id)
+	return c.getAccessListById(request.Id)
 }
 
 // SetOne godoc
@@ -50,37 +50,30 @@ func (c accessListController) GetById(req domain.Identity) ([]domain.MethodInfo,
 // @Failure 500 {object} structure.GrpcError
 // @Router /access_list/set_one [POST]
 func (c accessListController) SetOne(request entity.AccessList) (*domain.CountResponse, error) {
-	if app, err := model.AppRep.GetApplicationById(request.AppId); err != nil {
+	err := c.checkAppById(request.AppId)
+	if err != nil {
 		return nil, err
-	} else if app == nil {
-		return nil, status.Errorf(codes.NotFound, "application '%d' not found", request.AppId)
 	}
 
-	var (
-		resp = 0
-		err  error
-	)
-	if err := model.DbClient.RunInTransaction(func(repository model.AccessListRepository) error {
-		if resp, err = repository.Upsert(request); err != nil {
+	resp := 0
+	err = model.DbClient.RunInTransaction(func(repository model.AccessListRepository) error {
+		resp, err = repository.Upsert(request)
+		if err != nil {
 			return err
 		}
 
-		if _, err := redis.Client.Get().UseDb(rdLib.ApplicationPermissionDb, func(p rd.Pipeliner) error {
+		_, err = redis.Client.Get().UseDb(rdLib.ApplicationPermissionDb, func(p rd.Pipeliner) error {
 			key := fmt.Sprintf("%d|%s", request.AppId, request.Method)
-			if _, err := p.Set(key, request.Value, 0).Result(); err != nil {
-				return err
-			}
-			return nil
-		}); err != nil {
+			_, err := p.Set(context.Background(), key, request.Value, 0).Result()
 			return err
-		} else {
-			return nil
-		}
-	}); err != nil {
+		})
+		return err
+	})
+	if err != nil {
 		return nil, err
-	} else {
-		return &domain.CountResponse{Count: resp}, nil
 	}
+
+	return &domain.CountResponse{Count: resp}, nil
 }
 
 // SetList godoc
@@ -95,18 +88,13 @@ func (c accessListController) SetOne(request entity.AccessList) (*domain.CountRe
 // @Failure 500 {object} structure.GrpcError
 // @Router /access_list/set_list [POST]
 func (c accessListController) SetList(request domain.SetListRequest) ([]domain.MethodInfo, error) {
-	if app, err := model.AppRep.GetApplicationById(request.AppId); err != nil {
+	err := c.checkAppById(request.AppId)
+	if err != nil {
 		return nil, err
-	} else if app == nil {
-		return nil, status.Errorf(codes.NotFound, "application '%d' not found", request.AppId)
 	}
 
-	var (
-		oldAccessList = make([]entity.AccessList, 0)
-		err           error
-	)
-
-	if err := model.DbClient.RunInTransaction(func(repository model.AccessListRepository) error {
+	oldAccessList := make([]entity.AccessList, 0)
+	err = model.DbClient.RunInTransaction(func(repository model.AccessListRepository) error {
 		if request.RemoveOld == true {
 			oldAccessList, err = repository.DeleteById(request.AppId)
 			if err != nil {
@@ -131,41 +119,45 @@ func (c accessListController) SetList(request domain.SetListRequest) ([]domain.M
 		}
 
 		if len(newAccessList) > 0 {
-			if _, err := repository.UpsertArray(newAccessList); err != nil {
+			_, err := repository.UpsertArray(newAccessList)
+			if err != nil {
 				return err
 			}
 		}
 
-		if _, err := redis.Client.Get().UseDb(rdLib.ApplicationPermissionDb, func(p rd.Pipeliner) error {
+		_, err := redis.Client.Get().UseDb(rdLib.ApplicationPermissionDb, func(p rd.Pipeliner) error {
 			if len(redisDelRequest) > 0 {
-				if _, err := p.Del(redisDelRequest...).Result(); err != nil {
+				_, err := p.Del(context.Background(), redisDelRequest...).Result()
+				if err != nil {
 					return err
 				}
 			}
+
 			if len(redisMsetRequest) > 0 {
-				if _, err := p.MSet(redisMsetRequest...).Result(); err != nil {
+				_, err := p.MSet(context.Background(), redisMsetRequest...).Result()
+				if err != nil {
 					return err
 				}
 			}
+
 			return nil
-		}); err != nil {
-			return err
-		} else {
-			return nil
-		}
-	}); err != nil {
+		})
+		return err
+	})
+	if err != nil {
 		return nil, err
-	} else {
-		return c.getAccessListById(request.AppId)
 	}
+
+	return c.getAccessListById(request.AppId)
 }
 
 func (c accessListController) getAccessListById(id int32) ([]domain.MethodInfo, error) {
-	if accessList, err := model.AccessListRep.GetByAppId(id); err != nil {
+	accessList, err := model.AccessListRep.GetByAppId(id)
+	if err != nil {
 		return nil, err
-	} else {
-		return c.convertAccessList(accessList), nil
 	}
+
+	return c.convertAccessList(accessList), nil
 }
 
 func (accessListController) convertAccessList(accessLists []entity.AccessList) []domain.MethodInfo {
@@ -177,4 +169,15 @@ func (accessListController) convertAccessList(accessLists []entity.AccessList) [
 		}
 	}
 	return methodInfos
+}
+
+func (accessListController) checkAppById(appId int32) error {
+	app, err := model.AppRep.GetApplicationById(appId)
+	if err != nil {
+		return err
+	}
+	if app == nil {
+		return status.Errorf(codes.NotFound, "application '%d' not found", appId)
+	}
+	return nil
 }
