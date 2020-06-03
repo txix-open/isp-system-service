@@ -45,6 +45,7 @@ func main() {
 		OnShutdown(onShutdown).
 		OnSocketErrorReceive(onRemoteErrorReceive).
 		OnConfigErrorReceive(onRemoteConfigErrorReceive).
+		SubscribeBroadcastEvent(bootstrap.ListenRestartEvent()).
 		Run()
 }
 
