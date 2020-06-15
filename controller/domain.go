@@ -55,33 +55,43 @@ func (domainController) CreateUpdateDomain(domain entity.Domain, md metadata.MD)
 	}
 	domain.SystemId = int32(sysId)
 
-	sys, e := model.SystemRep.GetSystemById(domain.SystemId)
-	if e != nil {
+	sys, err := model.SystemRep.GetSystemById(domain.SystemId)
+	if err != nil {
 		return nil, err
 	}
 	if sys == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "System with id %d not found", domain.SystemId)
 	}
+
 	if domain.Id == 0 {
 		if existed != nil {
 			return nil, status.Errorf(codes.AlreadyExists, "Domain with name %s already exists", domain.Name)
 		}
-		domain, e := model.DomainRep.CreateDomain(domain)
-		return &domain, e
-	} else {
-		if existed != nil && existed.Id != domain.Id {
-			return nil, status.Errorf(codes.AlreadyExists, "Domain with name %s already exists", domain.Name)
-		}
-		existed, err = model.DomainRep.GetDomainById(domain.Id)
+
+		domain, err = model.DomainRep.CreateDomain(domain)
 		if err != nil {
 			return nil, err
 		}
-		if existed == nil {
-			return nil, status.Errorf(codes.NotFound, "Domain with id %d not found", domain.Id)
-		}
-		domain, e := model.DomainRep.UpdateDomain(domain)
-		return &domain, e
+		return &domain, nil
 	}
+
+	if existed != nil && existed.Id != domain.Id {
+		return nil, status.Errorf(codes.AlreadyExists, "Domain with name %s already exists", domain.Name)
+	}
+
+	existed, err = model.DomainRep.GetDomainById(domain.Id)
+	if err != nil {
+		return nil, err
+	}
+	if existed == nil {
+		return nil, status.Errorf(codes.NotFound, "Domain with id %d not found", domain.Id)
+	}
+
+	domain, err = model.DomainRep.UpdateDomain(domain)
+	if err != nil {
+		return nil, err
+	}
+	return &domain, nil
 }
 
 // GetDomainById godoc
@@ -96,14 +106,14 @@ func (domainController) CreateUpdateDomain(domain entity.Domain, md metadata.MD)
 // @Failure 500 {object} structure.GrpcError
 // @Router /domain/get_domain_by_id [POST]
 func (domainController) GetDomainById(identity domain.Identity) (*entity.Domain, error) {
-	domain, err := model.DomainRep.GetDomainById(identity.Id)
+	d, err := model.DomainRep.GetDomainById(identity.Id)
 	if err != nil {
 		return nil, err
 	}
-	if domain == nil {
+	if d == nil {
 		return nil, status.Errorf(codes.NotFound, "Domain with id %d not found", identity.Id)
 	}
-	return domain, err
+	return d, err
 }
 
 // DeleteDomains godoc
@@ -121,6 +131,10 @@ func (domainController) DeleteDomains(list []int32) (domain.DeleteResponse, erro
 	if len(list) == 0 {
 		return domain.DeleteResponse{Deleted: 0}, status.Errorf(codes.InvalidArgument, "At least one id are required")
 	}
+
 	res, err := model.DomainRep.DeleteDomains(list)
-	return domain.DeleteResponse{Deleted: res}, err
+	if err != nil {
+		return domain.DeleteResponse{}, err
+	}
+	return domain.DeleteResponse{Deleted: res}, nil
 }

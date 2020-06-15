@@ -54,22 +54,32 @@ func (systemController) CreateUpdateSystem(system entity.System) (*entity.System
 		if existed != nil {
 			return nil, status.Errorf(codes.AlreadyExists, "System with name %s already exists", system.Name)
 		}
-		sys, e := model.SystemRep.CreateSystem(system)
-		return &sys, e
-	} else {
-		if existed != nil && existed.Id != system.Id {
-			return nil, status.Errorf(codes.AlreadyExists, "System with name %s already exists", system.Name)
-		}
-		existed, err = model.SystemRep.GetSystemById(system.Id)
+
+		system, err = model.SystemRep.CreateSystem(system)
 		if err != nil {
 			return nil, err
 		}
-		if existed == nil {
-			return nil, status.Error(codes.NotFound, fmt.Sprintf("System with id %d not found", system.Id))
-		}
-		sys, e := model.SystemRep.UpdateSystem(system)
-		return &sys, e
+		return &system, nil
 	}
+
+	if existed != nil && existed.Id != system.Id {
+		return nil, status.Errorf(codes.AlreadyExists, "System with name %s already exists", system.Name)
+	}
+
+	existed, err = model.SystemRep.GetSystemById(system.Id)
+	if err != nil {
+		return nil, err
+	}
+	if existed == nil {
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("System with id %d not found", system.Id))
+	}
+
+	system, err = model.SystemRep.UpdateSystem(system)
+	if err != nil {
+		return nil, err
+	}
+	return &system, nil
+
 }
 
 // GetSystemById godoc
@@ -91,7 +101,7 @@ func (systemController) GetSystemById(identity domain.Identity) (*entity.System,
 	if sys == nil {
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("System with id %d not found", identity.Id))
 	}
-	return sys, err
+	return sys, nil
 }
 
 // DeleteSystems godoc
@@ -109,6 +119,10 @@ func (systemController) DeleteSystems(list []int32) (domain.DeleteResponse, erro
 	if len(list) == 0 {
 		return domain.DeleteResponse{}, status.Error(codes.InvalidArgument, "At least one id are required")
 	}
+
 	res, err := model.SystemRep.DeleteSystems(list)
-	return domain.DeleteResponse{Deleted: res}, err
+	if err != nil {
+		return domain.DeleteResponse{}, err
+	}
+	return domain.DeleteResponse{Deleted: res}, nil
 }

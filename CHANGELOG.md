@@ -1,3 +1,5 @@
+### v2.2.0
+* update libs
 ### v2.1.0
 * update to go mod
 ### v2.0.0

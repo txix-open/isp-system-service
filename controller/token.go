@@ -1,10 +1,11 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	rd "github.com/go-redis/redis"
+	rd "github.com/go-redis/redis/v8"
 	"github.com/integration-system/isp-lib/v2/config"
 	redisLib "github.com/integration-system/isp-lib/v2/redis"
 	"google.golang.org/grpc/codes"
@@ -143,13 +144,13 @@ func (tokenController) SetIdentityMapForTokenV2(token string, expireTime int64, 
 	instanceUuid := config.Get().(*conf.Configuration).InstanceUuid
 	_, e := redis.Client.Get().UseDbTx(redisLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
 		key := fmt.Sprintf("%s|%s", token, instanceUuid)
-		stat := p.HMSet(key, idMap)
+		stat := p.HMSet(context.Background(), key, idMap)
 		err := stat.Err()
 		if err != nil {
 			return err
 		}
 		if expireTime > 0 {
-			err = p.Expire(token, time.Duration(expireTime)*time.Millisecond).Err()
+			err = p.Expire(context.Background(), token, time.Duration(expireTime)*time.Millisecond).Err()
 		}
 		return err
 	})
@@ -218,28 +219,26 @@ func (tokenController) revokeTokens(tokens []string) (*domain.DeleteResponse, er
 	var (
 		count        = 0
 		instanceUuid = config.Get().(*conf.Configuration).InstanceUuid
+		keys         = make([]string, len(tokens))
 	)
-
-	keys := make([]string, len(tokens))
 	for i, token := range tokens {
 		keys[i] = fmt.Sprintf("%s|%s", token, instanceUuid)
 	}
-
-	if err := model.DbClient.RunInTransaction(func(rep model.TokenRepository) error {
-		if deleted, err := rep.DeleteTokens(tokens); err != nil {
+	err := model.DbClient.RunInTransaction(func(rep model.TokenRepository) error {
+		deleted, err := rep.DeleteTokens(tokens)
+		if err != nil {
 			return err
-		} else {
-			count = deleted
 		}
+		count = deleted
 
-		_, err := redis.Client.Get().UseDbTx(redisLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
-			_, err := p.Del(keys...).Result()
+		_, err = redis.Client.Get().UseDbTx(redisLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
+			_, err := p.Del(context.Background(), keys...).Result()
 			return err
 		})
 		return err
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
-	} else {
-		return &domain.DeleteResponse{Deleted: count}, nil
 	}
+	return &domain.DeleteResponse{Deleted: count}, nil
 }

@@ -62,33 +62,44 @@ func (serviceController) CreateUpdateService(service entity.Service) (*entity.Se
 	if err != nil {
 		return nil, err
 	}
-	domain, e := model.DomainRep.GetDomainById(service.DomainId)
-	if e != nil {
+
+	d, err := model.DomainRep.GetDomainById(service.DomainId)
+	if err != nil {
 		return nil, err
 	}
-	if domain == nil {
+	if d == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Domain with id %d not found", service.DomainId)
 	}
+
 	if service.Id == 0 {
 		if existed != nil {
 			return nil, status.Errorf(codes.AlreadyExists, "Service with name %s already exists", service.Name)
 		}
-		service, e := model.ServiceRep.CreateService(service)
-		return &service, e
-	} else {
-		if existed != nil && existed.Id != service.Id {
-			return nil, status.Errorf(codes.AlreadyExists, "Service with name %s already exists", service.Name)
-		}
-		existed, err = model.ServiceRep.GetServiceById(service.Id)
+		service, err = model.ServiceRep.CreateService(service)
 		if err != nil {
 			return nil, err
 		}
-		if existed == nil {
-			return nil, status.Errorf(codes.NotFound, "Service with id %d not found", service.Id)
-		}
-		service, e := model.ServiceRep.UpdateService(service)
-		return &service, e
+		return &service, nil
 	}
+
+	if existed != nil && existed.Id != service.Id {
+		return nil, status.Errorf(codes.AlreadyExists, "Service with name %s already exists", service.Name)
+	}
+
+	existed, err = model.ServiceRep.GetServiceById(service.Id)
+	if err != nil {
+		return nil, err
+	}
+	if existed == nil {
+		return nil, status.Errorf(codes.NotFound, "Service with id %d not found", service.Id)
+	}
+
+	service, err = model.ServiceRep.UpdateService(service)
+	if err != nil {
+		return nil, err
+	}
+
+	return &service, nil
 }
 
 // GetServiceById godoc
@@ -110,7 +121,8 @@ func (serviceController) GetServiceById(identity domain.Identity) (*entity.Servi
 	if service == nil {
 		return nil, status.Errorf(codes.NotFound, "Service with id %d not found", identity.Id)
 	}
-	return service, err
+
+	return service, nil
 }
 
 // DeleteService godoc
@@ -128,6 +140,10 @@ func (serviceController) DeleteService(list []int32) (domain.DeleteResponse, err
 	if len(list) == 0 {
 		return domain.DeleteResponse{Deleted: 0}, status.Error(codes.InvalidArgument, "At least one id are required")
 	}
+
 	res, err := model.ServiceRep.DeleteServices(list)
-	return domain.DeleteResponse{Deleted: res}, err
+	if err != nil {
+		return domain.DeleteResponse{}, err
+	}
+	return domain.DeleteResponse{Deleted: res}, nil
 }
