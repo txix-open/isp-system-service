@@ -1,14 +1,15 @@
 package controller
 
 import (
+	"isp-system-service/domain"
+	"isp-system-service/entity"
+	"isp-system-service/model"
+
 	_ "github.com/integration-system/isp-lib/v2/structure"
 	"github.com/integration-system/isp-lib/v2/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"isp-system-service/domain"
-	"isp-system-service/entity"
-	"isp-system-service/model"
 )
 
 var Domain domainController
@@ -30,6 +31,7 @@ func (domainController) GetDomainsBySystemId(md metadata.MD) ([]entity.Domain, e
 	if err != nil {
 		return nil, err
 	}
+
 	return model.DomainRep.GetDomainsBySystemId(int32(sysId))
 }
 
@@ -72,6 +74,7 @@ func (domainController) CreateUpdateDomain(domain entity.Domain, md metadata.MD)
 		if err != nil {
 			return nil, err
 		}
+
 		return &domain, nil
 	}
 
@@ -91,6 +94,7 @@ func (domainController) CreateUpdateDomain(domain entity.Domain, md metadata.MD)
 	if err != nil {
 		return nil, err
 	}
+
 	return &domain, nil
 }
 
@@ -113,6 +117,7 @@ func (domainController) GetDomainById(identity domain.Identity) (*entity.Domain,
 	if d == nil {
 		return nil, status.Errorf(codes.NotFound, "Domain with id %d not found", identity.Id)
 	}
+
 	return d, err
 }
 
@@ -136,5 +141,6 @@ func (domainController) DeleteDomains(list []int32) (domain.DeleteResponse, erro
 	if err != nil {
 		return domain.DeleteResponse{}, err
 	}
+
 	return domain.DeleteResponse{Deleted: res}, nil
 }

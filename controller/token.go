@@ -66,6 +66,7 @@ func (c tokenController) CreateToken(req domain.CreateTokenRequest) (*domain.App
 		if err != nil {
 			return err
 		}
+
 		return c.setIdentityMapForToken(tokenInfo, m)
 	}); err != nil {
 		return nil, err
@@ -152,8 +153,10 @@ func (tokenController) SetIdentityMapForTokenV2(token string, expireTime int64, 
 		if expireTime > 0 {
 			err = p.Expire(context.Background(), token, time.Duration(expireTime)*time.Millisecond).Err()
 		}
+
 		return err
 	})
+
 	return e
 }
 
@@ -208,6 +211,7 @@ func (c tokenController) revokeTokensForApp(identity domain.Identity) (*domain.D
 	for i, t := range tokens {
 		tokenIdList[i] = t.Token
 	}
+
 	return c.revokeTokens(tokenIdList)
 }
 
@@ -233,12 +237,15 @@ func (tokenController) revokeTokens(tokens []string) (*domain.DeleteResponse, er
 
 		_, err = redis.Client.Get().UseDbTx(redisLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
 			_, err := p.Del(context.Background(), keys...).Result()
+
 			return err
 		})
+
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	return &domain.DeleteResponse{Deleted: count}, nil
 }

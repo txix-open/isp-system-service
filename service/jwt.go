@@ -1,22 +1,24 @@
 package service
 
 import (
+	"crypto/rand"
 	"encoding/hex"
-	"math/rand"
+	mathRand "math/rand"
 	"time"
+
+	"isp-system-service/conf"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/integration-system/isp-lib/v2/config"
-	"isp-system-service/conf"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 var Jwt jwtService
 
 type jwtService struct{}
+
+func init() {
+	mathRand.Seed(time.Now().UnixNano())
+}
 
 func (s jwtService) CreateApplication(appId int32, expTime int64) (string, error) {
 	var (
@@ -36,7 +38,11 @@ func (s jwtService) CreateApplication(appId int32, expTime int64) (string, error
 }
 
 func (jwtService) getSalt() string {
-	salt := make([]byte, rand.Intn(30)+10)
-	rand.Read(salt)
+	const randIntSize = 30
+	const minLen = 10
+	randomInt := mathRand.Intn(randIntSize)
+	salt := make([]byte, randomInt+minLen)
+	_, _ = rand.Read(salt)
+
 	return hex.EncodeToString(salt)
 }

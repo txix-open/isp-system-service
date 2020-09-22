@@ -3,12 +3,13 @@ package controller
 import (
 	"fmt"
 
-	_ "github.com/integration-system/isp-lib/v2/structure"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
 	"isp-system-service/model"
+
+	_ "github.com/integration-system/isp-lib/v2/structure"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var System systemController
@@ -30,6 +31,7 @@ func (systemController) GetSystems(list []int32) ([]entity.System, error) {
 	if err != nil {
 		return res, err
 	}
+
 	return res, nil
 }
 
@@ -59,6 +61,7 @@ func (systemController) CreateUpdateSystem(system entity.System) (*entity.System
 		if err != nil {
 			return nil, err
 		}
+
 		return &system, nil
 	}
 
@@ -78,8 +81,8 @@ func (systemController) CreateUpdateSystem(system entity.System) (*entity.System
 	if err != nil {
 		return nil, err
 	}
-	return &system, nil
 
+	return &system, nil
 }
 
 // GetSystemById godoc
@@ -101,6 +104,7 @@ func (systemController) GetSystemById(identity domain.Identity) (*entity.System,
 	if sys == nil {
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("System with id %d not found", identity.Id))
 	}
+
 	return sys, nil
 }
 
@@ -124,5 +128,6 @@ func (systemController) DeleteSystems(list []int32) (domain.DeleteResponse, erro
 	if err != nil {
 		return domain.DeleteResponse{}, err
 	}
+
 	return domain.DeleteResponse{Deleted: res}, nil
 }

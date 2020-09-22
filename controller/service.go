@@ -1,11 +1,12 @@
 package controller
 
 import (
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
 	"isp-system-service/model"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var Service serviceController
@@ -27,6 +28,7 @@ func (serviceController) GetService(list []int32) ([]entity.Service, error) {
 	if err != nil {
 		return res, err
 	}
+
 	return res, nil
 }
 
@@ -79,6 +81,7 @@ func (serviceController) CreateUpdateService(service entity.Service) (*entity.Se
 		if err != nil {
 			return nil, err
 		}
+
 		return &service, nil
 	}
 
@@ -145,5 +148,6 @@ func (serviceController) DeleteService(list []int32) (domain.DeleteResponse, err
 	if err != nil {
 		return domain.DeleteResponse{}, err
 	}
+
 	return domain.DeleteResponse{Deleted: res}, nil
 }
