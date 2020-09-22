@@ -4,6 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"isp-system-service/conf"
+	"isp-system-service/domain"
+	"isp-system-service/entity"
+	"isp-system-service/model"
+	"isp-system-service/redis"
+
 	rd "github.com/go-redis/redis/v8"
 	"github.com/integration-system/isp-lib/v2/config"
 	rdLib "github.com/integration-system/isp-lib/v2/redis"
@@ -12,11 +18,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"isp-system-service/conf"
-	"isp-system-service/domain"
-	"isp-system-service/entity"
-	"isp-system-service/model"
-	"isp-system-service/redis"
 )
 
 var Application applicationController
@@ -38,6 +39,7 @@ func (c applicationController) GetApplications(list []int32) ([]*domain.AppWithT
 	if err != nil {
 		return nil, err
 	}
+
 	return c.enrichWithTokens(res...)
 }
 
@@ -56,6 +58,7 @@ func (c applicationController) GetApplicationsByServiceId(identity domain.Identi
 	if err != nil {
 		return nil, err
 	}
+
 	return c.enrichWithTokens(arr...)
 }
 
@@ -126,7 +129,6 @@ func (c applicationController) CreateUpdateApplication(app entity.Application) (
 	}
 
 	return arr[0], nil
-
 }
 
 // GetApplicationById godoc
@@ -154,6 +156,7 @@ func (c applicationController) GetApplicationById(identity domain.Identity) (*do
 	if err != nil {
 		return nil, err
 	}
+
 	return arr[0], nil
 }
 
@@ -180,7 +183,6 @@ func (applicationController) DeleteApplications(list []int32) (domain.DeleteResp
 	_, err := redis.Client.Get().UseDb(rdLib.ApplicationTokenDb, func(p rd.Pipeliner) error {
 		return model.DbClient.RunInTransaction(func(
 			appRep model.AppRepository, tokenRep model.TokenRepository, accessRep model.AccessListRepository) error {
-
 			accessList, err := accessRep.GetByAppIdList(list)
 			if err != nil {
 				return err
@@ -221,18 +223,21 @@ func (applicationController) DeleteApplications(list []int32) (domain.DeleteResp
 			if len(redisDelRequest) > 0 {
 				_, err := redis.Client.Get().UseDb(rdLib.ApplicationPermissionDb, func(p rd.Pipeliner) error {
 					_, err := p.Del(context.Background(), redisDelRequest...).Result()
+
 					return err
 				})
 				if err != nil {
 					return err
 				}
 			}
+
 			return nil
 		})
 	})
 	if err != nil {
 		return domain.DeleteResponse{}, err
 	}
+
 	return domain.DeleteResponse{Deleted: count}, nil
 }
 
@@ -290,7 +295,8 @@ func (applicationController) GetSystemTree(md metadata.MD) ([]*domain.DomainWith
 
 	for _, app := range apps {
 		s := servicesMap[app.ServiceId]
-		s.Apps = append(s.Apps, &domain.SimpleApp{Id: app.Id,
+		s.Apps = append(s.Apps, &domain.SimpleApp{
+			Id:          app.Id,
 			Name:        app.Name,
 			Type:        app.Type,
 			Description: app.Description,
@@ -324,5 +330,6 @@ func (applicationController) enrichWithTokens(apps ...entity.Application) ([]*do
 		app := appMap[v.AppId]
 		app.Tokens = append(app.Tokens, v)
 	}
+
 	return enriched, nil
 }
