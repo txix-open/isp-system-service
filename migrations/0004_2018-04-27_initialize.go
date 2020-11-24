@@ -19,7 +19,7 @@ const (
 	insertDomain  = "INSERT INTO %s.domain (id, name, description, system_id) VALUES (%d, '%s', '%s', %d) RETURNING id;"
 	insertService = "INSERT INTO %s.service (id, name, description, domain_id) VALUES (%d, '%s', '%s', %d) RETURNING id;"
 	insertApp     = "INSERT INTO %s.application (id, name, description, service_id, type) VALUES (%d, '%s', '%s', %d, '%s') RETURNING id;"
-	insertToken   = "INSERT INTO %s.token (token, app_id, expire_time) VALUES ('%s', %d, %d);" //nolint
+	insertToken   = "INSERT INTO %s.token (token, app_id, expire_time) VALUES ('%s', %d, %d);"
 
 	setSeqQuery = "SELECT setval('%s.%s_id_seq' :: regclass, %d);"
 
