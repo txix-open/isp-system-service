@@ -1,3 +1,5 @@
+### v2.2.4
+* updated isp-lib
 ### v2.2.3
 * updated isp-lib
 * updated isp-lib-test
