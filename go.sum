@@ -253,8 +253,8 @@ github.com/integration-system/go-cmp v0.0.0-20190131081942-ac5582987a2f/go.mod h
 github.com/integration-system/gowsdl v1.0.0/go.mod h1:ZwTCE+Av5aQLnPj2/3PIop6mzCs1FY7jXrcWDvSjrBA=
 github.com/integration-system/isp-etp-go/v2 v2.1.2 h1:K3mZUm71VuaaBAriMxOp2G/Wql+pgaryI1MZzr81H1U=
 github.com/integration-system/isp-etp-go/v2 v2.1.2/go.mod h1:fSkS09/engepaDDqaDAEeXUpzmtcMpSLjilZ35BfNcc=
-github.com/integration-system/isp-lib/v2 v2.8.2 h1:9E6JR4cL+dxeR0b3F07FLa6fCFWDKtlMmHl0zoeqQG8=
-github.com/integration-system/isp-lib/v2 v2.8.2/go.mod h1:sOiJv5aOy7OonD+BtbarTkuXDMJ4D686whUFxe7NSFs=
+github.com/integration-system/isp-lib/v2 v2.8.3 h1:8uo6o3NUTdR6M7+LCDGCdKsIhioUYiX+K/qAymVq+KE=
+github.com/integration-system/isp-lib/v2 v2.8.3/go.mod h1:sOiJv5aOy7OonD+BtbarTkuXDMJ4D686whUFxe7NSFs=
 github.com/integration-system/isp-log v1.1.6 h1:a0X0nT0AsM72Js1aT/EJAItaQJsVqlOMvESIA719cdY=
 github.com/integration-system/isp-log v1.1.6/go.mod h1:TpUZ/Tx84sRipAT/YXZ8V7Z21C4iZ8o3wXQs3Cee0Pk=
 github.com/integration-system/jsonschema v1.0.0 h1:Lci4sHGhOX27qCgZo5rvJ37Bjcfm+qCwU0yvw6ImEX4=
