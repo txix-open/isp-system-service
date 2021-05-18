@@ -4,12 +4,6 @@ import (
 	"context"
 	"os"
 
-	"isp-system-service/conf"
-	"isp-system-service/helper"
-	_ "isp-system-service/migrations"
-	"isp-system-service/model"
-	"isp-system-service/redis"
-
 	"github.com/integration-system/isp-lib/v2/backend"
 	"github.com/integration-system/isp-lib/v2/bootstrap"
 	"github.com/integration-system/isp-lib/v2/config/schema"
@@ -17,7 +11,12 @@ import (
 	"github.com/integration-system/isp-lib/v2/structure"
 	log "github.com/integration-system/isp-log"
 	"github.com/integration-system/isp-log/stdcodes"
+	"isp-system-service/conf"
 	_ "isp-system-service/docs"
+	"isp-system-service/helper"
+	"isp-system-service/migrations"
+	"isp-system-service/model"
+	"isp-system-service/redis"
 )
 
 var version = "0.1.0"
@@ -47,28 +46,6 @@ func main() {
 		SubscribeBroadcastEvent(bootstrap.ListenRestartEvent()).
 		Run()
 }
-
-/*func ensureRootToken() {
-	tokens, err := model.TokenRep.GetTokensByAppId(entity.RootAdminApplicationId)
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	if len(tokens) > 0 {
-		m, err, _ := controller.GetIdMap(entity.RootAdminApplicationId)
-		if err != nil {
-			logger.Error(err)
-			return
-		}
-		for _, token := range tokens {
-			err = controller.SetIdentityMapForToken(token, m)
-			if err != nil {
-				logger.Error(err)
-				continue
-			}
-		}
-	}
-}*/
 
 func onRemoteErrorReceive(errorMessage map[string]interface{}) {
 	log.WithMetadata(errorMessage).Error(stdcodes.ReceiveErrorFromConfig, "error from config service")
@@ -101,6 +78,7 @@ func onShutdown(_ context.Context, _ os.Signal) {
 }
 
 func onRemoteConfigReceive(remoteConfig, oldConfig *conf.RemoteConfig) {
+	migrations.DatabaseConfig = remoteConfig.Database
 	redis.Client.ReceiveConfiguration(remoteConfig.Redis)
 	model.DbClient.ReceiveConfiguration(remoteConfig.Database)
 	metric.InitCollectors(remoteConfig.Metrics, oldConfig.Metrics)

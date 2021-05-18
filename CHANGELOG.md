@@ -1,3 +1,5 @@
+### v2.2.6
+* fix migrations
 ### v2.2.5
 * updated dependencies
 ### v2.2.4
