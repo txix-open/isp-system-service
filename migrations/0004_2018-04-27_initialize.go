@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"isp-system-service/conf"
+	"path/filepath"
+
+	"github.com/integration-system/isp-lib/v2/database"
+	"github.com/integration-system/isp-lib/v2/structure"
+	"github.com/pressly/goose"
 	"isp-system-service/controller"
 	"isp-system-service/domain"
-	path2 "path"
-
-	"github.com/integration-system/isp-lib/v2/config"
-	"github.com/integration-system/isp-lib/v2/database"
-	"github.com/pressly/goose"
 )
 
 const (
@@ -26,12 +25,14 @@ const (
 	initFile = "init.json"
 )
 
+var DatabaseConfig structure.DBConfiguration
+
 func init() {
 	goose.AddMigration(Up, Down)
 }
 
 func Up(tx *sql.Tx) error {
-	path := path2.Join(database.ResolveMigrationsDirectory(), initFile)
+	path := filepath.Join(database.ResolveMigrationsDirectory(), initFile)
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -42,7 +43,7 @@ func Up(tx *sql.Tx) error {
 		return err
 	}
 
-	schema := config.GetRemote().(*conf.RemoteConfig).Database.Schema
+	schema := DatabaseConfig.Schema
 	lastDomainId := int64(0)
 	lastServiceId := int64(0)
 	lastAppId := int64(0)
