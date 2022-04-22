@@ -1,12 +1,12 @@
 {
+  "logLevel": "debug",
   "database": {
-    "address": "127.0.0.1",
-    "port": "5432",
-    "schema": "system_service",
-    "database": "name",
-    "username": "name",
-    "password": "password",
-    "createSchema": true
+    "schema": "mdm_service",
+    "database": "{{ msp_pgsql_name }}",
+    "password": "{{ msp_pgsql_password }}",
+    "username": "{{ msp_pgsql_user }}",
+    "host": "{{ msp_pgsql_address }}",
+    "port": 5432
   },
   "redis": {
     "address": {
@@ -14,15 +14,6 @@
       "port": "6379"
     },
     "defaultDB": 0
-  },
-  "metrics": {
-    "gc": true,
-    "memory": true,
-    "address": {
-      "ip": "0.0.0.0",
-      "path": "/metrics",
-      "port": "9555"
-    }
   },
   "applicationSecret": "SECRET_ACCESS_KEY"
 }
