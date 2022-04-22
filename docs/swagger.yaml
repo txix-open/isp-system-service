@@ -1,35 +1,128 @@
 basePath: /api/system
 definitions:
-  domain.AppWithToken:
+  domain.AccessListSetListRequest:
     properties:
-      app:
-        $ref: '#/definitions/entity.Application'
-        type: object
-      tokens:
+      appId:
+        type: integer
+      methods:
         items:
-          $ref: '#/definitions/entity.Token'
+          $ref: '#/definitions/domain.MethodInfo'
         type: array
+      removeOld:
+        type: boolean
+    required:
+    - appId
     type: object
-  domain.CountResponse:
+  domain.AccessListSetOneRequest:
+    properties:
+      appId:
+        type: integer
+      method:
+        type: string
+      value:
+        type: boolean
+    required:
+    - appId
+    - method
+    type: object
+  domain.AccessListSetOneResponse:
     properties:
       count:
         type: integer
     type: object
-  domain.CreateTokenRequest:
+  domain.Application:
     properties:
-      appId:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
         type: integer
-      expireTimeMs:
+      name:
+        type: string
+      serviceId:
         type: integer
+      type:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  domain.ApplicationCreateUpdateRequest:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      serviceId:
+        type: integer
+      type:
+        enum:
+        - SYSTEM
+        - MOBILE
+        type: string
     required:
-    - appId
+    - name
+    - serviceId
+    - type
+    type: object
+  domain.ApplicationSimple:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      tokens:
+        items:
+          $ref: '#/definitions/domain.Token'
+        type: array
+      type:
+        type: string
+    type: object
+  domain.ApplicationWithTokens:
+    properties:
+      app:
+        $ref: '#/definitions/domain.Application'
+      tokens:
+        items:
+          $ref: '#/definitions/domain.Token'
+        type: array
     type: object
   domain.DeleteResponse:
     properties:
       deleted:
         type: integer
     type: object
-  domain.DomainWithServices:
+  domain.Domain:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      systemId:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  domain.DomainCreateUpdateRequest:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  domain.DomainWithService:
     properties:
       description:
         type: string
@@ -56,107 +149,7 @@ definitions:
       value:
         type: boolean
     type: object
-  domain.RevokeTokensRequest:
-    properties:
-      appId:
-        type: integer
-      tokens:
-        items:
-          type: string
-        type: array
-    required:
-    - appId
-    type: object
-  domain.ServiceWithApps:
-    properties:
-      apps:
-        items:
-          $ref: '#/definitions/domain.SimpleApp'
-        type: array
-      description:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  domain.SetListRequest:
-    properties:
-      appId:
-        type: integer
-      methods:
-        items:
-          $ref: '#/definitions/domain.MethodInfo'
-        type: array
-      removeOld:
-        type: boolean
-    type: object
-  domain.SimpleApp:
-    properties:
-      description:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      tokens:
-        items:
-          $ref: '#/definitions/entity.Token'
-        type: array
-      type:
-        type: string
-    type: object
-  entity.AccessList:
-    properties:
-      appId:
-        type: integer
-      method:
-        type: string
-      value:
-        type: boolean
-    type: object
-  entity.Application:
-    properties:
-      createdAt:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      serviceId:
-        type: integer
-      type:
-        enum:
-        - SYSTEM
-        - MOBILE
-        type: string
-      updatedAt:
-        type: string
-    required:
-    - name
-    - serviceId
-    - type
-    type: object
-  entity.Domain:
-    properties:
-      createdAt:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      systemId:
-        type: integer
-      updatedAt:
-        type: string
-    required:
-    - name
-    type: object
-  entity.Service:
+  domain.Service:
     properties:
       createdAt:
         type: string
@@ -170,24 +163,64 @@ definitions:
         type: string
       updatedAt:
         type: string
+    type: object
+  domain.ServiceCreateUpdateRequest:
+    properties:
+      description:
+        type: string
+      domainId:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
     required:
     - domainId
     - name
     type: object
-  entity.System:
+  domain.ServiceWithApps:
     properties:
-      createdAt:
-        type: string
+      apps:
+        items:
+          $ref: '#/definitions/domain.ApplicationSimple'
+        type: array
       description:
         type: string
       id:
         type: integer
       name:
         type: string
-      updatedAt:
+    type: object
+  domain.Token:
+    properties:
+      appId:
+        type: integer
+      createdAt:
         type: string
+      expireTime:
+        type: integer
+      token:
+        type: string
+    type: object
+  domain.TokenCreateRequest:
+    properties:
+      appId:
+        type: integer
+      expireTimeMs:
+        type: integer
     required:
-    - name
+    - appId
+    type: object
+  domain.TokenRevokeRequest:
+    properties:
+      appId:
+        type: integer
+      tokens:
+        items:
+          type: string
+        type: array
+    required:
+    - appId
     type: object
   entity.Token:
     properties:
@@ -199,9 +232,6 @@ definitions:
         type: integer
       token:
         type: string
-    required:
-    - appId
-    - token
     type: object
   structure.GrpcError:
     properties:
@@ -214,20 +244,21 @@ definitions:
       errorMessage:
         type: string
     type: object
-host: localhost:9003
+host: localhost:9000
 info:
   contact: {}
   description: Сервис управления реестром внешних приложений и токенами аутентификации
   license:
     name: GNU GPL v3.0
-  title: ISP system service
-  version: 1.1.2
+  title: isp-system-service
+  version: 1.0.0
 paths:
   /access_list/get_by_id:
     post:
       consumes:
       - application/json
-      description: Возвращает список методов для приложения, для которых заданы настройки доступа
+      description: Возвращает список методов для приложения, для которых заданы настройки
+        доступа
       parameters:
       - description: идентификатор приложения
         in: body
@@ -258,13 +289,14 @@ paths:
     post:
       consumes:
       - application/json
-      description: Возвращает список методов для приложения, для которых заданы настройки доступа
+      description: Возвращает список методов для приложения, для которых заданы настройки
+        доступа
       parameters:
       - description: объект настройки доступа
         in: body
         name: body
         schema:
-          $ref: '#/definitions/domain.SetListRequest'
+          $ref: '#/definitions/domain.AccessListSetListRequest'
       produces:
       - application/json
       responses:
@@ -282,27 +314,27 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/structure.GrpcError'
-      summary: Настройть доступность списка методов для приложения
+      summary: Настроить доступность списка методов для приложения
       tags:
       - accessList
   /access_list/set_one:
     post:
       consumes:
       - application/json
-      description: Возвращает количество изменных строк
+      description: Возвращает количество измененных строк
       parameters:
       - description: объект для настройки доступа
         in: body
         name: body
         schema:
-          $ref: '#/definitions/entity.AccessList'
+          $ref: '#/definitions/domain.AccessListSetOneRequest'
       produces:
       - application/json
       responses:
         "200":
           description: количество измененных строк
           schema:
-            $ref: '#/definitions/domain.CountResponse'
+            $ref: '#/definitions/domain.AccessListSetOneResponse'
         "404":
           description: Not Found
           schema:
@@ -318,21 +350,22 @@ paths:
     post:
       consumes:
       - application/json
-      description: Если приложение с такими идентификатором существует, то обновляет данные, если нет, то добавляет данные в базу
+      description: Если приложение с такими идентификатором существует, то обновляет
+        данные, если нет, то добавляет данные в базу
       parameters:
       - description: Объект приложения
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/entity.Application'
+          $ref: '#/definitions/domain.ApplicationCreateUpdateRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.AppWithToken'
+            $ref: '#/definitions/domain.ApplicationWithTokens'
         "400":
           description: Bad Request
           schema:
@@ -356,7 +389,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Удаляет приложения по списку их идентификаторов, возвращает количество удаленных приложений
+      description: Удаляет приложения по списку их идентификаторов, возвращает количество
+        удаленных приложений
       parameters:
       - description: Массив идентификаторов приложений
         in: body
@@ -401,7 +435,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.AppWithToken'
+            $ref: '#/definitions/domain.ApplicationWithTokens'
         "400":
           description: Bad Request
           schema:
@@ -437,7 +471,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.AppWithToken'
+              $ref: '#/definitions/domain.ApplicationWithTokens'
             type: array
         "500":
           description: Internal Server Error
@@ -450,9 +484,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Возвращает список приложений по запрошенныму идентификатору сервиса
+      description: Возвращает список приложений по запрошенному идентификатору сервиса
       parameters:
-      - description: Идентификатор серсиса
+      - description: Идентификатор сервиса
         in: body
         name: body
         required: true
@@ -465,7 +499,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.AppWithToken'
+              $ref: '#/definitions/domain.ApplicationWithTokens'
             type: array
         "500":
           description: Internal Server Error
@@ -486,7 +520,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.DomainWithServices'
+              $ref: '#/definitions/domain.DomainWithService'
             type: array
         "500":
           description: Internal Server Error
@@ -499,21 +533,22 @@ paths:
     post:
       consumes:
       - application/json
-      description: Если домен с такими идентификатором существует, то обновляет данные, если нет, то добавляет данные в базу
+      description: Если домен с такими идентификатором существует, то обновляет данные,
+        если нет, то добавляет данные в базу
       parameters:
       - description: Объект домена
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/entity.Domain'
+          $ref: '#/definitions/domain.DomainCreateUpdateRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/entity.Domain'
+            $ref: '#/definitions/domain.Domain'
         "500":
           description: Internal Server Error
           schema:
@@ -525,7 +560,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Удаляет домены по списку их идентификаторов, возвращает количество удаленных доменов
+      description: Удаляет домены по списку их идентификаторов, возвращает количество
+        удаленных доменов
       parameters:
       - description: Массив идентификаторов доменов
         in: body
@@ -570,7 +606,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/entity.Domain'
+            $ref: '#/definitions/domain.Domain'
         "404":
           description: Not Found
           schema:
@@ -600,7 +636,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/entity.Domain'
+              $ref: '#/definitions/domain.Domain'
             type: array
         "500":
           description: Internal Server Error
@@ -613,21 +649,22 @@ paths:
     post:
       consumes:
       - application/json
-      description: Если сервис с такими идентификатором существует, то обновляет данные, если нет, то добавляет данные в базу
+      description: Если сервис с такими идентификатором существует, то обновляет данные,
+        если нет, то добавляет данные в базу
       parameters:
       - description: Объект сервиса
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/entity.Service'
+          $ref: '#/definitions/domain.ServiceCreateUpdateRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/entity.Service'
+            $ref: '#/definitions/domain.Service'
         "400":
           description: Bad Request
           schema:
@@ -651,7 +688,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Удаляет сервисов по списку их идентификаторов, возвращает количество удаленных сервисов
+      description: Удаляет сервисов по списку их идентификаторов, возвращает количество
+        удаленных сервисов
       parameters:
       - description: Массив идентификаторов сервисов
         in: body
@@ -699,7 +737,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/entity.Service'
+              $ref: '#/definitions/domain.Service'
             type: array
         "500":
           description: Internal Server Error
@@ -726,7 +764,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/entity.Service'
+            $ref: '#/definitions/domain.Service'
         "404":
           description: Not Found
           schema:
@@ -757,7 +795,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/entity.Service'
+              $ref: '#/definitions/domain.Service'
             type: array
         "500":
           description: Internal Server Error
@@ -766,149 +804,25 @@ paths:
       summary: Получить список сервисов по идентификатору домена
       tags:
       - service
-  /system/create_update_system:
-    post:
-      consumes:
-      - application/json
-      description: Если система с такими идентификатором существует, то обновляет данные, если нет, то добавляет данные в базу
-      parameters:
-      - description: Объект системы
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/entity.System'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/entity.System'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/structure.GrpcError'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/structure.GrpcError'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/structure.GrpcError'
-      summary: Создать/обновить систему
-      tags:
-      - system
-  /system/delete_systems:
-    post:
-      consumes:
-      - application/json
-      description: Удаляет системы по списку их идентификаторов, возвращает количество удаленных систем
-      parameters:
-      - description: Массив идентификаторов систем
-        in: body
-        name: body
-        schema:
-          items:
-            type: integer
-          type: array
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/domain.DeleteResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/structure.GrpcError'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/structure.GrpcError'
-      summary: Удалить системы
-      tags:
-      - system
-  /system/get_system_by_id:
-    post:
-      consumes:
-      - application/json
-      description: Возвращает описание системы по ее идентификатору
-      parameters:
-      - description: Идентификатор системы
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/domain.Identity'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/entity.System'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/structure.GrpcError'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/structure.GrpcError'
-      summary: Получить систему по идентификатору
-      tags:
-      - system
-  /system/get_systems:
-    post:
-      consumes:
-      - application/json
-      description: Возвращает список систем по их идентификаторам
-      parameters:
-      - description: Массив идентификаторов систем
-        in: body
-        name: body
-        schema:
-          items:
-            type: integer
-          type: array
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/entity.System'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/structure.GrpcError'
-      summary: Получить список систем
-      tags:
-      - system
   /token/create_token:
     post:
       consumes:
       - application/json
-      description: Созддает токен и привязывает его к приложению
+      description: Создает токен и привязывает его к приложению
       parameters:
       - description: Объект создания токена
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/domain.CreateTokenRequest'
+          $ref: '#/definitions/domain.TokenCreateRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.AppWithToken'
+            $ref: '#/definitions/domain.ApplicationWithTokens'
         "500":
           description: Internal Server Error
           schema:
@@ -941,28 +855,28 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/structure.GrpcError'
-      summary: Получить токены по идентификаотру приложения
+      summary: Получить токены по идентификатору приложения
       tags:
       - token
   /token/revoke_tokens:
     post:
       consumes:
       - application/json
-      description: Отвязывает токены от приложений и удялет их
+      description: Отвязывает токены от приложений и удаляет их
       parameters:
       - description: Объект отзыва токенов
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/domain.RevokeTokensRequest'
+          $ref: '#/definitions/domain.TokenRevokeRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.AppWithToken'
+            $ref: '#/definitions/domain.ApplicationWithTokens'
         "500":
           description: Internal Server Error
           schema:
@@ -974,7 +888,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Отвязывает токены от приложений и удаляет их по идентификатору приложения
+      description: Отвязывает токены от приложений и удаляет их по идентификатору
+        приложения
       parameters:
       - description: Идентификатор приложения
         in: body
