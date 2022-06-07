@@ -1,3 +1,13 @@
+### v3.0.0
+* migrate to isp-kit
+* split domain and entity structs
+* prepare to remove system block
+  * remove CRUD for system
+  * use default system_id
+* remove migration initializing city_module
+* unite requests to redis into one directory
+  * prepare to remove redis
+* update go to 1.17
 ### v2.2.7
 * updated dependencies
 * migrated to common local config

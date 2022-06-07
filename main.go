@@ -1,28 +1,19 @@
 package main
 
 import (
-	"context"
-	"os"
-
-	"github.com/integration-system/isp-lib/v2/backend"
-	"github.com/integration-system/isp-lib/v2/bootstrap"
-	"github.com/integration-system/isp-lib/v2/config/schema"
-	"github.com/integration-system/isp-lib/v2/metric"
-	"github.com/integration-system/isp-lib/v2/structure"
-	log "github.com/integration-system/isp-log"
-	"github.com/integration-system/isp-log/stdcodes"
+	"github.com/integration-system/isp-kit/bootstrap"
+	"github.com/integration-system/isp-kit/shutdown"
+	"isp-system-service/assembly"
 	"isp-system-service/conf"
-	_ "isp-system-service/docs"
-	"isp-system-service/helper"
-	"isp-system-service/migrations"
-	"isp-system-service/model"
-	"isp-system-service/redis"
+	"isp-system-service/routes"
 )
 
-var version = "0.1.0"
+var (
+	version = "1.0.0"
+)
 
-// @title ISP system service
-// @version 1.1.2
+// @title isp-system-service
+// @version 1.0.0
 // @description Сервис управления реестром внешних приложений и токенами аутентификации
 
 // @license.name GNU GPL v3.0
@@ -33,70 +24,26 @@ var version = "0.1.0"
 //go:generate swag init --parseDependency
 //go:generate rm -f docs/swagger.json
 func main() {
-	bootstrap.
-		ServiceBootstrap(&conf.Configuration{}, &conf.RemoteConfig{}).
-		OnLocalConfigLoad(onLocalConfigLoad).
-		DefaultRemoteConfigPath(schema.ResolveDefaultConfigPath("default_remote_config.json")).
-		SocketConfiguration(socketConfiguration).
-		DeclareMe(routesData).
-		OnRemoteConfigReceive(onRemoteConfigReceive).
-		OnShutdown(onShutdown).
-		OnSocketErrorReceive(onRemoteErrorReceive).
-		OnConfigErrorReceive(onRemoteConfigErrorReceive).
-		SubscribeBroadcastEvent(bootstrap.ListenRestartEvent()).
-		Run()
-}
+	boot := bootstrap.New(version, conf.Remote{}, routes.EndpointDescriptors())
+	app := boot.App
+	logger := app.Logger()
 
-func onRemoteErrorReceive(errorMessage map[string]interface{}) {
-	log.WithMetadata(errorMessage).Error(stdcodes.ReceiveErrorFromConfig, "error from config service")
-}
-
-func onRemoteConfigErrorReceive(errorMessage string) {
-	log.WithMetadata(map[string]interface{}{
-		"message": errorMessage,
-	}).Error(stdcodes.ReceiveErrorOnGettingConfigFromConfig, "error on getting remote configuration")
-}
-
-func socketConfiguration(cfg interface{}) structure.SocketConfiguration {
-	appConfig := cfg.(*conf.Configuration)
-
-	return structure.SocketConfiguration{
-		Host:   appConfig.ConfigServiceAddress.IP,
-		Port:   appConfig.ConfigServiceAddress.Port,
-		Secure: false,
-		UrlParams: map[string]string{
-			"module_name": appConfig.ModuleName,
-		},
+	assembly, err := assembly.New(boot)
+	if err != nil {
+		logger.Fatal(app.Context(), err)
 	}
-}
+	app.AddRunners(assembly.Runners()...)
+	app.AddClosers(assembly.Closers()...)
 
-func onShutdown(_ context.Context, _ os.Signal) {
-	backend.StopGrpcServer()
-	_ = model.DbClient.Close()
-	redis.Client.Close()
-}
+	shutdown.On(func() {
+		logger.Info(app.Context(), "starting shutdown")
+		app.Shutdown()
+		logger.Info(app.Context(), "shutdown completed")
+	})
 
-func onRemoteConfigReceive(remoteConfig, oldConfig *conf.RemoteConfig) {
-	migrations.DatabaseConfig = remoteConfig.Database
-	redis.Client.ReceiveConfiguration(remoteConfig.Redis)
-	model.DbClient.ReceiveConfiguration(remoteConfig.Database)
-	metric.InitCollectors(remoteConfig.Metrics, oldConfig.Metrics)
-	metric.InitHttpServer(remoteConfig.Metrics)
-}
-
-func onLocalConfigLoad(cfg *conf.Configuration) {
-	handlers := helper.GetAllHandlers()
-	service := backend.GetDefaultService(cfg.ModuleName, handlers...)
-	backend.StartBackendGrpcServer(cfg.GrpcInnerAddress, service)
-}
-
-func routesData(localConfig interface{}) bootstrap.ModuleInfo {
-	cfg := localConfig.(*conf.Configuration)
-
-	return bootstrap.ModuleInfo{
-		ModuleName:       cfg.ModuleName,
-		ModuleVersion:    version,
-		GrpcOuterAddress: cfg.GrpcOuterAddress,
-		Handlers:         helper.GetAllHandlers(),
+	err = app.Run()
+	if err != nil {
+		app.Shutdown()
+		logger.Fatal(app.Context(), err)
 	}
 }

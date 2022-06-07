@@ -3,46 +3,54 @@ package service
 import (
 	"crypto/rand"
 	"encoding/hex"
-	mathRand "math/rand"
 	"time"
 
-	"isp-system-service/conf"
-
 	"github.com/dgrijalva/jwt-go"
-	"github.com/integration-system/isp-lib/v2/config"
+	"github.com/pkg/errors"
 )
 
-var Jwt jwtService
-
-type jwtService struct{}
-
-func init() {
-	mathRand.Seed(time.Now().UnixNano())
+type Jwt struct {
+	secret string
 }
 
-func (s jwtService) CreateApplication(appId int32, expTime int64) (string, error) {
-	var (
-		claims  = jwt.MapClaims{}
-		created = time.Now()
-		secret  = config.GetRemote().(*conf.RemoteConfig).ApplicationSecret
-	)
+func NewJwt(secret string) Jwt {
+	return Jwt{
+		secret: secret,
+	}
+}
 
-	claims["appId"] = appId
-	claims["iat"] = created.Unix()
-	claims["salt"] = s.getSalt()
-	if expTime > 0 {
-		claims["exp"] = created.Add(time.Millisecond * time.Duration(expTime)).Unix()
+func (s Jwt) CreateApplicationToken(appId int, expireTime int) (string, error) {
+	random, err := s.generateSalt()
+	if err != nil {
+		return "", errors.WithMessage(err, "generate salt")
 	}
 
-	return jwt.NewWithClaims(jwt.SigningMethodHS512, claims).SignedString([]byte(secret))
+	created := time.Now().UTC()
+	claims := jwt.MapClaims{
+		"appId": appId,
+		"iat":   created.Unix(),
+		"salt":  random,
+	}
+	if expireTime > 0 {
+		claims["exp"] = created.Add(time.Millisecond * time.Duration(expireTime)).Unix()
+	}
+
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS512, claims).
+		SignedString([]byte(s.secret))
+	if err != nil {
+		return "", errors.WithMessage(err, "signed token")
+	}
+
+	return token, nil
 }
 
-func (jwtService) getSalt() string {
-	const randIntSize = 30
-	const minLen = 10
-	randomInt := mathRand.Intn(randIntSize) //nolint:gosec
-	salt := make([]byte, randomInt+minLen)
-	_, _ = rand.Read(salt)
+func (Jwt) generateSalt() (string, error) {
+	cryptoRand := make([]byte, 16) //nolint:gomnd
+	_, err := rand.Read(cryptoRand)
+	if err != nil {
+		return "", errors.WithMessage(err, "crypto/rand read")
+	}
+	random := hex.EncodeToString(cryptoRand)
 
-	return hex.EncodeToString(salt)
+	return random, nil
 }
