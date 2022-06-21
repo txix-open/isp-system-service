@@ -6,5 +6,5 @@ import (
 
 type Local struct {
 	*bootstrap.LocalConfig
-	InstanceUuid string
+	InstanceUuid string `valid:"required"`
 }

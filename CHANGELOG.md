@@ -1,3 +1,5 @@
+### v3.0.1
+* mark `InstanceUuid` as required
 ### v3.0.0
 * migrate to isp-kit
 * split domain and entity structs
