@@ -6,7 +6,7 @@
     "password": "{{ msp_pgsql_password }}",
     "username": "{{ msp_pgsql_user }}",
     "host": "{{ msp_pgsql_address }}",
-    "port": {{ msp_pgsql_port }}
+    "port": 5432
   },
   "redis": {
     "address": {
