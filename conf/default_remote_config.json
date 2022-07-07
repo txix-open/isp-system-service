@@ -1,7 +1,7 @@
 {
   "logLevel": "debug",
   "database": {
-    "schema": "mdm_service",
+    "schema": "isp_system_service",
     "database": "{{ msp_pgsql_name }}",
     "password": "{{ msp_pgsql_password }}",
     "username": "{{ msp_pgsql_user }}",
