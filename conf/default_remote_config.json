@@ -6,14 +6,15 @@
     "password": "{{ msp_pgsql_password }}",
     "username": "{{ msp_pgsql_user }}",
     "host": "{{ msp_pgsql_address }}",
-    "port": 5432
+    "port": {{ msp_pgsql_port }}
   },
   "redis": {
     "address": {
-      "ip": "127.0.0.1",
-      "port": "6379"
+      "ip": "{{ msp_redis_address }}",
+      "port": "{{ msp_redis_port }}"
     },
-    "defaultDB": 0
+    "defaultDB": 0,
+    "password": "{{ msp_redis_password }}"
   },
-  "applicationSecret": "SECRET_ACCESS_KEY"
+  "applicationSecret": "{{ msp_app_secret }}"
 }
