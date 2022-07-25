@@ -215,7 +215,7 @@ func (s Application) CreateUpdate(ctx context.Context, req domain.ApplicationCre
 		return result[0], nil
 	}
 
-	if existed.Id != req.Id {
+	if existed != nil && existed.Id != req.Id {
 		return nil, domain.ErrApplicationDuplicateName
 	}
 
