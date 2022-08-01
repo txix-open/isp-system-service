@@ -16,29 +16,21 @@ import (
 )
 
 type Assembly struct {
-	boot         *bootstrap.Bootstrap
-	db           *dbrx.Client
-	server       *grpc.Server
-	logger       *log.Adapter
-	instanceUuid string
+	boot   *bootstrap.Bootstrap
+	db     *dbrx.Client
+	server *grpc.Server
+	logger *log.Adapter
 }
 
 func New(boot *bootstrap.Bootstrap) (*Assembly, error) {
 	dbCli := dbrx.New(dbx.WithMigration(boot.MigrationsDir))
 	server := grpc.NewServer()
 
-	localConfig := conf.Local{}
-	err := boot.App.Config().Read(&localConfig)
-	if err != nil {
-		return nil, errors.WithMessage(err, "read local config")
-	}
-
 	return &Assembly{
-		boot:         boot,
-		db:           dbCli,
-		server:       server,
-		logger:       boot.App.Logger(),
-		instanceUuid: localConfig.InstanceUuid,
+		boot:   boot,
+		db:     dbCli,
+		server: server,
+		logger: boot.App.Logger(),
 	}, nil
 }
 
