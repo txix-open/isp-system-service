@@ -45,13 +45,7 @@ type ITokenTxRunner interface {
 	TokenRevokeTx(ctx context.Context, tx func(ctx context.Context, tx ITokenRevokeTx) error) error
 }
 
-type ITokenRedis interface {
-	SetApplicationToken(ctx context.Context, req entity.RedisSetToken) error
-	DeleteToken(ctx context.Context, tokens []string) error
-}
-
 type Token struct {
-	redisRep          ITokenRedis
 	defaultExpireTime int
 	jwt               ITokenJwt
 	appEnrich         ITokenAppEnrich
@@ -63,7 +57,6 @@ type Token struct {
 }
 
 func NewToken(
-	redisRep ITokenRedis,
 	defaultExpireTime int,
 	jwtGenerate ITokenJwt,
 	appEnrich ITokenAppEnrich,
@@ -74,7 +67,6 @@ func NewToken(
 	tokenRep ITokenTokenRep,
 ) Token {
 	return Token{
-		redisRep:          redisRep,
 		defaultExpireTime: defaultExpireTime,
 		appEnrich:         appEnrich,
 		jwt:               jwtGenerate,
@@ -111,7 +103,7 @@ func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 		return nil, errors.WithMessagef(err, "get service by id")
 	}
 
-	domainEntity, err := s.domainRep.GetDomainById(ctx, serviceEntity.DomainId)
+	_, err = s.domainRep.GetDomainById(ctx, serviceEntity.DomainId)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get domain by id")
 	}
@@ -127,20 +119,9 @@ func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 	}
 
 	err = s.tx.TokenCreateTx(ctx, func(ctx context.Context, tx ITokenCreateTx) error {
-		tokenEntity, err := tx.SaveToken(ctx, token, req.AppId, expTime)
+		_, err = tx.SaveToken(ctx, token, req.AppId, expTime)
 		if err != nil {
 			return errors.WithMessagef(err, "tx save token")
-		}
-
-		err = s.redisRep.SetApplicationToken(ctx, entity.RedisSetToken{
-			Token:               tokenEntity.Token,
-			ExpireTime:          tokenEntity.ExpireTime,
-			DomainIdentity:      domainEntity.Id,
-			ServiceIdentity:     serviceEntity.Id,
-			ApplicationIdentity: applicationEntity.Id,
-		})
-		if err != nil {
-			return errors.WithMessage(err, "redis set token")
 		}
 
 		return nil
@@ -200,11 +181,6 @@ func (s Token) revokeTokens(ctx context.Context, tokens []string) (*domain.Delet
 		deleted, err := tx.DeleteToken(ctx, tokens)
 		if err != nil {
 			return errors.WithMessagef(err, "tx delete token")
-		}
-
-		err = s.redisRep.DeleteToken(ctx, tokens)
-		if err != nil {
-			return errors.WithMessage(err, "redis delete token")
 		}
 
 		count = deleted

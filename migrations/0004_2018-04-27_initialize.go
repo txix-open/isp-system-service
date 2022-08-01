@@ -1,7 +1,6 @@
 package migrations
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -11,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/pressly/goose"
 	"isp-system-service/domain"
-	"isp-system-service/entity"
 )
 
 const (
@@ -29,14 +27,9 @@ func init() {
 	goose.AddMigration(Initialize.Up, Initialize.Down)
 }
 
-type IRedis interface {
-	SetApplicationToken(ctx context.Context, req entity.RedisSetToken) error
-}
-
 var Initialize = &initializeMigration{}
 
 type initializeMigration struct {
-	redis        IRedis
 	migrationDir string
 	schema       string
 }
@@ -47,8 +40,7 @@ type identity struct {
 	serviceId int
 }
 
-func (i *initializeMigration) SetParams(redis IRedis, migrationDir string, schema string) {
-	i.redis = redis
+func (i *initializeMigration) SetParams(migrationDir string, schema string) {
 	i.migrationDir = migrationDir
 	i.schema = schema
 }
@@ -131,17 +123,6 @@ func (i *initializeMigration) insert(tx *sql.Tx, domainInfo domain.DomainWithSer
 				_, err = i.insertNode(tx, insertToken, false, i.schema, t.Token, appId, t.ExpireTime)
 				if err != nil {
 					return nil, errors.WithMessage(err, "insert token")
-				}
-
-				err = i.redis.SetApplicationToken(context.Background(), entity.RedisSetToken{
-					Token:               t.Token,
-					ExpireTime:          t.ExpireTime,
-					DomainIdentity:      domainId,
-					ServiceIdentity:     serviceId,
-					ApplicationIdentity: appId,
-				})
-				if err != nil {
-					return nil, errors.WithMessage(err, "redis set token")
 				}
 			}
 		}

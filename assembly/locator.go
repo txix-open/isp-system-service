@@ -7,7 +7,6 @@ import (
 	"github.com/integration-system/isp-kit/log"
 	"isp-system-service/conf"
 	"isp-system-service/controller"
-	"isp-system-service/redis"
 	"isp-system-service/repository"
 	"isp-system-service/routes"
 	"isp-system-service/service"
@@ -21,14 +20,12 @@ type DB interface {
 
 type Locator struct {
 	db     DB
-	redis  redis.Client
 	logger log.Logger
 }
 
-func NewLocator(db DB, redisCli redis.Client, logger log.Logger) Locator {
+func NewLocator(db DB, logger log.Logger) Locator {
 	return Locator{
 		db:     db,
-		redis:  redisCli,
 		logger: logger,
 	}
 }
@@ -41,13 +38,13 @@ func (l Locator) Handler(cfg conf.Remote) isp.BackendServiceServer {
 	serviceRep := repository.NewService(l.db)
 	tokenRep := repository.NewToken(l.db)
 
-	accessListService := service.NewAccessList(l.redis, txManager, accessListRep, applicationRep)
-	applicationService := service.NewApplication(l.redis, txManager, applicationRep, domainRep, serviceRep, tokenRep)
+	accessListService := service.NewAccessList(txManager, accessListRep, applicationRep)
+	applicationService := service.NewApplication(txManager, applicationRep, domainRep, serviceRep, tokenRep)
 	domainService := service.NewDomain(domainRep)
 	serviceService := service.NewService(domainRep, serviceRep)
 
 	jwtService := service.NewJwt(cfg.ApplicationSecret)
-	tokenService := service.NewToken(l.redis, cfg.DefaultTokenExpireTime, jwtService, applicationService, txManager,
+	tokenService := service.NewToken(cfg.DefaultTokenExpireTime, jwtService, applicationService, txManager,
 		applicationRep, domainRep, serviceRep, tokenRep,
 	)
 

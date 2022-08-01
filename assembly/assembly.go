@@ -10,17 +10,14 @@ import (
 	"github.com/integration-system/isp-kit/dbx"
 	"github.com/integration-system/isp-kit/grpc"
 	"github.com/integration-system/isp-kit/log"
-	rd "github.com/integration-system/isp-lib/v2/redis"
 	"github.com/pkg/errors"
 	"isp-system-service/conf"
 	"isp-system-service/migrations"
-	"isp-system-service/redis"
 )
 
 type Assembly struct {
 	boot         *bootstrap.Bootstrap
 	db           *dbrx.Client
-	redis        *rd.RxClient
 	server       *grpc.Server
 	logger       *log.Adapter
 	instanceUuid string
@@ -36,17 +33,9 @@ func New(boot *bootstrap.Bootstrap) (*Assembly, error) {
 		return nil, errors.WithMessage(err, "read local config")
 	}
 
-	redisCli := rd.NewRxClient(
-		rd.WithInitHandler(func(c *rd.Client, err error) {
-			if err != nil {
-				boot.App.Logger().Fatal(c.Context(), "redis init", log.Any("err", err))
-			}
-		}))
-
 	return &Assembly{
 		boot:         boot,
 		db:           dbCli,
-		redis:        redisCli,
 		server:       server,
 		logger:       boot.App.Logger(),
 		instanceUuid: localConfig.InstanceUuid,
@@ -63,10 +52,7 @@ func (a *Assembly) ReceiveConfig(ctx context.Context, remoteConfig []byte) error
 		a.logger.Fatal(ctx, errors.WithMessage(err, "upgrade remote config"))
 	}
 
-	a.redis.ReceiveConfiguration(newCfg.Redis)
-	redisCli := redis.NewClient(a.instanceUuid, a.redis)
-
-	migrations.Initialize.SetParams(redisCli, a.boot.MigrationsDir, newCfg.Database.Schema)
+	migrations.Initialize.SetParams(a.boot.MigrationsDir, newCfg.Database.Schema)
 
 	a.logger.SetLevel(newCfg.LogLevel)
 
@@ -75,7 +61,7 @@ func (a *Assembly) ReceiveConfig(ctx context.Context, remoteConfig []byte) error
 		a.logger.Fatal(ctx, errors.WithMessage(err, "upgrade db client"), log.Any("config", newCfg.Database))
 	}
 
-	locator := NewLocator(a.db, redisCli, a.logger)
+	locator := NewLocator(a.db, a.logger)
 	handler := locator.Handler(newCfg)
 	a.server.Upgrade(handler)
 
@@ -102,7 +88,6 @@ func (a *Assembly) Closers() []app.Closer {
 			a.server.Shutdown()
 			return nil
 		}),
-		a.redis,
 		a.db,
 	}
 }
