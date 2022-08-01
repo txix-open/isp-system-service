@@ -15,4 +15,9 @@ var (
 
 	ErrApplicationNotFound      = errors.New("application not found")
 	ErrApplicationDuplicateName = errors.New("application name already exist")
+
+	ErrTokenNotFound = errors.New("token not found")
+	ErrTokenExpired  = errors.New("token is expired")
+
+	ErrAccessListNotFound = errors.New("access_list not found")
 )
