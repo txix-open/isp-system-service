@@ -14,6 +14,7 @@ type Controllers struct {
 	Service     controller.Service
 	Application controller.Application
 	Token       controller.Token
+	Secure      controller.Secure
 }
 
 func EndpointDescriptors() []cluster.EndpointDescriptor {
@@ -30,12 +31,28 @@ func Handler(wrapper endpoint.Wrapper, c Controllers) isp.BackendServiceServer {
 
 func endpointDescriptors(c Controllers) []cluster.EndpointDescriptor {
 	return concatCluster([][]cluster.EndpointDescriptor{
+		secureCluster(c),
 		accessListCluster(c),
 		domainCluster(c),
 		serviceCluster(c),
 		applicationCluster(c),
 		tokenCluster(c),
 	})
+}
+
+func secureCluster(c Controllers) []cluster.EndpointDescriptor {
+	return []cluster.EndpointDescriptor{
+		{
+			Path:    "system/secure/authenticate",
+			Inner:   true,
+			Handler: c.Secure.Authenticate,
+		},
+		{
+			Path:    "system/secure/authorize",
+			Inner:   true,
+			Handler: c.Secure.Authorize,
+		},
+	}
 }
 
 func accessListCluster(c Controllers) []cluster.EndpointDescriptor {

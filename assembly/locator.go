@@ -10,6 +10,7 @@ import (
 	"isp-system-service/repository"
 	"isp-system-service/routes"
 	"isp-system-service/service"
+	"isp-system-service/service/secure"
 	"isp-system-service/transaction"
 )
 
@@ -38,6 +39,7 @@ func (l Locator) Handler(cfg conf.Remote) isp.BackendServiceServer {
 	serviceRep := repository.NewService(l.db)
 	tokenRep := repository.NewToken(l.db)
 
+	secureService := secure.NewService(tokenRep, accessListRep)
 	accessListService := service.NewAccessList(txManager, accessListRep, applicationRep)
 	applicationService := service.NewApplication(txManager, applicationRep, domainRep, serviceRep, tokenRep)
 	domainService := service.NewDomain(domainRep)
@@ -48,6 +50,7 @@ func (l Locator) Handler(cfg conf.Remote) isp.BackendServiceServer {
 		applicationRep, domainRep, serviceRep, tokenRep,
 	)
 
+	secureController := controller.NewSecure(secureService)
 	accessListController := controller.NewAccessList(accessListService)
 	applicationController := controller.NewApplication(applicationService)
 	domainController := controller.NewDomain(domainService)
@@ -55,6 +58,7 @@ func (l Locator) Handler(cfg conf.Remote) isp.BackendServiceServer {
 	tokenController := controller.NewToken(tokenService)
 
 	c := routes.Controllers{
+		Secure:      secureController,
 		AccessList:  accessListController,
 		Domain:      domainController,
 		Service:     serviceController,
