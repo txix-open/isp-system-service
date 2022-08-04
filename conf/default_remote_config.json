@@ -7,6 +7,5 @@
     "username": "{{ msp_pgsql_user }}",
     "host": "{{ msp_pgsql_address }}",
     "port": 5432
-  },
-  "applicationSecret": "{{ msp_app_secret }}"
+  }
 }

@@ -8,8 +8,8 @@ import (
 	"isp-system-service/entity"
 )
 
-type ITokenJwt interface {
-	CreateApplicationToken(appId int, expireTime int) (string, error)
+type ITokenSource interface {
+	CreateApplicationToken() (string, error)
 }
 
 type ITokenAppEnrich interface {
@@ -47,7 +47,7 @@ type ITokenTxRunner interface {
 
 type Token struct {
 	defaultExpireTime int
-	jwt               ITokenJwt
+	jwt               ITokenSource
 	appEnrich         ITokenAppEnrich
 	tx                ITokenTxRunner
 	appRep            ITokenApplicationRep
@@ -58,7 +58,7 @@ type Token struct {
 
 func NewToken(
 	defaultExpireTime int,
-	jwtGenerate ITokenJwt,
+	jwtGenerate ITokenSource,
 	appEnrich ITokenAppEnrich,
 	tx ITokenTxRunner,
 	appRep ITokenApplicationRep,
@@ -113,9 +113,9 @@ func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 		expTime = s.defaultExpireTime
 	}
 
-	token, err := s.jwt.CreateApplicationToken(req.AppId, expTime)
+	token, err := s.jwt.CreateApplicationToken()
 	if err != nil {
-		return nil, errors.WithMessagef(err, "jwt create application token")
+		return nil, errors.WithMessagef(err, "create application token")
 	}
 
 	err = s.tx.TokenCreateTx(ctx, func(ctx context.Context, tx ITokenCreateTx) error {
