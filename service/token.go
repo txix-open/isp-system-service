@@ -46,18 +46,16 @@ type ITokenTxRunner interface {
 }
 
 type Token struct {
-	defaultExpireTime int
-	jwt               ITokenSource
-	appEnrich         ITokenAppEnrich
-	tx                ITokenTxRunner
-	appRep            ITokenApplicationRep
-	domainRep         ITokenDomainRep
-	serviceRep        ITokenServiceRep
-	tokenRep          ITokenTokenRep
+	jwt        ITokenSource
+	appEnrich  ITokenAppEnrich
+	tx         ITokenTxRunner
+	appRep     ITokenApplicationRep
+	domainRep  ITokenDomainRep
+	serviceRep ITokenServiceRep
+	tokenRep   ITokenTokenRep
 }
 
 func NewToken(
-	defaultExpireTime int,
 	jwtGenerate ITokenSource,
 	appEnrich ITokenAppEnrich,
 	tx ITokenTxRunner,
@@ -67,14 +65,13 @@ func NewToken(
 	tokenRep ITokenTokenRep,
 ) Token {
 	return Token{
-		defaultExpireTime: defaultExpireTime,
-		appEnrich:         appEnrich,
-		jwt:               jwtGenerate,
-		tx:                tx,
-		appRep:            appRep,
-		domainRep:         domainRep,
-		serviceRep:        serviceRep,
-		tokenRep:          tokenRep,
+		appEnrich:  appEnrich,
+		jwt:        jwtGenerate,
+		tx:         tx,
+		appRep:     appRep,
+		domainRep:  domainRep,
+		serviceRep: serviceRep,
+		tokenRep:   tokenRep,
 	}
 }
 
@@ -108,18 +105,13 @@ func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 		return nil, errors.WithMessagef(err, "get domain by id")
 	}
 
-	expTime := req.ExpireTimeMs
-	if expTime == 0 {
-		expTime = s.defaultExpireTime
-	}
-
 	token, err := s.jwt.CreateApplicationToken()
 	if err != nil {
 		return nil, errors.WithMessagef(err, "create application token")
 	}
 
 	err = s.tx.TokenCreateTx(ctx, func(ctx context.Context, tx ITokenCreateTx) error {
-		_, err = tx.SaveToken(ctx, token, req.AppId, expTime)
+		_, err = tx.SaveToken(ctx, token, req.AppId, req.ExpireTimeMs)
 		if err != nil {
 			return errors.WithMessagef(err, "tx save token")
 		}

@@ -17,7 +17,6 @@ func init() {
 }
 
 type Remote struct {
-	Database               dbx.Config `schema:"Настройка базы данных"`
-	LogLevel               log.Level  `schemaGen:"logLevel" schema:"Уровень логирования"`
-	DefaultTokenExpireTime int        `schema:"Время жизни токена по умолчанию,время жизни токена в миллисекундах с момента его создания. если = -1 - время жизни неограниченно"`
+	Database dbx.Config `schema:"Настройка базы данных"`
+	LogLevel log.Level  `schemaGen:"logLevel" schema:"Уровень логирования"`
 }

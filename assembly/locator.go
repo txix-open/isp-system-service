@@ -46,7 +46,7 @@ func (l Locator) Handler(cfg conf.Remote) isp.BackendServiceServer {
 	serviceService := service.NewService(domainRep, serviceRep)
 
 	jwtService := service.NewTokenSource()
-	tokenService := service.NewToken(cfg.DefaultTokenExpireTime, jwtService, applicationService, txManager,
+	tokenService := service.NewToken(jwtService, applicationService, txManager,
 		applicationRep, domainRep, serviceRep, tokenRep,
 	)
 

@@ -18,5 +18,5 @@ type TokenRevokeRequest struct {
 
 type TokenCreateRequest struct {
 	AppId        int `valid:"required~Required"`
-	ExpireTimeMs int
+	ExpireTimeMs int `valid:"required~Required"`
 }
