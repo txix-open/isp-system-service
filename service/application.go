@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"isp-system-service/domain"
@@ -32,8 +31,6 @@ type IApplicationDomainRep interface {
 }
 
 type IApplicationDeleteTx interface {
-	GetAccessListByAppIdList(ctx context.Context, appIdList []int) ([]entity.AccessList, error)
-	GetTokenByAppIdList(ctx context.Context, appIdList []int) ([]entity.Token, error)
 	DeleteApplicationByIdList(ctx context.Context, idList []int) (int, error)
 }
 
@@ -41,12 +38,7 @@ type IApplicationTxRunner interface {
 	ApplicationDeleteTx(ctx context.Context, tx func(ctx context.Context, tx IApplicationDeleteTx) error) error
 }
 
-type IApplicationRedis interface {
-	DeleteApplication(ctx context.Context, appTokens []string, applicationPermissionList []string) error
-}
-
 type Application struct {
-	redis          IApplicationRedis
 	tx             IApplicationTxRunner
 	applicationRep IApplicationApplicationRep
 	domainRep      IApplicationDomainRep
@@ -55,7 +47,6 @@ type Application struct {
 }
 
 func NewApplication(
-	redis IApplicationRedis,
 	tx IApplicationTxRunner,
 	applicationRep IApplicationApplicationRep,
 	domainRep IApplicationDomainRep,
@@ -63,7 +54,6 @@ func NewApplication(
 	tokenRep IApplicationTokenRep,
 ) Application {
 	return Application{
-		redis:          redis,
 		tx:             tx,
 		applicationRep: applicationRep,
 		domainRep:      domainRep,
@@ -240,34 +230,9 @@ func (s Application) CreateUpdate(ctx context.Context, req domain.ApplicationCre
 func (s Application) Delete(ctx context.Context, idList []int) (int, error) {
 	count := 0
 	err := s.tx.ApplicationDeleteTx(ctx, func(ctx context.Context, tx IApplicationDeleteTx) error {
-		accessList, err := tx.GetAccessListByAppIdList(ctx, idList)
-		if err != nil {
-			return errors.WithMessage(err, "get access list by app_id list")
-		}
-
-		permissionDeleteList := make([]string, 0)
-		for _, access := range accessList {
-			permissionDeleteList = append(permissionDeleteList, fmt.Sprintf("%d|%s", access.AppId, access.Method))
-		}
-
-		tokens, err := tx.GetTokenByAppIdList(ctx, idList)
-		if err != nil {
-			return errors.WithMessage(err, "get token by app_id list")
-		}
-
-		tokenIdList := make([]string, len(tokens))
-		for i, t := range tokens {
-			tokenIdList[i] = t.Token
-		}
-
 		deletedApp, err := tx.DeleteApplicationByIdList(ctx, idList)
 		if err != nil {
 			return errors.WithMessage(err, "delete application by id list")
-		}
-
-		err = s.redis.DeleteApplication(ctx, tokenIdList, permissionDeleteList)
-		if err != nil {
-			return errors.WithMessage(err, "redis delete application")
 		}
 
 		count = deletedApp

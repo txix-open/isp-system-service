@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/integration-system/isp-kit/db"
 	"github.com/integration-system/isp-kit/db/query"
 	"github.com/pkg/errors"
+	"isp-system-service/domain"
 	"isp-system-service/entity"
 )
 
@@ -18,6 +20,24 @@ func NewAccessList(db db.DB) AccessList {
 	return AccessList{
 		db: db,
 	}
+}
+
+func (r AccessList) GetAccessListByAppIdAndMethod(ctx context.Context, appId int, method string) (*entity.AccessList, error) {
+	q := `
+	SELECT app_id, method, value
+	FROM access_list
+	WHERE app_id = $1 AND method = $2
+`
+	result := entity.AccessList{}
+	err := r.db.SelectRow(ctx, &result, q, appId, method)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, domain.ErrAccessListNotFound
+		}
+		return nil, errors.WithMessagef(err, "select db")
+	}
+
+	return &result, nil
 }
 
 func (r AccessList) GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error) {

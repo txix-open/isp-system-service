@@ -7,10 +7,10 @@ import (
 	"github.com/integration-system/isp-kit/log"
 	"isp-system-service/conf"
 	"isp-system-service/controller"
-	"isp-system-service/redis"
 	"isp-system-service/repository"
 	"isp-system-service/routes"
 	"isp-system-service/service"
+	"isp-system-service/service/secure"
 	"isp-system-service/transaction"
 )
 
@@ -21,14 +21,12 @@ type DB interface {
 
 type Locator struct {
 	db     DB
-	redis  redis.Client
 	logger log.Logger
 }
 
-func NewLocator(db DB, redisCli redis.Client, logger log.Logger) Locator {
+func NewLocator(db DB, logger log.Logger) Locator {
 	return Locator{
 		db:     db,
-		redis:  redisCli,
 		logger: logger,
 	}
 }
@@ -41,16 +39,18 @@ func (l Locator) Handler(cfg conf.Remote) isp.BackendServiceServer {
 	serviceRep := repository.NewService(l.db)
 	tokenRep := repository.NewToken(l.db)
 
-	accessListService := service.NewAccessList(l.redis, txManager, accessListRep, applicationRep)
-	applicationService := service.NewApplication(l.redis, txManager, applicationRep, domainRep, serviceRep, tokenRep)
+	secureService := secure.NewService(tokenRep, accessListRep)
+	accessListService := service.NewAccessList(txManager, accessListRep, applicationRep)
+	applicationService := service.NewApplication(txManager, applicationRep, domainRep, serviceRep, tokenRep)
 	domainService := service.NewDomain(domainRep)
 	serviceService := service.NewService(domainRep, serviceRep)
 
-	jwtService := service.NewJwt(cfg.ApplicationSecret)
-	tokenService := service.NewToken(l.redis, cfg.DefaultTokenExpireTime, jwtService, applicationService, txManager,
+	jwtService := service.NewTokenSource()
+	tokenService := service.NewToken(jwtService, applicationService, txManager,
 		applicationRep, domainRep, serviceRep, tokenRep,
 	)
 
+	secureController := controller.NewSecure(secureService)
 	accessListController := controller.NewAccessList(accessListService)
 	applicationController := controller.NewApplication(applicationService)
 	domainController := controller.NewDomain(domainService)
@@ -58,6 +58,7 @@ func (l Locator) Handler(cfg conf.Remote) isp.BackendServiceServer {
 	tokenController := controller.NewToken(tokenService)
 
 	c := routes.Controllers{
+		Secure:      secureController,
 		AccessList:  accessListController,
 		Domain:      domainController,
 		Service:     serviceController,

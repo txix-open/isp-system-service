@@ -45,20 +45,14 @@ func (m Manager) AccessListSetListTx(ctx context.Context, msgTx func(ctx context
 }
 
 type applicationDeleteTx struct {
-	repository.AccessList
 	repository.Application
-	repository.Token
 }
 
 func (m Manager) ApplicationDeleteTx(ctx context.Context, msgTx func(ctx context.Context, tx service.IApplicationDeleteTx) error) error {
 	return m.db.RunInTransaction(ctx, func(ctx context.Context, tx *db.Tx) error {
-		accessListRep := repository.NewAccessList(tx)
 		applicationRep := repository.NewApplication(tx)
-		tokenRep := repository.NewToken(tx)
 		return msgTx(ctx, applicationDeleteTx{
-			AccessList:  accessListRep,
 			Application: applicationRep,
-			Token:       tokenRep,
 		})
 	})
 }

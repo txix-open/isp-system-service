@@ -8,8 +8,8 @@ import (
 	"isp-system-service/entity"
 )
 
-type ITokenJwt interface {
-	CreateApplicationToken(appId int, expireTime int) (string, error)
+type ITokenSource interface {
+	CreateApplicationToken() (string, error)
 }
 
 type ITokenAppEnrich interface {
@@ -45,27 +45,18 @@ type ITokenTxRunner interface {
 	TokenRevokeTx(ctx context.Context, tx func(ctx context.Context, tx ITokenRevokeTx) error) error
 }
 
-type ITokenRedis interface {
-	SetApplicationToken(ctx context.Context, req entity.RedisSetToken) error
-	DeleteToken(ctx context.Context, tokens []string) error
-}
-
 type Token struct {
-	redisRep          ITokenRedis
-	defaultExpireTime int
-	jwt               ITokenJwt
-	appEnrich         ITokenAppEnrich
-	tx                ITokenTxRunner
-	appRep            ITokenApplicationRep
-	domainRep         ITokenDomainRep
-	serviceRep        ITokenServiceRep
-	tokenRep          ITokenTokenRep
+	jwt        ITokenSource
+	appEnrich  ITokenAppEnrich
+	tx         ITokenTxRunner
+	appRep     ITokenApplicationRep
+	domainRep  ITokenDomainRep
+	serviceRep ITokenServiceRep
+	tokenRep   ITokenTokenRep
 }
 
 func NewToken(
-	redisRep ITokenRedis,
-	defaultExpireTime int,
-	jwtGenerate ITokenJwt,
+	jwtGenerate ITokenSource,
 	appEnrich ITokenAppEnrich,
 	tx ITokenTxRunner,
 	appRep ITokenApplicationRep,
@@ -74,15 +65,13 @@ func NewToken(
 	tokenRep ITokenTokenRep,
 ) Token {
 	return Token{
-		redisRep:          redisRep,
-		defaultExpireTime: defaultExpireTime,
-		appEnrich:         appEnrich,
-		jwt:               jwtGenerate,
-		tx:                tx,
-		appRep:            appRep,
-		domainRep:         domainRep,
-		serviceRep:        serviceRep,
-		tokenRep:          tokenRep,
+		appEnrich:  appEnrich,
+		jwt:        jwtGenerate,
+		tx:         tx,
+		appRep:     appRep,
+		domainRep:  domainRep,
+		serviceRep: serviceRep,
+		tokenRep:   tokenRep,
 	}
 }
 
@@ -111,36 +100,20 @@ func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 		return nil, errors.WithMessagef(err, "get service by id")
 	}
 
-	domainEntity, err := s.domainRep.GetDomainById(ctx, serviceEntity.DomainId)
+	_, err = s.domainRep.GetDomainById(ctx, serviceEntity.DomainId)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get domain by id")
 	}
 
-	expTime := req.ExpireTimeMs
-	if expTime == 0 {
-		expTime = s.defaultExpireTime
-	}
-
-	token, err := s.jwt.CreateApplicationToken(req.AppId, expTime)
+	token, err := s.jwt.CreateApplicationToken()
 	if err != nil {
-		return nil, errors.WithMessagef(err, "jwt create application token")
+		return nil, errors.WithMessagef(err, "create application token")
 	}
 
 	err = s.tx.TokenCreateTx(ctx, func(ctx context.Context, tx ITokenCreateTx) error {
-		tokenEntity, err := tx.SaveToken(ctx, token, req.AppId, expTime)
+		_, err = tx.SaveToken(ctx, token, req.AppId, req.ExpireTimeMs)
 		if err != nil {
 			return errors.WithMessagef(err, "tx save token")
-		}
-
-		err = s.redisRep.SetApplicationToken(ctx, entity.RedisSetToken{
-			Token:               tokenEntity.Token,
-			ExpireTime:          tokenEntity.ExpireTime,
-			DomainIdentity:      domainEntity.Id,
-			ServiceIdentity:     serviceEntity.Id,
-			ApplicationIdentity: applicationEntity.Id,
-		})
-		if err != nil {
-			return errors.WithMessage(err, "redis set token")
 		}
 
 		return nil
@@ -200,11 +173,6 @@ func (s Token) revokeTokens(ctx context.Context, tokens []string) (*domain.Delet
 		deleted, err := tx.DeleteToken(ctx, tokens)
 		if err != nil {
 			return errors.WithMessagef(err, "tx delete token")
-		}
-
-		err = s.redisRep.DeleteToken(ctx, tokens)
-		if err != nil {
-			return errors.WithMessage(err, "redis delete token")
 		}
 
 		count = deleted

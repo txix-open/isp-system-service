@@ -34,7 +34,7 @@ func NewToken(service ITokenService) Token {
 // @Produce  json
 // @Param body body domain.Identity true "Идентификатор приложения"
 // @Success 200 {array} entity.Token
-// @Failure 500 {object} structure.GrpcError
+// @Failure 500 {object} domain.GrpcError
 // @Router /token/get_tokens_by_app_id [POST]
 func (c Token) GetByAppId(ctx context.Context, req domain.Identity) ([]domain.Token, error) {
 	return c.service.GetByAppId(ctx, req.Id)
@@ -48,7 +48,7 @@ func (c Token) GetByAppId(ctx context.Context, req domain.Identity) ([]domain.To
 // @Produce  json
 // @Param body body domain.TokenCreateRequest true "Объект создания токена"
 // @Success 200 {object} domain.ApplicationWithTokens
-// @Failure 500 {object} structure.GrpcError
+// @Failure 500 {object} domain.GrpcError
 // @Router /token/create_token [POST]
 func (c Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*domain.ApplicationWithTokens, error) {
 	result, err := c.service.Create(ctx, req)
@@ -74,7 +74,7 @@ func (c Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 // @Produce  json
 // @Param body body domain.TokenRevokeRequest true "Объект отзыва токенов"
 // @Success 200 {object} domain.ApplicationWithTokens
-// @Failure 500 {object} structure.GrpcError
+// @Failure 500 {object} domain.GrpcError
 // @Router /token/revoke_tokens [POST]
 func (c Token) Revoke(ctx context.Context, req domain.TokenRevokeRequest) (*domain.ApplicationWithTokens, error) {
 	return c.service.Revoke(ctx, req)
@@ -88,7 +88,7 @@ func (c Token) Revoke(ctx context.Context, req domain.TokenRevokeRequest) (*doma
 // @Produce  json
 // @Param body body domain.Identity true "Идентификатор приложения"
 // @Success 200 {object} domain.DeleteResponse
-// @Failure 500 {object} structure.GrpcError
+// @Failure 500 {object} domain.GrpcError
 // @Router /token/revoke_tokens_for_app [POST]
 func (c Token) RevokeForApp(ctx context.Context, req domain.Identity) (*domain.DeleteResponse, error) {
 	return c.service.RevokeByAppId(ctx, req.Id)

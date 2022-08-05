@@ -1,3 +1,11 @@
+### v4.0.0
+* Удален `InstanceUuid`
+* Удалена интеграция с Redis
+* Генерация токенов теперь использует обычный crypto/rand вместо JWT
+* Убран из конфига defaultTokenExpireTime
+* Добавлены методы проверки подлинности токенов и прав у приложений
+  * system/secure/authenticate
+  * system/secure/authorize
 ### v3.0.2
 * исправлена ошибка при обновлении имени или описании у созданного application
 ### v3.0.1

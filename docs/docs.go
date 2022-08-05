@@ -55,13 +55,13 @@ var doc = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -103,13 +103,13 @@ var doc = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -148,13 +148,13 @@ var doc = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -194,25 +194,25 @@ var doc = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -254,13 +254,13 @@ var doc = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -300,19 +300,19 @@ var doc = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -357,7 +357,7 @@ var doc = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -400,7 +400,7 @@ var doc = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -432,7 +432,7 @@ var doc = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -472,7 +472,7 @@ var doc = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -514,13 +514,13 @@ var doc = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -560,13 +560,13 @@ var doc = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -608,7 +608,93 @@ var doc = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
+                        }
+                    }
+                }
+            }
+        },
+        "/secure/authenticate": {
+            "post": {
+                "description": "Проверяет наличие токена в системе,",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "secure"
+                ],
+                "summary": "Метод аутентификации токена",
+                "parameters": [
+                    {
+                        "description": "Тело запроса",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.AuthenticateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.AuthenticateResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/domain.GrpcError"
+                        }
+                    }
+                }
+            }
+        },
+        "/secure/authorize": {
+            "post": {
+                "description": "Проверяет доступ приложения к запрашиваемому ендпоинту",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "secure"
+                ],
+                "summary": "Метод авторизации приложения",
+                "parameters": [
+                    {
+                        "description": "Тело запрос",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.AuthorizeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.AuthorizeResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -648,25 +734,25 @@ var doc = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -709,13 +795,13 @@ var doc = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -760,7 +846,7 @@ var doc = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -800,13 +886,13 @@ var doc = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -849,7 +935,7 @@ var doc = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -889,7 +975,7 @@ var doc = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -932,7 +1018,7 @@ var doc = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -972,7 +1058,7 @@ var doc = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -1012,7 +1098,7 @@ var doc = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/structure.GrpcError"
+                            "$ref": "#/definitions/domain.GrpcError"
                         }
                     }
                 }
@@ -1158,6 +1244,71 @@ var doc = `{
                 }
             }
         },
+        "domain.AuthData": {
+            "type": "object",
+            "properties": {
+                "applicationId": {
+                    "type": "integer"
+                },
+                "domainId": {
+                    "type": "integer"
+                },
+                "serviceId": {
+                    "type": "integer"
+                },
+                "systemId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.AuthenticateRequest": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.AuthenticateResponse": {
+            "type": "object",
+            "properties": {
+                "authData": {
+                    "$ref": "#/definitions/domain.AuthData"
+                },
+                "authenticated": {
+                    "type": "boolean"
+                },
+                "errorReason": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.AuthorizeRequest": {
+            "type": "object",
+            "required": [
+                "applicationId",
+                "endpoint"
+            ],
+            "properties": {
+                "applicationId": {
+                    "type": "integer"
+                },
+                "endpoint": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.AuthorizeResponse": {
+            "type": "object",
+            "properties": {
+                "authorized": {
+                    "type": "boolean"
+                }
+            }
+        },
         "domain.DeleteResponse": {
             "type": "object",
             "properties": {
@@ -1223,6 +1374,23 @@ var doc = `{
                     "items": {
                         "$ref": "#/definitions/domain.ServiceWithApps"
                     }
+                }
+            }
+        },
+        "domain.GrpcError": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                },
+                "errorCode": {
+                    "type": "string"
+                },
+                "errorMessage": {
+                    "type": "string"
                 }
             }
         },
@@ -1373,23 +1541,6 @@ var doc = `{
                     "type": "integer"
                 },
                 "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "structure.GrpcError": {
-            "type": "object",
-            "properties": {
-                "details": {
-                    "type": "array",
-                    "items": {
-                        "type": "object"
-                    }
-                },
-                "errorCode": {
-                    "type": "string"
-                },
-                "errorMessage": {
                     "type": "string"
                 }
             }

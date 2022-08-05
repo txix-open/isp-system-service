@@ -36,9 +36,9 @@ func NewApplication(service ApplicationService) Application {
 // @Produce  json
 // @Param body body domain.Identity true "Идентификатор приложения"
 // @Success 200 {object} domain.ApplicationWithTokens
-// @Failure 400 {object} structure.GrpcError
-// @Failure 404 {object} structure.GrpcError
-// @Failure 500 {object} structure.GrpcError
+// @Failure 400 {object} domain.GrpcError
+// @Failure 404 {object} domain.GrpcError
+// @Failure 500 {object} domain.GrpcError
 // @Router /application/get_application_by_id [POST]
 func (c Application) GetById(ctx context.Context, req domain.Identity) (*domain.ApplicationWithTokens, error) {
 	result, err := c.service.GetById(ctx, req.Id)
@@ -60,7 +60,7 @@ func (c Application) GetById(ctx context.Context, req domain.Identity) (*domain.
 // @Produce  json
 // @Param body body []integer false "Массив идентификаторов приложений"
 // @Success 200 {array} domain.ApplicationWithTokens
-// @Failure 500 {object} structure.GrpcError
+// @Failure 500 {object} domain.GrpcError
 // @Router /application/get_applications [POST]
 func (c Application) GetByIdList(ctx context.Context, req []int) ([]*domain.ApplicationWithTokens, error) {
 	return c.service.GetByIdList(ctx, req)
@@ -74,7 +74,7 @@ func (c Application) GetByIdList(ctx context.Context, req []int) ([]*domain.Appl
 // @Produce  json
 // @Param body body domain.Identity true "Идентификатор сервиса"
 // @Success 200 {array} domain.ApplicationWithTokens
-// @Failure 500 {object} structure.GrpcError
+// @Failure 500 {object} domain.GrpcError
 // @Router /application/get_applications_by_service_id [POST]
 func (c Application) GetByServiceId(ctx context.Context, req domain.Identity) ([]*domain.ApplicationWithTokens, error) {
 	return c.service.GetByServiceId(ctx, req.Id)
@@ -87,7 +87,7 @@ func (c Application) GetByServiceId(ctx context.Context, req domain.Identity) ([
 // @Accept  json
 // @Produce  json
 // @Success 200 {array} domain.DomainWithService
-// @Failure 500 {object} structure.GrpcError
+// @Failure 500 {object} domain.GrpcError
 // @Router /application/get_system_tree [POST]
 func (c Application) GetSystemTree(ctx context.Context) ([]*domain.DomainWithService, error) {
 	return c.service.SystemTree(ctx, domain.DefaultSystemId)
@@ -101,10 +101,10 @@ func (c Application) GetSystemTree(ctx context.Context) ([]*domain.DomainWithSer
 // @Produce  json
 // @Param body body domain.ApplicationCreateUpdateRequest true "Объект приложения"
 // @Success 200 {object} domain.ApplicationWithTokens
-// @Failure 400 {object} structure.GrpcError
-// @Failure 404 {object} structure.GrpcError
-// @Failure 409 {object} structure.GrpcError
-// @Failure 500 {object} structure.GrpcError
+// @Failure 400 {object} domain.GrpcError
+// @Failure 404 {object} domain.GrpcError
+// @Failure 409 {object} domain.GrpcError
+// @Failure 500 {object} domain.GrpcError
 // @Router /application/create_update_application [POST]
 func (c Application) CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.ApplicationWithTokens, error) {
 	result, err := c.service.CreateUpdate(ctx, req)
@@ -130,8 +130,8 @@ func (c Application) CreateUpdate(ctx context.Context, req domain.ApplicationCre
 // @Produce  json
 // @Param body body []integer false "Массив идентификаторов приложений"
 // @Success 200 {object} domain.DeleteResponse
-// @Failure 400 {object} structure.GrpcError
-// @Failure 500 {object} structure.GrpcError
+// @Failure 400 {object} domain.GrpcError
+// @Failure 500 {object} domain.GrpcError
 // @Router /application/delete_applications [POST]
 func (c Application) Delete(ctx context.Context, req []int) (*domain.DeleteResponse, error) {
 	if len(req) == 0 {

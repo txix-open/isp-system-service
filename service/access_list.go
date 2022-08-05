@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"isp-system-service/domain"
@@ -33,26 +32,18 @@ type IAccessListTxRunner interface {
 	AccessListSetListTx(ctx context.Context, tx func(ctx context.Context, tx IAccessListSetListTx) error) error
 }
 
-type IAccessListRedis interface {
-	UpdateApplicationPermission(ctx context.Context, req entity.RedisApplicationPermission) error
-	UpdateApplicationPermissionList(ctx context.Context, removed []string, added []interface{}) error
-}
-
 type AccessList struct {
-	redis          IAccessListRedis
 	tx             IAccessListTxRunner
 	accessListRep  IAccessListAccessListRep
 	applicationRep IAccessListApplicationRep
 }
 
 func NewAccessList(
-	redis IAccessListRedis,
 	tx IAccessListTxRunner,
 	accessListRep IAccessListAccessListRep,
 	applicationRep IAccessListApplicationRep,
 ) AccessList {
 	return AccessList{
-		redis:          redis,
 		tx:             tx,
 		accessListRep:  accessListRep,
 		applicationRep: applicationRep,
@@ -98,15 +89,6 @@ func (s AccessList) SetOne(ctx context.Context, request domain.AccessListSetOneR
 			return errors.WithMessagef(err, "upsert access list")
 		}
 
-		err = s.redis.UpdateApplicationPermission(ctx, entity.RedisApplicationPermission{
-			AppId:  request.AppId,
-			Method: request.Method,
-			Value:  request.Value,
-		})
-		if err != nil {
-			return errors.WithMessagef(err, "redis update application permission")
-		}
-
 		return nil
 	})
 	if err != nil {
@@ -125,9 +107,8 @@ func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 	}
 
 	err = s.tx.AccessListSetListTx(ctx, func(ctx context.Context, tx IAccessListSetListTx) error {
-		oldAccessList := make([]entity.AccessList, 0)
 		if req.RemoveOld {
-			oldAccessList, err = tx.DeleteAccessListByAppId(ctx, req.AppId)
+			_, err = tx.DeleteAccessListByAppId(ctx, req.AppId)
 			if err != nil {
 				return errors.WithMessage(err, "delete access list by app_id")
 			}
@@ -135,7 +116,6 @@ func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 
 		newAccessList := make([]entity.AccessList, len(req.Methods))
 		updateMethods := make([]string, len(req.Methods))
-		redisMsetRequest := make([]interface{}, 0)
 		for i, m := range req.Methods {
 			updateMethods[i] = m.Method
 			newAccessList[i] = entity.AccessList{
@@ -143,12 +123,6 @@ func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 				Method: m.Method,
 				Value:  m.Value,
 			}
-			redisMsetRequest = append(redisMsetRequest, fmt.Sprintf("%d|%s", req.AppId, m.Method), m.Value)
-		}
-
-		redisDelRequest := make([]string, len(oldAccessList))
-		for i, access := range oldAccessList {
-			redisDelRequest[i] = fmt.Sprintf("%d|%s", req.AppId, access.Method)
 		}
 
 		if len(newAccessList) > 0 {
@@ -161,11 +135,6 @@ func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 			if err != nil {
 				return errors.WithMessage(err, "insert access_list")
 			}
-		}
-
-		err = s.redis.UpdateApplicationPermissionList(ctx, redisDelRequest, redisMsetRequest)
-		if err != nil {
-			return errors.WithMessage(err, "redis update application permission list")
 		}
 
 		return nil

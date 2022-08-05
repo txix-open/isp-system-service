@@ -91,6 +91,48 @@ definitions:
           $ref: '#/definitions/domain.Token'
         type: array
     type: object
+  domain.AuthData:
+    properties:
+      applicationId:
+        type: integer
+      domainId:
+        type: integer
+      serviceId:
+        type: integer
+      systemId:
+        type: integer
+    type: object
+  domain.AuthenticateRequest:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  domain.AuthenticateResponse:
+    properties:
+      authData:
+        $ref: '#/definitions/domain.AuthData'
+      authenticated:
+        type: boolean
+      errorReason:
+        type: string
+    type: object
+  domain.AuthorizeRequest:
+    properties:
+      applicationId:
+        type: integer
+      endpoint:
+        type: string
+    required:
+    - applicationId
+    - endpoint
+    type: object
+  domain.AuthorizeResponse:
+    properties:
+      authorized:
+        type: boolean
+    type: object
   domain.DeleteResponse:
     properties:
       deleted:
@@ -134,6 +176,17 @@ definitions:
         items:
           $ref: '#/definitions/domain.ServiceWithApps'
         type: array
+    type: object
+  domain.GrpcError:
+    properties:
+      details:
+        items:
+          type: object
+        type: array
+      errorCode:
+        type: string
+      errorMessage:
+        type: string
     type: object
   domain.Identity:
     properties:
@@ -233,17 +286,6 @@ definitions:
       token:
         type: string
     type: object
-  structure.GrpcError:
-    properties:
-      details:
-        items:
-          type: object
-        type: array
-      errorCode:
-        type: string
-      errorMessage:
-        type: string
-    type: object
 host: localhost:9000
 info:
   contact: {}
@@ -277,11 +319,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Получить список доступности методов для приложения
       tags:
       - accessList
@@ -309,11 +351,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Настроить доступность списка методов для приложения
       tags:
       - accessList
@@ -338,11 +380,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Настроить доступность метода для приложения
       tags:
       - accessList
@@ -369,19 +411,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Создать/обновить приложение
       tags:
       - application
@@ -409,11 +451,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Удалить приложения
       tags:
       - application
@@ -439,15 +481,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Получить приложение по идентификатору
       tags:
       - application
@@ -476,7 +518,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Получить список приложений
       tags:
       - application
@@ -504,7 +546,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Получить список приложений по идентификатору сервиса
       tags:
       - application
@@ -525,7 +567,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Метод получения системного дерева
       tags:
       - application
@@ -552,7 +594,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Создать/обновить домен
       tags:
       - domain
@@ -580,11 +622,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Удаление доменов
       tags:
       - domain
@@ -610,11 +652,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Получить домен по идентификатору
       tags:
       - domain
@@ -641,10 +683,66 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Получить домены по идентификатору системы
       tags:
       - domain
+  /secure/authenticate:
+    post:
+      consumes:
+      - application/json
+      description: Проверяет наличие токена в системе,
+      parameters:
+      - description: Тело запроса
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.AuthenticateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.AuthenticateResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+      summary: Метод аутентификации токена
+      tags:
+      - secure
+  /secure/authorize:
+    post:
+      consumes:
+      - application/json
+      description: Проверяет доступ приложения к запрашиваемому ендпоинту
+      parameters:
+      - description: Тело запрос
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.AuthorizeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.AuthorizeResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+      summary: Метод авторизации приложения
+      tags:
+      - secure
   /service/create_update_service:
     post:
       consumes:
@@ -668,19 +766,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Создать/обновить сервис
       tags:
       - service
@@ -709,11 +807,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Удалить сервисы
       tags:
       - service
@@ -742,7 +840,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Получить список сервисов
       tags:
       - service
@@ -768,11 +866,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Получить сервис по идентификатору
       tags:
       - service
@@ -800,7 +898,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Получить список сервисов по идентификатору домена
       tags:
       - service
@@ -826,7 +924,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Создать токен
       tags:
       - token
@@ -854,7 +952,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Получить токены по идентификатору приложения
       tags:
       - token
@@ -880,7 +978,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Отозвать токены
       tags:
       - token
@@ -907,7 +1005,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/structure.GrpcError'
+            $ref: '#/definitions/domain.GrpcError'
       summary: Отозвать токены для приложения
       tags:
       - token
