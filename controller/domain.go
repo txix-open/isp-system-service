@@ -1,87 +1,116 @@
 package controller
 
 import (
-	"isp-system-service/entity"
-	"isp-system-service/model"
+	"context"
 
-	"github.com/integration-system/isp-lib/utils"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"isp-system-service/domain"
 )
 
-/*func GetDomains(list []int32) ([]entity.Domain, error) {
-	res, err := model.DomainRep.GetDomains(list)
-	if err != nil {
-		return res, err
-	}
-	return res, nil
-}*/
-
-func GetDomainsBySystemId(md metadata.MD) ([]entity.Domain, error) {
-	sysId, err := utils.ResolveMetadataIdentity(utils.SystemIdHeader, md)
-	if err != nil {
-		return nil, err
-	}
-	return model.DomainRep.GetDomainsBySystemId(int32(sysId))
+type DomainService interface {
+	GetById(ctx context.Context, id int) (*domain.Domain, error)
+	GetBySystemId(ctx context.Context, systemId int) ([]domain.Domain, error)
+	CreateUpdate(ctx context.Context, req domain.DomainCreateUpdateRequest, systemId int) (*domain.Domain, error)
+	Delete(ctx context.Context, idList []int) (int, error)
 }
 
-func CreateUpdateDomain(domain entity.Domain, md metadata.MD) (*entity.Domain, error) {
-	existed, err := model.DomainRep.GetDomainByNameAndSystemId(domain.Name, domain.SystemId)
-	if err != nil {
-		return nil, err
-	}
+type Domain struct {
+	service DomainService
+}
 
-	sysId, err := utils.ResolveMetadataIdentity(utils.SystemIdHeader, md)
-	if err != nil {
-		return nil, err
-	}
-	domain.SystemId = int32(sysId)
-
-	sys, e := model.SystemRep.GetSystemById(domain.SystemId)
-	if e != nil {
-		return nil, err
-	}
-	if sys == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "System with id %d not found", domain.SystemId)
-	}
-	if domain.Id == 0 {
-		if existed != nil {
-			return nil, status.Errorf(codes.AlreadyExists, "Domain with name %s already exists", domain.Name)
-		}
-		domain, e := model.DomainRep.CreateDomain(domain)
-		return &domain, e
-	} else {
-		if existed != nil && existed.Id != domain.Id {
-			return nil, status.Errorf(codes.AlreadyExists, "Domain with name %s already exists", domain.Name)
-		}
-		existed, err = model.DomainRep.GetDomainById(domain.Id)
-		if err != nil {
-			return nil, err
-		}
-		if existed == nil {
-			return nil, status.Errorf(codes.NotFound, "Domain with id %d not found", domain.Id)
-		}
-		domain, e := model.DomainRep.UpdateDomain(domain)
-		return &domain, e
+func NewDomain(service DomainService) Domain {
+	return Domain{
+		service: service,
 	}
 }
 
-func GetDomainById(identity Identity) (*entity.Domain, error) {
-	domain, err := model.DomainRep.GetDomainById(identity.Id)
+// GetById godoc
+// @Tags domain
+// @Summary Получить домен по идентификатору
+// @Description Возвращает описание домена по его идентификатору
+// @Accept  json
+// @Produce  json
+// @Param body body domain.Identity true "Идентификатор домена"
+// @Success 200 {object} domain.Domain
+// @Failure 404 {object} domain.GrpcError
+// @Failure 500 {object} domain.GrpcError
+// @Router /domain/get_domain_by_id [POST]
+func (c Domain) GetById(ctx context.Context, req domain.Identity) (*domain.Domain, error) {
+	result, err := c.service.GetById(ctx, req.Id)
+	switch {
+	case errors.Is(err, domain.ErrDomainNotFound):
+		return nil, status.Errorf(codes.NotFound, "domain with id %d not found", req.Id)
+	case err != nil:
+		return nil, err
+	default:
+		return result, nil
+	}
+}
+
+// GetBySystemId godoc
+// @Tags domain
+// @Summary Получить домены по идентификатору системы
+// @Description Возвращает список доменов по системному идентификатору
+// @Accept  json
+// @Produce  json
+// @Param body body integer false "Идентификатор системы"
+// @Success 200 {array} domain.Domain
+// @Failure 500 {object} domain.GrpcError
+// @Router /domain/get_domains_by_system_id [POST]
+func (c Domain) GetBySystemId(ctx context.Context) ([]domain.Domain, error) {
+	return c.service.GetBySystemId(ctx, domain.DefaultSystemId)
+}
+
+// CreateUpdate godoc
+// @Tags domain
+// @Summary Создать/обновить домен
+// @Description Если домен с такими идентификатором существует, то обновляет данные, если нет, то добавляет данные в базу
+// @Accept  json
+// @Produce  json
+// @Param body body domain.DomainCreateUpdateRequest true "Объект домена"
+// @Success 200 {object} domain.Domain
+// @Failure 500 {object} domain.GrpcError
+// @Router /domain/create_update_domain [POST]
+func (c Domain) CreateUpdate(ctx context.Context, req domain.DomainCreateUpdateRequest) (*domain.Domain, error) {
+	result, err := c.service.CreateUpdate(ctx, req, domain.DefaultSystemId)
+	switch {
+	case errors.Is(err, domain.ErrSystemNotFound):
+		return nil, status.Errorf(codes.InvalidArgument, "system with id %d not found", domain.DefaultSystemId)
+	case errors.Is(err, domain.ErrDomainNotFound):
+		return nil, status.Errorf(codes.NotFound, "domain with id %d not found", req.Id)
+	case errors.Is(err, domain.ErrDomainDuplicateName):
+		return nil, status.Errorf(codes.AlreadyExists, "domain with name %s already exists", req.Name)
+	case err != nil:
+		return nil, err
+	default:
+		return result, nil
+	}
+}
+
+// Delete godoc
+// @Tags domain
+// @Summary Удаление доменов
+// @Description Удаляет домены по списку их идентификаторов, возвращает количество удаленных доменов
+// @Accept  json
+// @Produce  json
+// @Param body body []integer false "Массив идентификаторов доменов"
+// @Success 200 {object} domain.DeleteResponse
+// @Failure 400 {object} domain.GrpcError
+// @Failure 500 {object} domain.GrpcError
+// @Router /domain/delete_domains [POST]
+func (c Domain) Delete(ctx context.Context, req []int) (*domain.DeleteResponse, error) {
+	if len(req) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "at least one id are required")
+	}
+
+	result, err := c.service.Delete(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if domain == nil {
-		return nil, status.Errorf(codes.NotFound, "Domain with id %d not found", identity.Id)
-	}
-	return domain, err
-}
 
-func DeleteDomains(list []int32) (DeleteResponse, error) {
-	if len(list) == 0 {
-		return DeleteResponse{Deleted: 0}, status.Errorf(codes.InvalidArgument, "At least one id are required")
-	}
-	res, err := model.DomainRep.DeleteDomains(list)
-	return DeleteResponse{Deleted: res}, err
+	return &domain.DeleteResponse{
+		Deleted: result,
+	}, nil
 }

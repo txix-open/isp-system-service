@@ -4,13 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/integration-system/isp-lib/config"
-	"github.com/integration-system/isp-lib/database"
-	"github.com/pressly/goose"
 	"io/ioutil"
-	"isp-system-service/conf"
-	"isp-system-service/controller"
-	path2 "path"
+	"path/filepath"
+
+	"github.com/pkg/errors"
+	"github.com/pressly/goose"
+	"isp-system-service/domain"
 )
 
 const (
@@ -25,102 +24,137 @@ const (
 )
 
 func init() {
-	goose.AddMigration(Up, Down)
+	goose.AddMigration(Initialize.Up, Initialize.Down)
 }
 
-func Up(tx *sql.Tx) error {
-	path := path2.Join(database.ResolveMigrationsDirectrory(), initFile)
+var Initialize = &initializeMigration{}
+
+type initializeMigration struct {
+	migrationDir string
+	schema       string
+}
+
+type identity struct {
+	domainId  int
+	appId     int
+	serviceId int
+}
+
+func (i *initializeMigration) SetParams(migrationDir string, schema string) {
+	i.migrationDir = migrationDir
+	i.schema = schema
+}
+
+func (i *initializeMigration) Up(tx *sql.Tx) error {
+	path := filepath.Join(i.migrationDir, initFile)
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "read file")
 	}
 
-	var list []controller.DomainWithServices
-	if err := json.Unmarshal(bytes, &list); err != nil {
-		return err
+	list := make([]domain.DomainWithService, 0)
+	err = json.Unmarshal(bytes, &list)
+	if err != nil {
+		return errors.WithMessage(err, "json unmarshal")
 	}
 
-	schema := config.GetRemote().(*conf.RemoteConfig).DB.Schema
-	lastDomainId := int64(0)
-	lastServiceId := int64(0)
-	lastAppId := int64(0)
-	for _, domain := range list {
-		domainId := int64(0)
-		if domainId, err = insertNode(tx, insertDomain, true, schema, domain.Id, domain.Name, domain.Description, 1); err != nil {
-			return err
+	lastDomainId := 0
+	lastServiceId := 0
+	lastAppId := 0
+	for _, domainInfo := range list {
+		last, err := i.insert(tx, domainInfo)
+		if err != nil {
+			return errors.WithMessage(err, "")
 		}
-		if domainId > lastDomainId {
-			lastDomainId = domainId
+		if last.domainId > lastDomainId {
+			lastDomainId = last.domainId
 		}
-
-		for _, service := range domain.Services {
-			serviceId := int64(0)
-			if serviceId, err = insertNode(tx, insertService, true, schema, service.Id, service.Name, service.Description, domainId); err != nil {
-				return err
-			}
-			if serviceId > lastServiceId {
-				lastServiceId = serviceId
-			}
-
-			for _, app := range service.Apps {
-				appId := int64(0)
-				if appId, err = insertNode(tx, insertApp, true, schema, app.Id, app.Name, app.Description, serviceId, app.Type); err != nil {
-					return err
-				}
-				if appId > lastAppId {
-					lastAppId = appId
-				}
-
-				for _, t := range app.Tokens {
-					if _, err := insertNode(tx, insertToken, false, schema, t.Token, appId, t.ExpireTime); err != nil {
-						return err
-					} else {
-						idMap := map[string]interface{}{
-							controller.SystemIdentityFieldInDb:      1,
-							controller.DomainIdentityFieldInDb:      domainId,
-							controller.ServiceIdentityFieldInDb:     serviceId,
-							controller.ApplicationIdentityFieldInDb: appId,
-						}
-						if err := controller.SetIdentityMapForTokenV2(t.Token, t.ExpireTime, idMap); err != nil {
-							return err
-						}
-					}
-				}
-			}
+		if last.serviceId > lastServiceId {
+			lastServiceId = last.serviceId
+		}
+		if last.appId > lastAppId {
+			lastAppId = last.appId
 		}
 	}
 
-	if err := setSeq(tx, schema, "domain", lastDomainId); err != nil {
-		return err
-	} else if err := setSeq(tx, schema, "service", lastServiceId); err != nil {
-		return err
-	} else if err := setSeq(tx, schema, "application", lastAppId); err != nil {
-		return err
+	err = i.setSeq(tx, "domain", lastDomainId)
+	if err != nil {
+		return errors.WithMessage(err, "set domain")
+	}
+
+	err = i.setSeq(tx, "service", lastServiceId)
+	if err != nil {
+		return errors.WithMessage(err, "set service")
+	}
+
+	err = i.setSeq(tx, "application", lastAppId)
+	if err != nil {
+		return errors.WithMessage(err, "set application")
 	}
 
 	return nil
 }
 
-func Down(tx *sql.Tx) error {
+func (i *initializeMigration) Down(tx *sql.Tx) error {
 	return nil
 }
 
-func insertNode(tx *sql.Tx, query string, scan bool, args ...interface{}) (int64, error) {
-	var id int64
-	var err error
+func (i *initializeMigration) insert(tx *sql.Tx, domainInfo domain.DomainWithService) (*identity, error) {
+	domainId, err := i.insertNode(tx, insertDomain, true, i.schema, domainInfo.Id, domainInfo.Name, domainInfo.Description, 1)
+	if err != nil {
+		return nil, errors.WithMessage(err, "insert domain")
+	}
+
+	serviceId := 0
+	appId := 0
+	for _, service := range domainInfo.Services {
+		serviceId, err = i.insertNode(tx, insertService, true, i.schema, service.Id, service.Name, service.Description, domainId)
+		if err != nil {
+			return nil, errors.WithMessage(err, "insert service")
+		}
+
+		for _, app := range service.Apps {
+			appId, err = i.insertNode(tx, insertApp, true, i.schema, app.Id, app.Name, app.Description, serviceId, app.Type)
+			if err != nil {
+				return nil, errors.WithMessage(err, "insert application")
+			}
+
+			for _, t := range app.Tokens {
+				_, err = i.insertNode(tx, insertToken, false, i.schema, t.Token, appId, t.ExpireTime)
+				if err != nil {
+					return nil, errors.WithMessage(err, "insert token")
+				}
+			}
+		}
+	}
+
+	return &identity{
+		domainId:  domainId,
+		appId:     appId,
+		serviceId: serviceId,
+	}, nil
+}
+
+func (i *initializeMigration) insertNode(tx *sql.Tx, query string, scan bool, args ...interface{}) (int, error) {
+	var id int
 	query = fmt.Sprintf(query, args...)
 	row := tx.QueryRow(query)
 	if scan {
-		row.Scan(&id)
+		err := row.Scan(&id)
+		if err != nil {
+			return 0, errors.WithMessage(err, "row scan")
+		}
 	}
-	if err != nil {
-		return 0, err
-	}
+
 	return id, nil
 }
 
-func setSeq(tx *sql.Tx, schema, table string, value int64) error {
-	q := fmt.Sprintf(setSeqQuery, schema, table, value)
+func (i *initializeMigration) setSeq(tx *sql.Tx, table string, value int) error {
+	q := fmt.Sprintf(setSeqQuery, i.schema, table, value)
 	_, err := tx.Exec(q)
-	return err
+	if err != nil {
+		return errors.WithMessage(err, "exec db")
+	}
+
+	return nil
 }

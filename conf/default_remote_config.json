@@ -1,0 +1,11 @@
+{
+  "logLevel": "debug",
+  "database": {
+    "schema": "isp_system_service",
+    "database": "{{ msp_pgsql_name }}",
+    "password": "{{ msp_pgsql_password }}",
+    "username": "{{ msp_pgsql_user }}",
+    "host": "{{ msp_pgsql_address }}",
+    "port": 5432
+  }
+}

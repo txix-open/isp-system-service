@@ -1,107 +1,49 @@
 package main
 
 import (
-	"os"
-
+	"github.com/integration-system/isp-kit/bootstrap"
+	"github.com/integration-system/isp-kit/shutdown"
+	"isp-system-service/assembly"
 	"isp-system-service/conf"
-	"isp-system-service/helper"
-	"isp-system-service/model"
-
-	_ "isp-system-service/migrations"
-
-	"github.com/integration-system/isp-lib/backend"
-	"github.com/integration-system/isp-lib/database"
-	"github.com/integration-system/isp-lib/metric"
-	"github.com/integration-system/isp-lib/socket"
-
-	"context"
-
-	"github.com/integration-system/isp-lib/bootstrap"
-	"github.com/integration-system/isp-lib/redis"
+	"isp-system-service/routes"
 )
 
 var (
-	version = "0.1.0"
-	date    = "undefined"
+	version = "1.0.0"
 )
 
+// @title isp-system-service
+// @version 1.0.0
+// @description Сервис управления реестром внешних приложений и токенами аутентификации
+
+// @license.name GNU GPL v3.0
+
+// @host localhost:9000
+// @BasePath /api/system
+
+//go:generate swag init --parseDependency
+//go:generate rm -f docs/swagger.json
 func main() {
-	bootstrap.
-		ServiceBootstrap(&conf.Configuration{}, &conf.RemoteConfig{}).
-		OnLocalConfigLoad(onLocalConfigLoad).
-		SocketConfiguration(socketConfiguration).
-		DeclareMe(routesData).
-		OnRemoteConfigReceive(onRemoteConfigReceive).
-		OnShutdown(onShutdown).
-		Run()
-}
+	boot := bootstrap.New(version, conf.Remote{}, routes.EndpointDescriptors())
+	app := boot.App
+	logger := app.Logger()
 
-/*func ensureRootToken() {
-	tokens, err := model.TokenRep.GetTokensByAppId(entity.RootAdminApplicationId)
+	assembly, err := assembly.New(boot)
 	if err != nil {
-		logger.Error(err)
-		return
+		logger.Fatal(app.Context(), err)
 	}
-	if len(tokens) > 0 {
-		m, err, _ := controller.GetIdMap(entity.RootAdminApplicationId)
-		if err != nil {
-			logger.Error(err)
-			return
-		}
-		for _, token := range tokens {
-			err = controller.SetIdentityMapForToken(token, m)
-			if err != nil {
-				logger.Error(err)
-				continue
-			}
-		}
-	}
-}*/
+	app.AddRunners(assembly.Runners()...)
+	app.AddClosers(assembly.Closers()...)
 
-func socketConfiguration(cfg interface{}) socket.SocketConfiguration {
-	appConfig := cfg.(*conf.Configuration)
-	return socket.SocketConfiguration{
-		Host:   appConfig.ConfigServiceAddress.IP,
-		Port:   appConfig.ConfigServiceAddress.Port,
-		Secure: false,
-		UrlParams: map[string]string{
-			"module_name":   appConfig.ModuleName,
-			"instance_uuid": appConfig.InstanceUuid,
-		},
-	}
-}
+	shutdown.On(func() {
+		logger.Info(app.Context(), "starting shutdown")
+		app.Shutdown()
+		logger.Info(app.Context(), "shutdown completed")
+	})
 
-func onShutdown(_ context.Context, _ os.Signal) {
-	backend.StopGrpcServer()
-	database.Close()
-}
-
-func onRemoteConfigReceive(remoteConfig, oldConfig *conf.RemoteConfig) {
-	if remoteConfig.RedisAddress.GetAddress() != oldConfig.RedisAddress.GetAddress() {
-		rd.InitClient(rd.RedisConfiguration{
-			Address:   remoteConfig.RedisAddress,
-			DefaultDB: int(rd.ApplicationTokenDb),
-		})
-	}
-	database.InitDb(remoteConfig.DB)
-	model.InitDbManager(database.GetDBManager())
-	metric.InitCollectors(remoteConfig.Metrics, oldConfig.Metrics)
-	metric.InitHttpServer(remoteConfig.Metrics)
-	//ensureRootToken()
-}
-
-func onLocalConfigLoad(cfg *conf.Configuration) {
-	handlers := helper.GetAllHandlers()
-	service := backend.GetDefaultService(cfg.ModuleName, handlers...)
-	backend.StartBackendGrpcServer(cfg.GrpcInnerAddress, service)
-}
-
-func routesData(localConfig interface{}) bootstrap.ModuleInfo {
-	cfg := localConfig.(*conf.Configuration)
-	return bootstrap.ModuleInfo{
-		ModuleName:       cfg.ModuleName,
-		ModuleVersion:    version,
-		GrpcOuterAddress: cfg.GrpcOuterAddress,
-		Handlers:         helper.GetAllHandlers(),
+	err = app.Run()
+	if err != nil {
+		app.Shutdown()
+		logger.Fatal(app.Context(), err)
 	}
 }

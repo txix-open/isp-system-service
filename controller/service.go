@@ -1,74 +1,134 @@
 package controller
 
 import (
-	"isp-system-service/entity"
-	"isp-system-service/model"
+	"context"
 
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"isp-system-service/domain"
 )
 
-func GetService(list []int32) ([]entity.Service, error) {
-	res, err := model.ServiceRep.GetServices(list)
-	if err != nil {
-		return res, err
+type ServiceService interface {
+	GetById(ctx context.Context, id int) (*domain.Service, error)
+	GetByIdList(ctx context.Context, idList []int) ([]domain.Service, error)
+	GetByDomainId(ctx context.Context, domainId int) ([]domain.Service, error)
+	CreateUpdate(ctx context.Context, req domain.ServiceCreateUpdateRequest) (*domain.Service, error)
+	Delete(ctx context.Context, idList []int) (int, error)
+}
+
+type Service struct {
+	service ServiceService
+}
+
+func NewService(service ServiceService) Service {
+	return Service{
+		service: service,
 	}
-	return res, nil
 }
 
-func GetServicesByDomainId(identity Identity) ([]entity.Service, error) {
-	return model.ServiceRep.GetServicesByDomainId(identity.Id)
+// GetById godoc
+// @Tags service
+// @Summary Получить сервис по идентификатору
+// @Description Возвращает описание сервиса по его идентификатору
+// @Accept  json
+// @Produce  json
+// @Param body body domain.Identity true "Идентификатор сервиса"
+// @Success 200 {object} domain.Service
+// @Failure 404 {object} domain.GrpcError
+// @Failure 500 {object} domain.GrpcError
+// @Router /service/get_service_by_id [POST]
+func (c Service) GetById(ctx context.Context, req domain.Identity) (*domain.Service, error) {
+	result, err := c.service.GetById(ctx, req.Id)
+	switch {
+	case errors.Is(err, domain.ErrServiceNotFound):
+		return nil, status.Errorf(codes.NotFound, "service with id %d not found", req.Id)
+	case err != nil:
+		return nil, err
+	default:
+		return result, nil
+	}
 }
 
-func CreateUpdateService(service entity.Service) (*entity.Service, error) {
-	existed, err := model.ServiceRep.GetServiceByNameAndDomainId(service.Name, service.DomainId)
+// Get godoc
+// @Tags service
+// @Summary Получить список сервисов
+// @Description Возвращает список сервисов по их идентификаторам
+// @Accept  json
+// @Produce  json
+// @Param body body []integer false "Массив идентификаторов сервисов"
+// @Success 200 {array} domain.Service
+// @Failure 500 {object} domain.GrpcError
+// @Router /service/get_service [POST]
+func (c Service) Get(ctx context.Context, req []int) ([]domain.Service, error) {
+	return c.service.GetByIdList(ctx, req)
+}
+
+// GetByDomainId godoc
+// @Tags service
+// @Summary Получить список сервисов по идентификатору домена
+// @Description Возвращает список сервисов по идентификатору домена
+// @Accept  json
+// @Produce  json
+// @Param body body domain.Identity true "Идентификатор домена"
+// @Success 200 {array} domain.Service
+// @Failure 500 {object} domain.GrpcError
+// @Router /service/get_services_by_domain_id [POST]
+func (c Service) GetByDomainId(ctx context.Context, req domain.Identity) ([]domain.Service, error) {
+	return c.service.GetByDomainId(ctx, req.Id)
+}
+
+// CreateUpdate godoc
+// @Tags service
+// @Summary Создать/обновить сервис
+// @Description Если сервис с такими идентификатором существует, то обновляет данные, если нет, то добавляет данные в базу
+// @Accept  json
+// @Produce  json
+// @Param body body domain.ServiceCreateUpdateRequest true "Объект сервиса"
+// @Success 200 {object} domain.Service
+// @Failure 400 {object} domain.GrpcError
+// @Failure 404 {object} domain.GrpcError
+// @Failure 409 {object} domain.GrpcError
+// @Failure 500 {object} domain.GrpcError
+// @Router /service/create_update_service [POST]
+func (c Service) CreateUpdate(ctx context.Context, req domain.ServiceCreateUpdateRequest) (*domain.Service, error) {
+	result, err := c.service.CreateUpdate(ctx, req)
+	switch {
+	case errors.Is(err, domain.ErrDomainNotFound):
+		return nil, status.Errorf(codes.InvalidArgument, "domain with id %d not found", req.DomainId)
+	case errors.Is(err, domain.ErrServiceNotFound):
+		return nil, status.Errorf(codes.NotFound, "service with id %d not found", req.Id)
+	case errors.Is(err, domain.ErrServiceDuplicateName):
+		return nil, status.Errorf(codes.AlreadyExists, "service with name %s already exists", req.Name)
+	case err != nil:
+		return nil, err
+	default:
+		return result, nil
+	}
+}
+
+// Delete godoc
+// @Tags service
+// @Summary Удалить сервисы
+// @Description Удаляет сервисов по списку их идентификаторов, возвращает количество удаленных сервисов
+// @Accept  json
+// @Produce  json
+// @Param body body []integer true "Массив идентификаторов сервисов"
+// @Success 200 {object} domain.DeleteResponse
+// @Failure 400 {object} domain.GrpcError
+// @Failure 500 {object} domain.GrpcError
+// @Router /service/delete_service [POST]
+func (c Service) Delete(ctx context.Context, req []int) (*domain.DeleteResponse, error) {
+	if len(req) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "at least one id are required")
+	}
+
+	result, err := c.service.Delete(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	domain, e := model.DomainRep.GetDomainById(service.DomainId)
-	if e != nil {
-		return nil, err
-	}
-	if domain == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Domain with id %d not found", service.DomainId)
-	}
-	if service.Id == 0 {
-		if existed != nil {
-			return nil, status.Errorf(codes.AlreadyExists, "Service with name %s already exists", service.Name)
-		}
-		service, e := model.ServiceRep.CreateService(service)
-		return &service, e
-	} else {
-		if existed != nil && existed.Id != service.Id {
-			return nil, status.Errorf(codes.AlreadyExists, "Service with name %s already exists", service.Name)
-		}
-		existed, err = model.ServiceRep.GetServiceById(service.Id)
-		if err != nil {
-			return nil, err
-		}
-		if existed == nil {
-			return nil, status.Errorf(codes.NotFound, "Service with id %d not found", service.Id)
-		}
-		service, e := model.ServiceRep.UpdateService(service)
-		return &service, e
-	}
-}
 
-func GetServiceById(identity Identity) (*entity.Service, error) {
-	service, err := model.ServiceRep.GetServiceById(identity.Id)
-	if err != nil {
-		return nil, err
-	}
-	if service == nil {
-		return nil, status.Errorf(codes.NotFound, "Service with id %d not found", identity.Id)
-	}
-	return service, err
-}
-
-func DeleteService(list []int32) (DeleteResponse, error) {
-	if len(list) == 0 {
-		return DeleteResponse{Deleted: 0}, status.Error(codes.InvalidArgument, "At least one id are required")
-	}
-	res, err := model.ServiceRep.DeleteServices(list)
-	return DeleteResponse{Deleted: res}, err
+	return &domain.DeleteResponse{
+		Deleted: result,
+	}, nil
 }
