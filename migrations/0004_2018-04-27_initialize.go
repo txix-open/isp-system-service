@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -47,7 +47,7 @@ func (i *initializeMigration) SetParams(migrationDir string, schema string) {
 
 func (i *initializeMigration) Up(tx *sql.Tx) error {
 	path := filepath.Join(i.migrationDir, initFile)
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return errors.WithMessage(err, "read file")
 	}

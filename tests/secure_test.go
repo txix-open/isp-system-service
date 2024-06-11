@@ -2,12 +2,12 @@ package tests
 
 import (
 	"context"
+	"github.com/txix-open/isp-kit/dbx/migration"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/txix-open/isp-kit/dbx/migration"
 	"github.com/txix-open/isp-kit/grpc/client"
 	"github.com/txix-open/isp-kit/test"
 	"github.com/txix-open/isp-kit/test/dbt"
@@ -40,7 +40,10 @@ func (s *SecureSuite) SetupSuite() {
 	db, err := s.testDb.DB()
 	s.require.NoError(err)
 
-	err = migration.NewRunner(db.DB.DB, "../migrations").Run()
+	logger := s.test.Logger()
+
+	err = migration.NewRunner(migration.DialectPostgreSQL, "../migrations", logger).Run(context.Background(), db.DB.DB)
+
 	s.require.NoError(err)
 
 	locator := assembly.NewLocator(s.testDb, s.test.Logger())
@@ -69,7 +72,7 @@ func (s *SecureSuite) TestAuthenticate_Success() {
 		JsonRequestBody(domain.AuthenticateRequest{
 			Token: "test_token_success",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthenticateResponse{
@@ -90,7 +93,7 @@ func (s *SecureSuite) TestAuthenticate_NotFound() {
 		JsonRequestBody(domain.AuthenticateRequest{
 			Token: "test_token_not_found",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthenticateResponse{
@@ -110,7 +113,7 @@ func (s *SecureSuite) TestAuthenticate_NotExpired() {
 		JsonRequestBody(domain.AuthenticateRequest{
 			Token: "test_token_not_expired",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthenticateResponse{
@@ -135,7 +138,7 @@ func (s *SecureSuite) TestAuthenticate_Expired() {
 		JsonRequestBody(domain.AuthenticateRequest{
 			Token: "test_token_expired",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthenticateResponse{
@@ -158,7 +161,7 @@ func (s *SecureSuite) TestAuthorize_Success_True() {
 			ApplicationId: 7,
 			Endpoint:      "endpoint/available",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthorizeResponse{
@@ -179,7 +182,7 @@ func (s *SecureSuite) TestAuthorize_Success_False() {
 			ApplicationId: 7,
 			Endpoint:      "endpoint/not_available",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthorizeResponse{
@@ -194,7 +197,7 @@ func (s *SecureSuite) TestAuthorize_NotFound() {
 			ApplicationId: 7,
 			Endpoint:      "endpoint/not_found",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthorizeResponse{

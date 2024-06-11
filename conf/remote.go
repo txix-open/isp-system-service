@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	schema.CustomGenerators.Register("logLevel", func(field reflect.StructField, t *jsonschema.Type) {
+	schema.CustomGenerators.Register("logLevel", func(field reflect.StructField, t *jsonschema.Schema) {
 		t.Type = "string"
 		t.Enum = []interface{}{"debug", "info", "error", "fatal"}
 	})

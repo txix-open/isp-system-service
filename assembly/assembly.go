@@ -23,7 +23,7 @@ type Assembly struct {
 }
 
 func New(boot *bootstrap.Bootstrap) (*Assembly, error) {
-	dbCli := dbrx.New(dbx.WithMigration(boot.MigrationsDir))
+	dbCli := dbrx.New(dbx.WithMigrationRunner(boot.MigrationsDir, boot.App.Logger()))
 	server := grpc.NewServer()
 
 	return &Assembly{
