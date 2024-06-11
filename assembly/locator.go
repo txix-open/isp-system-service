@@ -1,10 +1,10 @@
 package assembly
 
 import (
-	"github.com/integration-system/isp-kit/db"
-	"github.com/integration-system/isp-kit/grpc/endpoint"
-	"github.com/integration-system/isp-kit/grpc/isp"
-	"github.com/integration-system/isp-kit/log"
+	"github.com/txix-open/isp-kit/db"
+	"github.com/txix-open/isp-kit/grpc/endpoint"
+	"github.com/txix-open/isp-kit/grpc/isp"
+	"github.com/txix-open/isp-kit/log"
 	"isp-system-service/conf"
 	"isp-system-service/controller"
 	"isp-system-service/repository"

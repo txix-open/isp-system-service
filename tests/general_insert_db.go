@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"github.com/integration-system/isp-kit/test/dbt"
+	"github.com/txix-open/isp-kit/test/dbt"
 	"isp-system-service/entity"
 )
 

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/integration-system/isp-kit/bootstrap"
-	"github.com/integration-system/isp-kit/shutdown"
+	"github.com/txix-open/isp-kit/bootstrap"
+	"github.com/txix-open/isp-kit/shutdown"
 	"isp-system-service/assembly"
 	"isp-system-service/conf"
 	"isp-system-service/routes"
