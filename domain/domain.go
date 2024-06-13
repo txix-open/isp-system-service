@@ -19,9 +19,9 @@ type Domain struct {
 	UpdatedAt   time.Time
 }
 
-type DomainWithService struct {
-	Id          int
-	Name        string
-	Description string
-	Services    []*ServiceWithApps
+type DomainWithApplicationGroup struct {
+	Id               int
+	Name             string
+	Description      string
+	ApplicationGroup []*ApplicationGroupWithApps
 }

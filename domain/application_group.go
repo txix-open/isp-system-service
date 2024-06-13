@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type Service struct {
+type ApplicationGroup struct {
 	Id          int
 	Name        string
 	Description string
@@ -13,14 +13,14 @@ type Service struct {
 	UpdatedAt   time.Time
 }
 
-type ServiceCreateUpdateRequest struct {
+type ApplicationGroupCreateUpdateRequest struct {
 	Id          int
 	Name        string `valid:"required~Required"`
 	Description string
 	DomainId    int `valid:"required~Required"`
 }
 
-type ServiceWithApps struct {
+type ApplicationGroupWithApps struct {
 	Id          int
 	Name        string
 	Description string

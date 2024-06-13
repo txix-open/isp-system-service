@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type Service struct {
+type ApplicationGroup struct {
 	Id          int
 	Name        string
 	Description *string

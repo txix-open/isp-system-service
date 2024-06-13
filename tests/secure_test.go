@@ -54,11 +54,11 @@ func (s *SecureSuite) SetupSuite() {
 	InsertDomain(s.testDb, entity.Domain{
 		Id: 3, Name: "test_domain", SystemId: 1, CreatedAt: createdTime, UpdatedAt: createdTime,
 	})
-	InsertService(s.testDb, entity.Service{
-		Id: 5, Name: "test_service", DomainId: 3, CreatedAt: createdTime, UpdatedAt: createdTime,
+	InsertApplicationGroup(s.testDb, entity.ApplicationGroup{
+		Id: 5, Name: "test_application_group", DomainId: 3, CreatedAt: createdTime, UpdatedAt: createdTime,
 	})
 	InsertApplication(s.testDb, entity.Application{
-		Id: 7, Name: "test_application", ServiceId: 5, CreatedAt: createdTime, UpdatedAt: createdTime,
+		Id: 7, Name: "test_application", ApplicationGroupId: 5, CreatedAt: createdTime, UpdatedAt: createdTime,
 	})
 }
 
@@ -79,10 +79,10 @@ func (s *SecureSuite) TestAuthenticate_Success() {
 		Authenticated: true,
 		ErrorReason:   "",
 		AuthData: &domain.AuthData{
-			SystemId:      1,
-			DomainId:      3,
-			ServiceId:     5,
-			ApplicationId: 7,
+			SystemId:           1,
+			DomainId:           3,
+			ApplicationGroupId: 5,
+			ApplicationId:      7,
 		},
 	}, result)
 }
@@ -120,10 +120,10 @@ func (s *SecureSuite) TestAuthenticate_NotExpired() {
 		Authenticated: true,
 		ErrorReason:   "",
 		AuthData: &domain.AuthData{
-			SystemId:      1,
-			DomainId:      3,
-			ServiceId:     5,
-			ApplicationId: 7,
+			SystemId:           1,
+			DomainId:           3,
+			ApplicationGroupId: 5,
+			ApplicationId:      7,
 		},
 	}, result)
 }

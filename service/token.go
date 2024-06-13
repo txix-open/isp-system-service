@@ -21,7 +21,7 @@ type ITokenApplicationRep interface {
 }
 
 type ITokenServiceRep interface {
-	GetServiceById(ctx context.Context, id int) (*entity.Service, error)
+	GetApplicationGroupById(ctx context.Context, id int) (*entity.ApplicationGroup, error)
 }
 
 type ITokenDomainRep interface {
@@ -46,13 +46,13 @@ type ITokenTxRunner interface {
 }
 
 type Token struct {
-	jwt        ITokenSource
-	appEnrich  ITokenAppEnrich
-	tx         ITokenTxRunner
-	appRep     ITokenApplicationRep
-	domainRep  ITokenDomainRep
-	serviceRep ITokenServiceRep
-	tokenRep   ITokenTokenRep
+	jwt       ITokenSource
+	appEnrich ITokenAppEnrich
+	tx        ITokenTxRunner
+	appRep    ITokenApplicationRep
+	domainRep ITokenDomainRep
+	groupRep  ITokenServiceRep
+	tokenRep  ITokenTokenRep
 }
 
 func NewToken(
@@ -61,17 +61,17 @@ func NewToken(
 	tx ITokenTxRunner,
 	appRep ITokenApplicationRep,
 	domainRep ITokenDomainRep,
-	serviceRep ITokenServiceRep,
+	groupRep ITokenServiceRep,
 	tokenRep ITokenTokenRep,
 ) Token {
 	return Token{
-		appEnrich:  appEnrich,
-		jwt:        jwtGenerate,
-		tx:         tx,
-		appRep:     appRep,
-		domainRep:  domainRep,
-		serviceRep: serviceRep,
-		tokenRep:   tokenRep,
+		appEnrich: appEnrich,
+		jwt:       jwtGenerate,
+		tx:        tx,
+		appRep:    appRep,
+		domainRep: domainRep,
+		groupRep:  groupRep,
+		tokenRep:  tokenRep,
 	}
 }
 
@@ -95,12 +95,12 @@ func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 		return nil, errors.WithMessagef(err, "get application by id")
 	}
 
-	serviceEntity, err := s.serviceRep.GetServiceById(ctx, applicationEntity.ServiceId)
+	applicationGroupIdEntity, err := s.groupRep.GetApplicationGroupById(ctx, applicationEntity.ApplicationGroupId)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get service by id")
+		return nil, errors.WithMessagef(err, "get application groupId by id")
 	}
 
-	_, err = s.domainRep.GetDomainById(ctx, serviceEntity.DomainId)
+	_, err = s.domainRep.GetDomainById(ctx, applicationGroupIdEntity.DomainId)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get domain by id")
 	}

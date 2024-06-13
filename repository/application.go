@@ -24,7 +24,7 @@ func NewApplication(db db.DB) Application {
 
 func (r Application) GetApplicationById(ctx context.Context, id int) (*entity.Application, error) {
 	q := `
-	SELECT id, name, description, service_id, type, created_at, updated_at
+	SELECT id, name, description, application_group_id, type, created_at, updated_at
 	FROM application
 	WHERE id = $1
 `
@@ -42,7 +42,7 @@ func (r Application) GetApplicationById(ctx context.Context, id int) (*entity.Ap
 
 func (r Application) GetApplicationByIdList(ctx context.Context, idList []int) ([]entity.Application, error) {
 	q, args, err := query.New().
-		Select("id", "name", "description", "service_id", "type", "created_at", "updated_at").
+		Select("id", "name", "description", "application_group_id", "type", "created_at", "updated_at").
 		From("application").
 		Where(squirrel.Eq{"id": idList}).
 		OrderBy("created_at DESC").
@@ -60,11 +60,11 @@ func (r Application) GetApplicationByIdList(ctx context.Context, idList []int) (
 	return result, nil
 }
 
-func (r Application) GetApplicationByServiceIdList(ctx context.Context, serviceIdList []int) ([]entity.Application, error) {
+func (r Application) GetApplicationByApplicationGroupIdList(ctx context.Context, applicationGroupIdList []int) ([]entity.Application, error) {
 	q, args, err := query.New().
-		Select("id", "name", "description", "service_id", "type", "created_at", "updated_at").
+		Select("id", "name", "description", "application_group_id", "type", "created_at", "updated_at").
 		From("application").
-		Where(squirrel.Eq{"service_id": serviceIdList}).
+		Where(squirrel.Eq{"application_group_id": applicationGroupIdList}).
 		OrderBy("created_at DESC").
 		ToSql()
 	if err != nil {
@@ -80,14 +80,14 @@ func (r Application) GetApplicationByServiceIdList(ctx context.Context, serviceI
 	return result, nil
 }
 
-func (r Application) GetApplicationByNameAndServiceId(ctx context.Context, name string, serviceId int) (*entity.Application, error) {
+func (r Application) GetApplicationByNameAndApplicationGroupId(ctx context.Context, name string, applicationGroupId int) (*entity.Application, error) {
 	q := `
-	SELECT id, name, description, service_id, type, created_at, updated_at
+	SELECT id, name, description, application_group_id, type, created_at, updated_at
 	FROM application 
-	WHERE name = $1 AND service_id = $2
+	WHERE name = $1 AND application_group_id = $2
 `
 	result := entity.Application{}
-	err := r.db.SelectRow(ctx, &result, q, name, serviceId)
+	err := r.db.SelectRow(ctx, &result, q, name, applicationGroupId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -98,16 +98,16 @@ func (r Application) GetApplicationByNameAndServiceId(ctx context.Context, name 
 	return &result, nil
 }
 
-func (r Application) CreateApplication(ctx context.Context, name string, desc string, serviceId int, appType string) (
+func (r Application) CreateApplication(ctx context.Context, name string, desc string, applicationGroupId int, appType string) (
 	*entity.Application, error) {
 	q := `
 	INSERT INTO application 
-	(name, description, service_id, type)
+	(name, description, application_group_id, type)
 	VALUES ($1, $2, $3, $4)
-	RETURNING id, name, description, service_id, type, created_at, updated_at
+	RETURNING id, name, description, application_group_id, type, created_at, updated_at
 `
 	result := entity.Application{}
-	err := r.db.SelectRow(ctx, &result, q, name, desc, serviceId, appType)
+	err := r.db.SelectRow(ctx, &result, q, name, desc, applicationGroupId, appType)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "select row db")
 	}
@@ -121,7 +121,7 @@ func (r Application) UpdateApplication(ctx context.Context, id int, name string,
 	SET name = $2,
 		description = $3
 	WHERE id = $1
-	RETURNING id, name, description, service_id, type, created_at, updated_at
+	RETURNING id, name, description, application_group_id, type, created_at, updated_at
 `
 	result := entity.Application{}
 	err := r.db.SelectRow(ctx, &result, q, id, name, description)

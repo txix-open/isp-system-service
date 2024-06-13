@@ -8,8 +8,8 @@ var (
 	ErrDomainNotFound      = errors.New("domain not found")
 	ErrDomainDuplicateName = errors.New("domain name already exist")
 
-	ErrServiceNotFound      = errors.New("service not found")
-	ErrServiceDuplicateName = errors.New("service name already exist")
+	ErrApplicationGroupNotFound      = errors.New("application group not found")
+	ErrApplicationGroupDuplicateName = errors.New("application group name already exist")
 
 	ErrSystemNotFound = errors.New("system not found")
 

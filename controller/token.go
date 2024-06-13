@@ -55,8 +55,8 @@ func (c Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 	switch {
 	case errors.Is(err, domain.ErrApplicationNotFound):
 		return nil, status.Errorf(codes.NotFound, "application with id %d not found", req.AppId)
-	case errors.Is(err, domain.ErrServiceNotFound):
-		return nil, status.Errorf(codes.NotFound, "service for app_id id %d not found", req.AppId)
+	case errors.Is(err, domain.ErrApplicationGroupNotFound):
+		return nil, status.Errorf(codes.NotFound, "application group for app_id id %d not found", req.AppId)
 	case errors.Is(err, domain.ErrDomainNotFound):
 		return nil, status.Errorf(codes.NotFound, "domain for app_id %d not found", req.AppId)
 	case err != nil:

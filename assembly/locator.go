@@ -36,34 +36,36 @@ func (l Locator) Handler(cfg conf.Remote) isp.BackendServiceServer {
 	accessListRep := repository.NewAccessList(l.db)
 	applicationRep := repository.NewApplication(l.db)
 	domainRep := repository.NewDomain(l.db)
-	serviceRep := repository.NewService(l.db)
+	groupRep := repository.NewApplicationGroup(l.db)
 	tokenRep := repository.NewToken(l.db)
 
-	secureService := secure.NewService(tokenRep, accessListRep)
+	secureApplicationGroup := secure.NewApplicationGroup(tokenRep, accessListRep)
 	accessListService := service.NewAccessList(txManager, accessListRep, applicationRep)
-	applicationService := service.NewApplication(txManager, applicationRep, domainRep, serviceRep, tokenRep)
+	applicationService := service.NewApplication(txManager, applicationRep, domainRep, groupRep, tokenRep)
 	domainService := service.NewDomain(domainRep)
-	serviceService := service.NewService(domainRep, serviceRep)
+	applicationGroupService := service.NewApplicationGroup(domainRep, groupRep)
 
 	jwtService := service.NewTokenSource()
 	tokenService := service.NewToken(jwtService, applicationService, txManager,
-		applicationRep, domainRep, serviceRep, tokenRep,
+		applicationRep, domainRep, groupRep, tokenRep,
 	)
 
-	secureController := controller.NewSecure(secureService)
+	secureController := controller.NewSecure(secureApplicationGroup)
 	accessListController := controller.NewAccessList(accessListService)
 	applicationController := controller.NewApplication(applicationService)
 	domainController := controller.NewDomain(domainService)
-	serviceController := controller.NewService(serviceService)
+	serviceController := controller.NewService(applicationGroupService)
+	groupController := controller.NewApplicationGroup(applicationGroupService)
 	tokenController := controller.NewToken(tokenService)
 
 	c := routes.Controllers{
-		Secure:      secureController,
-		AccessList:  accessListController,
-		Domain:      domainController,
-		Service:     serviceController,
-		Application: applicationController,
-		Token:       tokenController,
+		Secure:           secureController,
+		AccessList:       accessListController,
+		Domain:           domainController,
+		Service:          serviceController,
+		ApplicationGroup: groupController,
+		Application:      applicationController,
+		Token:            tokenController,
 	}
 	mapper := endpoint.DefaultWrapper(l.logger, endpoint.BodyLogger(l.logger))
 	server := routes.Handler(mapper, c)

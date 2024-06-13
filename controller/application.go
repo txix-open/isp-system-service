@@ -12,8 +12,8 @@ import (
 type ApplicationService interface {
 	GetById(ctx context.Context, appId int) (*domain.ApplicationWithTokens, error)
 	GetByIdList(ctx context.Context, idList []int) ([]*domain.ApplicationWithTokens, error)
-	GetByServiceId(ctx context.Context, id int) ([]*domain.ApplicationWithTokens, error)
-	SystemTree(ctx context.Context, systemId int) ([]*domain.DomainWithService, error)
+	GetByApplicationGroupId(ctx context.Context, id int) ([]*domain.ApplicationWithTokens, error)
+	SystemTree(ctx context.Context, systemId int) ([]*domain.DomainWithApplicationGroup, error)
 	CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.ApplicationWithTokens, error)
 	Delete(ctx context.Context, idList []int) (int, error)
 }
@@ -66,30 +66,30 @@ func (c Application) GetByIdList(ctx context.Context, req []int) ([]*domain.Appl
 	return c.service.GetByIdList(ctx, req)
 }
 
-// GetByServiceId godoc
+// GetByApplicationGroupId godoc
 // @Tags application
-// @Summary Получить список приложений по идентификатору сервиса
-// @Description Возвращает список приложений по запрошенному идентификатору сервиса
+// @Summary Получить список приложений по идентификатору группы приложений
+// @Description Возвращает список приложений по запрошенному идентификатору группы приложений
 // @Accept  json
 // @Produce  json
-// @Param body body domain.Identity true "Идентификатор сервиса"
+// @Param body body domain.Identity true "Идентификатор группы приложений"
 // @Success 200 {array} domain.ApplicationWithTokens
 // @Failure 500 {object} domain.GrpcError
-// @Router /application/get_applications_by_service_id [POST]
-func (c Application) GetByServiceId(ctx context.Context, req domain.Identity) ([]*domain.ApplicationWithTokens, error) {
-	return c.service.GetByServiceId(ctx, req.Id)
+// @Router /application/get_applications_by_application_group_id [POST]
+func (c Application) GetByApplicationGroupId(ctx context.Context, req domain.Identity) ([]*domain.ApplicationWithTokens, error) {
+	return c.service.GetByApplicationGroupId(ctx, req.Id)
 }
 
 // GetSystemTree godoc
 // @Tags application
 // @Summary Метод получения системного дерева
-// @Description Возвращает описание взаимосвязей сервисов и приложений
+// @Description Возвращает описание взаимосвязей группы приложений и приложений
 // @Accept  json
 // @Produce  json
-// @Success 200 {array} domain.DomainWithService
+// @Success 200 {array} domain.DomainWithApplicationGroup
 // @Failure 500 {object} domain.GrpcError
 // @Router /application/get_system_tree [POST]
-func (c Application) GetSystemTree(ctx context.Context) ([]*domain.DomainWithService, error) {
+func (c Application) GetSystemTree(ctx context.Context) ([]*domain.DomainWithApplicationGroup, error) {
 	return c.service.SystemTree(ctx, domain.DefaultSystemId)
 }
 
@@ -109,12 +109,12 @@ func (c Application) GetSystemTree(ctx context.Context) ([]*domain.DomainWithSer
 func (c Application) CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.ApplicationWithTokens, error) {
 	result, err := c.service.CreateUpdate(ctx, req)
 	switch {
-	case errors.Is(err, domain.ErrServiceNotFound):
-		return nil, status.Errorf(codes.InvalidArgument, "service with id %d not found", req.ServiceId)
+	case errors.Is(err, domain.ErrApplicationGroupNotFound):
+		return nil, status.Errorf(codes.InvalidArgument, "application group with id %d not found", req.ApplicationGroupId)
 	case errors.Is(err, domain.ErrApplicationDuplicateName):
 		return nil, status.Errorf(codes.AlreadyExists, "application with name %s already exists", req.Name)
 	case errors.Is(err, domain.ErrApplicationNotFound):
-		return nil, status.Errorf(codes.NotFound, "Application with id %d not found", req.Id)
+		return nil, status.Errorf(codes.NotFound, "application with id %d not found", req.Id)
 	case err != nil:
 		return nil, err
 	default:

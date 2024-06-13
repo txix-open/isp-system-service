@@ -9,12 +9,13 @@ import (
 )
 
 type Controllers struct {
-	AccessList  controller.AccessList
-	Domain      controller.Domain
-	Service     controller.Service
-	Application controller.Application
-	Token       controller.Token
-	Secure      controller.Secure
+	AccessList       controller.AccessList
+	Domain           controller.Domain
+	Service          controller.Service
+	ApplicationGroup controller.ApplicationGroup
+	Application      controller.Application
+	Token            controller.Token
+	Secure           controller.Secure
 }
 
 func EndpointDescriptors() []cluster.EndpointDescriptor {
@@ -35,6 +36,7 @@ func endpointDescriptors(c Controllers) []cluster.EndpointDescriptor {
 		accessListCluster(c),
 		domainCluster(c),
 		serviceCluster(c),
+		applicationGroupCluster(c),
 		applicationCluster(c),
 		tokenCluster(c),
 	})
@@ -130,6 +132,31 @@ func serviceCluster(c Controllers) []cluster.EndpointDescriptor {
 	}
 }
 
+func applicationGroupCluster(c Controllers) []cluster.EndpointDescriptor {
+	return []cluster.EndpointDescriptor{
+		{
+			Path:    "system/application_group/get_group",
+			Inner:   true,
+			Handler: c.ApplicationGroup.Get,
+		},
+		{
+			Path:    "system/application_group/create_update_group",
+			Inner:   true,
+			Handler: c.ApplicationGroup.CreateUpdate,
+		},
+		{
+			Path:    "system/application_group/get_group_by_id",
+			Inner:   true,
+			Handler: c.ApplicationGroup.GetById,
+		},
+		{
+			Path:    "system/application_group/delete_group",
+			Inner:   true,
+			Handler: c.ApplicationGroup.Delete,
+		},
+	}
+}
+
 func applicationCluster(c Controllers) []cluster.EndpointDescriptor {
 	return []cluster.EndpointDescriptor{
 		{
@@ -138,9 +165,9 @@ func applicationCluster(c Controllers) []cluster.EndpointDescriptor {
 			Handler: c.Application.GetByIdList,
 		},
 		{
-			Path:    "system/application/get_applications_by_service_id",
+			Path:    "system/application/get_applications_by_application_group_id",
 			Inner:   true,
-			Handler: c.Application.GetByServiceId,
+			Handler: c.Application.GetByApplicationGroupId,
 		},
 		{
 			Path:    "system/application/create_update_application",

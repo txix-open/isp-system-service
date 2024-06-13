@@ -10,10 +10,10 @@ import (
 )
 
 type ServiceService interface {
-	GetById(ctx context.Context, id int) (*domain.Service, error)
-	GetByIdList(ctx context.Context, idList []int) ([]domain.Service, error)
-	GetByDomainId(ctx context.Context, domainId int) ([]domain.Service, error)
-	CreateUpdate(ctx context.Context, req domain.ServiceCreateUpdateRequest) (*domain.Service, error)
+	GetById(ctx context.Context, id int) (*domain.ApplicationGroup, error)
+	GetByIdList(ctx context.Context, idList []int) ([]domain.ApplicationGroup, error)
+	GetByDomainId(ctx context.Context, domainId int) ([]domain.ApplicationGroup, error)
+	CreateUpdate(ctx context.Context, req domain.ApplicationGroupCreateUpdateRequest) (*domain.ApplicationGroup, error)
 	Delete(ctx context.Context, idList []int) (int, error)
 }
 
@@ -38,10 +38,10 @@ func NewService(service ServiceService) Service {
 // @Failure 404 {object} domain.GrpcError
 // @Failure 500 {object} domain.GrpcError
 // @Router /service/get_service_by_id [POST]
-func (c Service) GetById(ctx context.Context, req domain.Identity) (*domain.Service, error) {
+func (c Service) GetById(ctx context.Context, req domain.Identity) (*domain.ApplicationGroup, error) {
 	result, err := c.service.GetById(ctx, req.Id)
 	switch {
-	case errors.Is(err, domain.ErrServiceNotFound):
+	case errors.Is(err, domain.ErrApplicationGroupNotFound):
 		return nil, status.Errorf(codes.NotFound, "service with id %d not found", req.Id)
 	case err != nil:
 		return nil, err
@@ -60,7 +60,7 @@ func (c Service) GetById(ctx context.Context, req domain.Identity) (*domain.Serv
 // @Success 200 {array} domain.Service
 // @Failure 500 {object} domain.GrpcError
 // @Router /service/get_service [POST]
-func (c Service) Get(ctx context.Context, req []int) ([]domain.Service, error) {
+func (c Service) Get(ctx context.Context, req []int) ([]domain.ApplicationGroup, error) {
 	return c.service.GetByIdList(ctx, req)
 }
 
@@ -74,7 +74,7 @@ func (c Service) Get(ctx context.Context, req []int) ([]domain.Service, error) {
 // @Success 200 {array} domain.Service
 // @Failure 500 {object} domain.GrpcError
 // @Router /service/get_services_by_domain_id [POST]
-func (c Service) GetByDomainId(ctx context.Context, req domain.Identity) ([]domain.Service, error) {
+func (c Service) GetByDomainId(ctx context.Context, req domain.Identity) ([]domain.ApplicationGroup, error) {
 	return c.service.GetByDomainId(ctx, req.Id)
 }
 
@@ -91,14 +91,14 @@ func (c Service) GetByDomainId(ctx context.Context, req domain.Identity) ([]doma
 // @Failure 409 {object} domain.GrpcError
 // @Failure 500 {object} domain.GrpcError
 // @Router /service/create_update_service [POST]
-func (c Service) CreateUpdate(ctx context.Context, req domain.ServiceCreateUpdateRequest) (*domain.Service, error) {
+func (c Service) CreateUpdate(ctx context.Context, req domain.ApplicationGroupCreateUpdateRequest) (*domain.ApplicationGroup, error) {
 	result, err := c.service.CreateUpdate(ctx, req)
 	switch {
 	case errors.Is(err, domain.ErrDomainNotFound):
 		return nil, status.Errorf(codes.InvalidArgument, "domain with id %d not found", req.DomainId)
-	case errors.Is(err, domain.ErrServiceNotFound):
+	case errors.Is(err, domain.ErrApplicationGroupNotFound):
 		return nil, status.Errorf(codes.NotFound, "service with id %d not found", req.Id)
-	case errors.Is(err, domain.ErrServiceDuplicateName):
+	case errors.Is(err, domain.ErrApplicationGroupDuplicateName):
 		return nil, status.Errorf(codes.AlreadyExists, "service with name %s already exists", req.Name)
 	case err != nil:
 		return nil, err

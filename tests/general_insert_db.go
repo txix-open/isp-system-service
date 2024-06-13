@@ -15,9 +15,9 @@ func InsertDomain(db *dbt.TestDb, value entity.Domain) {
 	db.Must().ExecNamed(q, value)
 }
 
-func InsertService(db *dbt.TestDb, value entity.Service) {
+func InsertApplicationGroup(db *dbt.TestDb, value entity.ApplicationGroup) {
 	q := `
-	INSERT INTO service 
+	INSERT INTO application_group 
 		(id, name, description, domain_id, created_at, updated_at)
 	VALUES 
 		(:id, :name, :description, :domain_id, :created_at, :updated_at)
@@ -28,7 +28,7 @@ func InsertService(db *dbt.TestDb, value entity.Service) {
 func InsertApplication(db *dbt.TestDb, value entity.Application) {
 	q := `
 	INSERT INTO application 
-		(id, name, description, service_id, created_at, updated_at) 
+		(id, name, description, application_group_id, created_at, updated_at) 
 	VALUES 
 		(:id, :name, :description, :service_id, :created_at, :updated_at)
 `

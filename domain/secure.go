@@ -11,10 +11,10 @@ type AuthenticateResponse struct {
 }
 
 type AuthData struct {
-	SystemId      int
-	DomainId      int
-	ServiceId     int
-	ApplicationId int
+	SystemId           int
+	DomainId           int
+	ApplicationGroupId int
+	ApplicationId      int
 }
 
 type AuthorizeRequest struct {
