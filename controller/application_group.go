@@ -12,7 +12,6 @@ import (
 type ApplicationGroupService interface {
 	GetById(ctx context.Context, id int) (*domain.ApplicationGroup, error)
 	GetByIdList(ctx context.Context, idList []int) ([]domain.ApplicationGroup, error)
-	GetByDomainId(ctx context.Context, domainId int) ([]domain.ApplicationGroup, error)
 	CreateUpdate(ctx context.Context, req domain.ApplicationGroupCreateUpdateRequest) (*domain.ApplicationGroup, error)
 	Delete(ctx context.Context, idList []int) (int, error)
 }
