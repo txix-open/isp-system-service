@@ -75,7 +75,7 @@ func (c Application) GetByIdList(ctx context.Context, req []int) ([]*domain.Appl
 // @Param body body domain.Identity true "Идентификатор группы приложений"
 // @Success 200 {array} domain.ApplicationWithTokens
 // @Failure 500 {object} domain.GrpcError
-// @Router /application/get_applications_by_application_group_id [POST]
+// @Router /application/get_applications_by_service_id [POST]
 func (c Application) GetByApplicationGroupId(ctx context.Context, req domain.Identity) ([]*domain.ApplicationWithTokens, error) {
 	return c.service.GetByApplicationGroupId(ctx, req.Id)
 }

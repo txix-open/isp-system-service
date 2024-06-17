@@ -165,7 +165,7 @@ func applicationCluster(c Controllers) []cluster.EndpointDescriptor {
 			Handler: c.Application.GetByIdList,
 		},
 		{
-			Path:    "system/application/get_applications_by_application_group_id",
+			Path:    "system/application/get_applications_by_service_id",
 			Inner:   true,
 			Handler: c.Application.GetByApplicationGroupId,
 		},
