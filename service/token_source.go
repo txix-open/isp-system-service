@@ -15,7 +15,7 @@ func NewTokenSource() TokenSource {
 }
 
 func (s TokenSource) CreateApplicationToken() (string, error) {
-	cryptoRand := make([]byte, 128) //nolint:gomnd
+	cryptoRand := make([]byte, 128) //nolint:mnd
 	_, err := rand.Read(cryptoRand)
 	if err != nil {
 		return "", errors.WithMessage(err, "crypto/rand read")

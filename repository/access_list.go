@@ -5,9 +5,9 @@ import (
 	"database/sql"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/integration-system/isp-kit/db"
-	"github.com/integration-system/isp-kit/db/query"
 	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/db"
+	"github.com/txix-open/isp-kit/db/query"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
 )
@@ -31,7 +31,7 @@ func (r AccessList) GetAccessListByAppIdAndMethod(ctx context.Context, appId int
 	result := entity.AccessList{}
 	err := r.db.SelectRow(ctx, &result, q, appId, method)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrAccessListNotFound
 		}
 		return nil, errors.WithMessagef(err, "select db")

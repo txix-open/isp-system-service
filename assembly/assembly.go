@@ -2,17 +2,17 @@ package assembly
 
 import (
 	"context"
+	"github.com/txix-open/isp-kit/rc"
 
-	"github.com/integration-system/isp-kit/app"
-	"github.com/integration-system/isp-kit/bootstrap"
-	"github.com/integration-system/isp-kit/cluster"
-	"github.com/integration-system/isp-kit/dbrx"
-	"github.com/integration-system/isp-kit/dbx"
-	"github.com/integration-system/isp-kit/grpc"
-	"github.com/integration-system/isp-kit/log"
 	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/app"
+	"github.com/txix-open/isp-kit/bootstrap"
+	"github.com/txix-open/isp-kit/cluster"
+	"github.com/txix-open/isp-kit/dbrx"
+	"github.com/txix-open/isp-kit/dbx"
+	"github.com/txix-open/isp-kit/grpc"
+	"github.com/txix-open/isp-kit/log"
 	"isp-system-service/conf"
-	"isp-system-service/migrations"
 )
 
 type Assembly struct {
@@ -23,9 +23,8 @@ type Assembly struct {
 }
 
 func New(boot *bootstrap.Bootstrap) (*Assembly, error) {
-	dbCli := dbrx.New(dbx.WithMigration(boot.MigrationsDir))
+	dbCli := dbrx.New(dbx.WithMigrationRunner(boot.MigrationsDir, boot.App.Logger()))
 	server := grpc.NewServer()
-
 	return &Assembly{
 		boot:   boot,
 		db:     dbCli,
@@ -35,27 +34,27 @@ func New(boot *bootstrap.Bootstrap) (*Assembly, error) {
 }
 
 func (a *Assembly) ReceiveConfig(ctx context.Context, remoteConfig []byte) error {
-	var (
-		newCfg  conf.Remote
-		prevCfg conf.Remote
-	)
-	err := a.boot.RemoteConfig.Upgrade(remoteConfig, &newCfg, &prevCfg)
+	newCfg, _, err := rc.Upgrade[conf.Remote](a.boot.RemoteConfig, remoteConfig)
 	if err != nil {
-		a.logger.Fatal(ctx, errors.WithMessage(err, "upgrade remote config"))
+		a.boot.Fatal(errors.WithMessage(err, "upgrade remote config"))
 	}
-
-	migrations.Initialize.SetParams(a.boot.MigrationsDir, newCfg.Database.Schema)
 
 	a.logger.SetLevel(newCfg.LogLevel)
 
 	err = a.db.Upgrade(ctx, newCfg.Database)
 	if err != nil {
-		a.logger.Fatal(ctx, errors.WithMessage(err, "upgrade db client"), log.Any("config", newCfg.Database))
+		a.boot.Fatal(errors.WithMessage(err, "upgrade db client"))
 	}
 
 	locator := NewLocator(a.db, a.logger)
-	handler := locator.Handler(newCfg)
-	a.server.Upgrade(handler)
+	config := locator.Config(newCfg)
+
+	err = config.Baseline.Do(a.boot.App.Context())
+	if err != nil {
+		a.boot.Fatal(errors.WithMessage(err, "run baseline"))
+	}
+
+	a.server.Upgrade(config.Handler)
 
 	return nil
 }

@@ -3,14 +3,15 @@ package conf
 import (
 	"reflect"
 
-	"github.com/integration-system/isp-kit/dbx"
-	"github.com/integration-system/isp-kit/log"
-	"github.com/integration-system/isp-kit/rc/schema"
-	"github.com/integration-system/jsonschema"
+	"github.com/txix-open/isp-kit/dbx"
+	"github.com/txix-open/isp-kit/log"
+	"github.com/txix-open/isp-kit/rc/schema"
+	"github.com/txix-open/jsonschema"
 )
 
+//nolint:gochecknoinits
 func init() {
-	schema.CustomGenerators.Register("logLevel", func(field reflect.StructField, t *jsonschema.Type) {
+	schema.CustomGenerators.Register("logLevel", func(field reflect.StructField, t *jsonschema.Schema) {
 		t.Type = "string"
 		t.Enum = []interface{}{"debug", "info", "error", "fatal"}
 	})
@@ -18,5 +19,10 @@ func init() {
 
 type Remote struct {
 	Database dbx.Config `schema:"Настройка базы данных"`
-	LogLevel log.Level  `schemaGen:"logLevel" schema:"Уровень логирования"`
+	Baseline Baseline
+	LogLevel log.Level `schemaGen:"logLevel" schema:"Уровень логирования"`
+}
+
+type Baseline struct {
+	InitialAdminUiToken string
 }

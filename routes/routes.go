@@ -1,10 +1,9 @@
 package routes
 
 import (
-	"github.com/integration-system/isp-kit/cluster"
-	"github.com/integration-system/isp-kit/grpc"
-	"github.com/integration-system/isp-kit/grpc/endpoint"
-	"github.com/integration-system/isp-kit/grpc/isp"
+	"github.com/txix-open/isp-kit/cluster"
+	"github.com/txix-open/isp-kit/grpc"
+	"github.com/txix-open/isp-kit/grpc/endpoint"
 	"isp-system-service/controller"
 )
 
@@ -21,7 +20,7 @@ func EndpointDescriptors() []cluster.EndpointDescriptor {
 	return endpointDescriptors(Controllers{})
 }
 
-func Handler(wrapper endpoint.Wrapper, c Controllers) isp.BackendServiceServer {
+func Handler(wrapper endpoint.Wrapper, c Controllers) *grpc.Mux {
 	muxer := grpc.NewMux()
 	for _, descriptor := range endpointDescriptors(c) {
 		muxer.Handle(descriptor.Path, wrapper.Endpoint(descriptor.Handler))

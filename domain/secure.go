@@ -1,7 +1,7 @@
 package domain
 
 type AuthenticateRequest struct {
-	Token string `valid:"required~Required"`
+	Token string `validate:"required"`
 }
 
 type AuthenticateResponse struct {
@@ -18,8 +18,8 @@ type AuthData struct {
 }
 
 type AuthorizeRequest struct {
-	ApplicationId int    `valid:"required~Required"`
-	Endpoint      string `valid:"required~Required"`
+	ApplicationId int    `validate:"required"`
+	Endpoint      string `validate:"required"`
 }
 
 type AuthorizeResponse struct {

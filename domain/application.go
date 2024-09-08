@@ -16,10 +16,10 @@ type Application struct {
 
 type ApplicationCreateUpdateRequest struct {
 	Id          int
-	Name        string `valid:"required~Required"`
+	Name        string `validate:"required"`
 	Description string
-	ServiceId   int    `valid:"required~Required"`
-	Type        string `valid:"required~Required,in(SYSTEM|MOBILE)"`
+	ServiceId   int    `validate:"required"`
+	Type        string `validate:"required,oneof=SYSTEM MOBILE"`
 }
 
 type ApplicationWithTokens struct {

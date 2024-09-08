@@ -180,8 +180,7 @@ definitions:
   domain.GrpcError:
     properties:
       details:
-        items:
-          type: object
+        items: {}
         type: array
       errorCode:
         type: string
@@ -263,6 +262,7 @@ definitions:
         type: integer
     required:
     - appId
+    - expireTimeMs
     type: object
   domain.TokenRevokeRequest:
     properties:

@@ -5,9 +5,9 @@ import (
 	"database/sql"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/integration-system/isp-kit/db"
-	"github.com/integration-system/isp-kit/db/query"
 	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/db"
+	"github.com/txix-open/isp-kit/db/query"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
 )
@@ -41,11 +41,14 @@ func (r Token) SaveToken(ctx context.Context, token string, appId int, expireTim
 func (r Token) GetTokenById(ctx context.Context, token string) (*entity.Token, error) {
 	q := `
 	SELECT token, app_id, expire_time, created_at
-	FROM system
+	FROM token
 	WHERE token = $1
 `
 	result := entity.Token{}
 	err := r.db.SelectRow(ctx, &result, q, token)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil //nolint:nilnil
+	}
 	if err != nil {
 		return nil, errors.WithMessage(err, "select row db")
 	}
@@ -110,7 +113,7 @@ WHERE token = $1
 	result := entity.AuthData{}
 	err := r.db.SelectRow(ctx, &result, q, token)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrTokenNotFound
 		}
 		return nil, errors.WithMessage(err, "select row db")

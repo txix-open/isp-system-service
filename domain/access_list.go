@@ -1,8 +1,8 @@
 package domain
 
 type AccessListSetOneRequest struct {
-	AppId  int    `valid:"required~Required"`
-	Method string `valid:"required~Required"`
+	AppId  int    `validate:"required"`
+	Method string `validate:"required"`
 	Value  bool
 }
 
@@ -11,7 +11,7 @@ type AccessListSetOneResponse struct {
 }
 
 type AccessListSetListRequest struct {
-	AppId     int `valid:"required~Required"`
+	AppId     int `validate:"required"`
 	RemoveOld bool
 	Methods   []MethodInfo
 }
