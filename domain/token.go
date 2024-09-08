@@ -12,11 +12,11 @@ type Token struct {
 }
 
 type TokenRevokeRequest struct {
-	AppId  int `valid:"required~Required"`
+	AppId  int `validate:"required"`
 	Tokens []string
 }
 
 type TokenCreateRequest struct {
-	AppId        int `valid:"required~Required"`
-	ExpireTimeMs int `valid:"required~Required"`
+	AppId        int `validate:"required"`
+	ExpireTimeMs int `validate:"required"`
 }

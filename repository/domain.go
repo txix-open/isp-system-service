@@ -5,9 +5,9 @@ import (
 	"database/sql"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/integration-system/isp-kit/db"
-	"github.com/integration-system/isp-kit/db/query"
 	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/db"
+	"github.com/txix-open/isp-kit/db/query"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
 )
@@ -31,7 +31,7 @@ func (r Domain) GetDomainById(ctx context.Context, id int) (*entity.Domain, erro
 	result := entity.Domain{}
 	err := r.db.SelectRow(ctx, &result, q, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrDomainNotFound
 		}
 		return nil, errors.WithMessage(err, "select row db")
@@ -84,7 +84,7 @@ func (r Domain) GetDomainByNameAndSystemId(ctx context.Context, name string, sys
 	result := entity.Domain{}
 	err := r.db.SelectRow(ctx, &result, q, name, systemId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrDomainNotFound
 		}
 		return nil, errors.WithMessage(err, "select row db")
@@ -103,7 +103,7 @@ func (r Domain) CreateDomain(ctx context.Context, name string, desc string, syst
 	result := entity.Domain{}
 	err := r.db.SelectRow(ctx, &result, q, name, desc, systemId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrDomainNotFound
 		}
 		return nil, errors.WithMessage(err, "select row db")
@@ -122,7 +122,7 @@ func (r Domain) UpdateDomain(ctx context.Context, id int, name string, descripti
 	result := entity.Domain{}
 	err := r.db.SelectRow(ctx, &result, q, name, description, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrDomainNotFound
 		}
 		return nil, errors.WithMessage(err, "select row db")

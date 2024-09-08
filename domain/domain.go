@@ -6,7 +6,7 @@ import (
 
 type DomainCreateUpdateRequest struct {
 	Id          int
-	Name        string `valid:"required~Required"`
+	Name        string `validate:"required"`
 	Description string
 }
 

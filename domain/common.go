@@ -2,7 +2,7 @@ package domain
 
 type (
 	Identity struct {
-		Id int `valid:"required~Required"`
+		Id int `validate:"required"`
 	}
 
 	DeleteResponse struct {

@@ -15,9 +15,9 @@ type Service struct {
 
 type ServiceCreateUpdateRequest struct {
 	Id          int
-	Name        string `valid:"required~Required"`
+	Name        string `validate:"required"`
 	Description string
-	DomainId    int `valid:"required~Required"`
+	DomainId    int `validate:"required"`
 }
 
 type ServiceWithApps struct {

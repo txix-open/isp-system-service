@@ -1,15 +1,16 @@
 package assembly
 
 import (
-	"github.com/integration-system/isp-kit/db"
-	"github.com/integration-system/isp-kit/grpc/endpoint"
-	"github.com/integration-system/isp-kit/grpc/isp"
-	"github.com/integration-system/isp-kit/log"
+	"github.com/txix-open/isp-kit/db"
+	"github.com/txix-open/isp-kit/grpc"
+	"github.com/txix-open/isp-kit/grpc/endpoint"
+	"github.com/txix-open/isp-kit/log"
 	"isp-system-service/conf"
 	"isp-system-service/controller"
 	"isp-system-service/repository"
 	"isp-system-service/routes"
 	"isp-system-service/service"
+	"isp-system-service/service/baseline"
 	"isp-system-service/service/secure"
 	"isp-system-service/transaction"
 )
@@ -31,7 +32,12 @@ func NewLocator(db DB, logger log.Logger) Locator {
 	}
 }
 
-func (l Locator) Handler(cfg conf.Remote) isp.BackendServiceServer {
+type Config struct {
+	Handler  *grpc.Mux
+	Baseline baseline.Service
+}
+
+func (l Locator) Config(cfg conf.Remote) Config {
 	txManager := transaction.NewManager(l.db)
 	accessListRep := repository.NewAccessList(l.db)
 	applicationRep := repository.NewApplication(l.db)
@@ -67,5 +73,10 @@ func (l Locator) Handler(cfg conf.Remote) isp.BackendServiceServer {
 	}
 	mapper := endpoint.DefaultWrapper(l.logger, endpoint.BodyLogger(l.logger))
 	server := routes.Handler(mapper, c)
-	return server
+
+	baselineService := baseline.NewService(cfg.Baseline, txManager, l.logger)
+	return Config{
+		Handler:  server,
+		Baseline: baselineService,
+	}
 }

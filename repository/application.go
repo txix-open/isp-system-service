@@ -5,9 +5,9 @@ import (
 	"database/sql"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/integration-system/isp-kit/db"
-	"github.com/integration-system/isp-kit/db/query"
 	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/db"
+	"github.com/txix-open/isp-kit/db/query"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
 )
@@ -31,7 +31,7 @@ func (r Application) GetApplicationById(ctx context.Context, id int) (*entity.Ap
 	result := entity.Application{}
 	err := r.db.SelectRow(ctx, &result, q, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrApplicationNotFound
 		}
 		return nil, errors.WithMessage(err, "select row db")
@@ -89,8 +89,8 @@ func (r Application) GetApplicationByNameAndServiceId(ctx context.Context, name 
 	result := entity.Application{}
 	err := r.db.SelectRow(ctx, &result, q, name, serviceId)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil //nolint:nilnil
 		}
 		return nil, errors.WithMessagef(err, "select row db")
 	}

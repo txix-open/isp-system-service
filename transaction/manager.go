@@ -2,8 +2,9 @@ package transaction
 
 import (
 	"context"
+	"isp-system-service/service/baseline"
 
-	"github.com/integration-system/isp-kit/db"
+	"github.com/txix-open/isp-kit/db"
 	"isp-system-service/repository"
 	"isp-system-service/service"
 )
@@ -79,6 +80,28 @@ func (m Manager) TokenRevokeTx(ctx context.Context, msgTx func(ctx context.Conte
 		tokenRep := repository.NewToken(tx)
 		return msgTx(ctx, tokenRevokeTx{
 			Token: tokenRep,
+		})
+	})
+}
+
+type baselineTx struct {
+	repository.Locker
+	repository.Domain
+	repository.Service
+	repository.Application
+	repository.AccessList
+	repository.Token
+}
+
+func (m Manager) BaselineTx(ctx context.Context, txTx func(ctx context.Context, tx baseline.Transaction) error) error {
+	return m.db.RunInTransaction(ctx, func(ctx context.Context, tx *db.Tx) error {
+		return txTx(ctx, baselineTx{
+			Locker:      repository.NewLocker(tx),
+			Domain:      repository.NewDomain(tx),
+			Service:     repository.NewService(tx),
+			Application: repository.NewApplication(tx),
+			AccessList:  repository.NewAccessList(tx),
+			Token:       repository.NewToken(tx),
 		})
 	})
 }

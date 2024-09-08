@@ -1,25 +1,25 @@
-package tests
+package tests_test
 
 import (
 	"context"
+	"github.com/txix-open/isp-kit/dbx"
 	"testing"
 	"time"
 
-	"github.com/integration-system/isp-kit/dbx/migration"
-	"github.com/integration-system/isp-kit/grpc/client"
-	"github.com/integration-system/isp-kit/test"
-	"github.com/integration-system/isp-kit/test/dbt"
-	"github.com/integration-system/isp-kit/test/grpct"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/txix-open/isp-kit/grpc/client"
+	"github.com/txix-open/isp-kit/test"
+	"github.com/txix-open/isp-kit/test/dbt"
+	"github.com/txix-open/isp-kit/test/grpct"
 	"isp-system-service/assembly"
 	"isp-system-service/conf"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
-	"isp-system-service/migrations"
 )
 
 func TestSecureSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, &SecureSuite{})
 }
 
@@ -34,18 +34,11 @@ type SecureSuite struct {
 func (s *SecureSuite) SetupSuite() {
 	s.test, s.require = test.New(s.T())
 
-	s.testDb = dbt.New(s.test)
-	migrations.Initialize.SetParams("../migrations", s.testDb.Schema())
-
-	db, err := s.testDb.DB()
-	s.require.NoError(err)
-
-	err = migration.NewRunner(db.DB.DB, "../migrations").Run()
-	s.require.NoError(err)
+	s.testDb = dbt.New(s.test, dbx.WithMigrationRunner("../migrations", s.test.Logger()))
 
 	locator := assembly.NewLocator(s.testDb, s.test.Logger())
-	handler := locator.Handler(conf.Remote{})
-	_, s.api = grpct.TestServer(s.test, handler)
+	config := locator.Config(conf.Remote{})
+	_, s.api = grpct.TestServer(s.test, config.Handler)
 
 	createdTime := time.Now().UTC()
 	InsertDomain(s.testDb, entity.Domain{
@@ -69,7 +62,7 @@ func (s *SecureSuite) TestAuthenticate_Success() {
 		JsonRequestBody(domain.AuthenticateRequest{
 			Token: "test_token_success",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthenticateResponse{
@@ -90,7 +83,7 @@ func (s *SecureSuite) TestAuthenticate_NotFound() {
 		JsonRequestBody(domain.AuthenticateRequest{
 			Token: "test_token_not_found",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthenticateResponse{
@@ -110,7 +103,7 @@ func (s *SecureSuite) TestAuthenticate_NotExpired() {
 		JsonRequestBody(domain.AuthenticateRequest{
 			Token: "test_token_not_expired",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthenticateResponse{
@@ -135,7 +128,7 @@ func (s *SecureSuite) TestAuthenticate_Expired() {
 		JsonRequestBody(domain.AuthenticateRequest{
 			Token: "test_token_expired",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthenticateResponse{
@@ -158,7 +151,7 @@ func (s *SecureSuite) TestAuthorize_Success_True() {
 			ApplicationId: 7,
 			Endpoint:      "endpoint/available",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthorizeResponse{
@@ -179,7 +172,7 @@ func (s *SecureSuite) TestAuthorize_Success_False() {
 			ApplicationId: 7,
 			Endpoint:      "endpoint/not_available",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthorizeResponse{
@@ -194,7 +187,7 @@ func (s *SecureSuite) TestAuthorize_NotFound() {
 			ApplicationId: 7,
 			Endpoint:      "endpoint/not_found",
 		}).
-		ReadJsonResponse(&result).
+		JsonResponseBody(&result).
 		Do(context.Background())
 	s.require.NoError(err)
 	s.require.Equal(domain.AuthorizeResponse{
