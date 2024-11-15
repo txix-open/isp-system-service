@@ -74,7 +74,7 @@ func (s Service) GetByDomainId(ctx context.Context, domainId int) ([]domain.Serv
 }
 
 func (s Service) CreateUpdate(ctx context.Context, req domain.ServiceCreateUpdateRequest) (*domain.Service, error) {
-	req.DomainId = 1 //temporary use only 1 domain, soon domain entity will be removed
+	req.DomainId = 1 // temporary use only 1 domain, soon domain entity will be removed
 
 	existed, err := s.serviceRep.GetServiceByNameAndDomainId(ctx, req.Name, req.DomainId)
 	switch {
