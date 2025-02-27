@@ -71,7 +71,7 @@ func (l Locator) Config(cfg conf.Remote) Config {
 		Application: applicationController,
 		Token:       tokenController,
 	}
-	mapper := endpoint.DefaultWrapper(l.logger, endpoint.BodyLogger(l.logger))
+	mapper := endpoint.DefaultWrapper(l.logger, endpoint.Log(l.logger, true))
 	server := routes.Handler(mapper, c)
 
 	baselineService := baseline.NewService(cfg.Baseline, txManager, l.logger)
