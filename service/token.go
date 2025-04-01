@@ -123,7 +123,7 @@ func (s Token) Revoke(ctx context.Context, req domain.TokenRevokeRequest) (*doma
 
 	_, err = s.revokeTokens(ctx, req.Tokens)
 	if err != nil {
-		return nil, errors.WithMessage(err, "reboke tokens")
+		return nil, errors.WithMessage(err, "revoke tokens")
 	}
 
 	res, err := s.appEnricher.EnrichWithTokens(ctx, []entity.Application{*app})
