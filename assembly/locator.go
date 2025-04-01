@@ -1,10 +1,6 @@
 package assembly
 
 import (
-	"github.com/txix-open/isp-kit/db"
-	"github.com/txix-open/isp-kit/grpc"
-	"github.com/txix-open/isp-kit/grpc/endpoint"
-	"github.com/txix-open/isp-kit/log"
 	"isp-system-service/conf"
 	"isp-system-service/controller"
 	"isp-system-service/repository"
@@ -13,6 +9,12 @@ import (
 	"isp-system-service/service/baseline"
 	"isp-system-service/service/secure"
 	"isp-system-service/transaction"
+
+	"github.com/txix-open/isp-kit/db"
+	"github.com/txix-open/isp-kit/grpc"
+	"github.com/txix-open/isp-kit/grpc/endpoint"
+	"github.com/txix-open/isp-kit/grpc/endpoint/grpclog"
+	"github.com/txix-open/isp-kit/log"
 )
 
 type DB interface {
@@ -71,7 +73,7 @@ func (l Locator) Config(cfg conf.Remote) Config {
 		Application: applicationController,
 		Token:       tokenController,
 	}
-	mapper := endpoint.DefaultWrapper(l.logger, endpoint.Log(l.logger, true))
+	mapper := endpoint.DefaultWrapper(l.logger, grpclog.Log(l.logger, true))
 	server := routes.Handler(mapper, c)
 
 	baselineService := baseline.NewService(cfg.Baseline, txManager, l.logger)
