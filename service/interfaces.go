@@ -21,18 +21,19 @@ type DomainRepo interface {
 type ApplicationRepo interface {
 	GetApplicationById(ctx context.Context, id int) (*entity.Application, error)
 	GetApplicationByIdList(ctx context.Context, idList []int) ([]entity.Application, error)
-	GetApplicationByServiceIdList(ctx context.Context, serviceIdList []int) ([]entity.Application, error)
-	GetApplicationByNameAndServiceId(ctx context.Context, name string, serviceId int) (*entity.Application, error)
-	CreateApplication(ctx context.Context, name string, desc string, serviceId int, appType string) (*entity.Application, error)
+	GetApplicationByAppGroupIdList(ctx context.Context, appGroupIdList []int) ([]entity.Application, error)
+	GetApplicationByNameAndAppGroupId(ctx context.Context, name string, appGroupId int) (*entity.Application, error)
+	CreateApplication(ctx context.Context, id int, name string, desc string, appGroupId int, appType string) (*entity.Application, error)
 	UpdateApplication(ctx context.Context, id int, name string, description string) (*entity.Application, error)
+	NextApplicationId(ctx context.Context) (int, error)
 }
 
-type ServiceRepo interface {
-	GetServiceById(ctx context.Context, id int) (*entity.Service, error)
-	GetServiceByIdList(ctx context.Context, idList []int) ([]entity.Service, error)
-	GetServiceByDomainId(ctx context.Context, domainIdList []int) ([]entity.Service, error)
-	GetServiceByNameAndDomainId(ctx context.Context, name string, domainId int) (*entity.Service, error)
-	CreateService(ctx context.Context, name string, desc string, domainId int) (*entity.Service, error)
-	UpdateService(ctx context.Context, id int, name string, description string) (*entity.Service, error)
-	DeleteService(ctx context.Context, idList []int) (int, error)
+type AppGroupRepo interface {
+	GetAppGroupById(ctx context.Context, id int) (*entity.AppGroup, error)
+	GetAppGroupByIdList(ctx context.Context, idList []int) ([]entity.AppGroup, error)
+	GetAppGroupByDomainId(ctx context.Context, domainIdList []int) ([]entity.AppGroup, error)
+	GetAppGroupByNameAndDomainId(ctx context.Context, name string, domainId int) (*entity.AppGroup, error)
+	CreateAppGroup(ctx context.Context, name string, desc string, domainId int) (*entity.AppGroup, error)
+	UpdateAppGroup(ctx context.Context, id int, name string, description string) (*entity.AppGroup, error)
+	DeleteAppGroup(ctx context.Context, idList []int) (int, error)
 }

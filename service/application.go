@@ -9,11 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ApplicationServiceRep interface {
-	GetServiceById(ctx context.Context, id int) (*entity.Service, error)
-	GetServiceByDomainId(ctx context.Context, domainIdList []int) ([]entity.Service, error)
-}
-
 type ApplicationDeleteTx interface {
 	DeleteApplicationByIdList(ctx context.Context, idList []int) (int, error)
 }
@@ -26,7 +21,7 @@ type Application struct {
 	txRunner    ApplicationTxRunner
 	appRepo     ApplicationRepo
 	domainRepo  DomainRepo
-	serviceRepo ApplicationServiceRep
+	serviceRepo AppGroupRepo
 	tokenRepo   TokenRepo
 }
 
@@ -34,14 +29,14 @@ func NewApplication(
 	txRunner ApplicationTxRunner,
 	applicationRepo ApplicationRepo,
 	domainRepo DomainRepo,
-	serviceRepo ApplicationServiceRep,
+	appGroupRepo AppGroupRepo,
 	tokenRepo TokenRepo,
 ) Application {
 	return Application{
 		txRunner:    txRunner,
 		appRepo:     applicationRepo,
 		domainRepo:  domainRepo,
-		serviceRepo: serviceRepo,
+		serviceRepo: appGroupRepo,
 		tokenRepo:   tokenRepo,
 	}
 }
@@ -70,9 +65,9 @@ func (s Application) GetByIdList(ctx context.Context, idList []int) ([]*domain.A
 }
 
 func (s Application) GetByServiceId(ctx context.Context, id int) ([]*domain.ApplicationWithTokens, error) {
-	arr, err := s.appRepo.GetApplicationByServiceIdList(ctx, []int{id})
+	arr, err := s.appRepo.GetApplicationByAppGroupIdList(ctx, []int{id})
 	if err != nil {
-		return nil, errors.WithMessage(err, "get application by service_id")
+		return nil, errors.WithMessage(err, "get application by app_group_id")
 	}
 
 	return s.EnrichWithTokens(ctx, arr)
@@ -106,7 +101,7 @@ func (s Application) SystemTree(ctx context.Context, systemId int) ([]*domain.Do
 		result[i] = r
 	}
 
-	serviceEntityList, err := s.serviceRepo.GetServiceByDomainId(ctx, domainIdList)
+	serviceEntityList, err := s.serviceRepo.GetAppGroupByDomainId(ctx, domainIdList)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get service by domain_id")
 	}
@@ -130,13 +125,13 @@ func (s Application) SystemTree(ctx context.Context, systemId int) ([]*domain.Do
 		resultServiceByServiceId[serviceEntity.Id] = resultService
 	}
 
-	applicationEntityList, err := s.appRepo.GetApplicationByServiceIdList(ctx, serviceIdList)
+	applicationEntityList, err := s.appRepo.GetApplicationByAppGroupIdList(ctx, serviceIdList)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get application by service_id")
 	}
 
 	for _, applicationEntity := range applicationEntityList {
-		resultService := resultServiceByServiceId[applicationEntity.ServiceId]
+		resultService := resultServiceByServiceId[applicationEntity.ApplicationGroupId]
 		description := ""
 		if applicationEntity.Description != nil {
 			description = *applicationEntity.Description
@@ -154,14 +149,14 @@ func (s Application) SystemTree(ctx context.Context, systemId int) ([]*domain.Do
 }
 
 func (s Application) CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.ApplicationWithTokens, error) {
-	existed, err := s.appRepo.GetApplicationByNameAndServiceId(ctx, req.Name, req.ServiceId)
+	existed, err := s.appRepo.GetApplicationByNameAndAppGroupId(ctx, req.Name, req.ServiceId)
 	switch {
 	case errors.Is(err, domain.ErrApplicationNotFound):
 	case err != nil:
 		return nil, errors.WithMessage(err, "get application by name and service_id")
 	}
 
-	_, err = s.serviceRepo.GetServiceById(ctx, req.ServiceId)
+	_, err = s.serviceRepo.GetAppGroupById(ctx, req.ServiceId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get service by id")
 	}
@@ -171,12 +166,17 @@ func (s Application) CreateUpdate(ctx context.Context, req domain.ApplicationCre
 			return nil, domain.ErrApplicationDuplicateName
 		}
 
-		_, err = s.appRepo.GetApplicationByNameAndServiceId(ctx, req.Name, req.ServiceId)
+		_, err = s.appRepo.GetApplicationByNameAndAppGroupId(ctx, req.Name, req.ServiceId)
 		if err != nil {
 			return nil, errors.WithMessage(err, "get application by name and service_id")
 		}
 
-		app, err := s.appRepo.CreateApplication(ctx, req.Name, req.Description, req.ServiceId, req.Type)
+		appId, err := s.appRepo.NextApplicationId(ctx)
+		if err != nil {
+			return nil, errors.WithMessage(err, "next app id")
+		}
+
+		app, err := s.appRepo.CreateApplication(ctx, appId, req.Name, req.Description, req.ServiceId, req.Type)
 		if err != nil {
 			return nil, errors.WithMessage(err, "create application")
 		}
@@ -270,7 +270,7 @@ func (s Application) convertApplication(req entity.Application) domain.Applicati
 		Id:          req.Id,
 		Name:        req.Name,
 		Description: desc,
-		ServiceId:   req.ServiceId,
+		ServiceId:   req.ApplicationGroupId,
 		Type:        req.Type,
 		CreatedAt:   req.CreatedAt,
 		UpdatedAt:   req.UpdatedAt,

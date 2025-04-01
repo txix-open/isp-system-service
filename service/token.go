@@ -36,7 +36,7 @@ type Token struct {
 	tx          TokenTxRunner
 	appRepo     ApplicationRepo
 	domainRepo  DomainRepo
-	serviceRepo ServiceRepo
+	serviceRepo AppGroupRepo
 	tokenRepo   TokenRepo
 }
 
@@ -46,7 +46,7 @@ func NewToken(
 	tx TokenTxRunner,
 	appRepo ApplicationRepo,
 	domainRepo DomainRepo,
-	serviceRepo ServiceRepo,
+	appGroupRepo AppGroupRepo,
 	tokenRepo TokenRepo,
 ) Token {
 	return Token{
@@ -55,7 +55,7 @@ func NewToken(
 		tx:          tx,
 		appRepo:     appRepo,
 		domainRepo:  domainRepo,
-		serviceRepo: serviceRepo,
+		serviceRepo: appGroupRepo,
 		tokenRepo:   tokenRepo,
 	}
 }
@@ -80,7 +80,7 @@ func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 		return nil, errors.WithMessage(err, "get application by id")
 	}
 
-	serviceEntity, err := s.serviceRepo.GetServiceById(ctx, applicationEntity.ServiceId)
+	serviceEntity, err := s.serviceRepo.GetAppGroupById(ctx, applicationEntity.ApplicationGroupId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get service by id")
 	}

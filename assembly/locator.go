@@ -44,18 +44,18 @@ func (l Locator) Config(cfg conf.Remote) Config {
 	accessListRep := repository.NewAccessList(l.db)
 	applicationRep := repository.NewApplication(l.db)
 	domainRep := repository.NewDomain(l.db)
-	serviceRep := repository.NewService(l.db)
+	appGroupRep := repository.NewAppGroup(l.db)
 	tokenRep := repository.NewToken(l.db)
 
 	secureService := secure.NewService(tokenRep, accessListRep)
 	accessListService := service.NewAccessList(txManager, accessListRep, applicationRep)
-	applicationService := service.NewApplication(txManager, applicationRep, domainRep, serviceRep, tokenRep)
+	applicationService := service.NewApplication(txManager, applicationRep, domainRep, appGroupRep, tokenRep)
 	domainService := service.NewDomain(domainRep)
-	serviceService := service.NewService(domainRep, serviceRep)
+	serviceService := service.NewService(domainRep, appGroupRep)
 
 	jwtService := service.NewTokenSource()
 	tokenService := service.NewToken(jwtService, applicationService, txManager,
-		applicationRep, domainRep, serviceRep, tokenRep,
+		applicationRep, domainRep, appGroupRep, tokenRep,
 	)
 
 	secureController := controller.NewSecure(secureService)

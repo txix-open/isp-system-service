@@ -3,10 +3,11 @@ package controller
 import (
 	"context"
 
+	"isp-system-service/domain"
+
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"isp-system-service/domain"
 )
 
 type TokenService interface {
@@ -55,7 +56,7 @@ func (c Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 	switch {
 	case errors.Is(err, domain.ErrApplicationNotFound):
 		return nil, status.Errorf(codes.NotFound, "application with id %d not found", req.AppId)
-	case errors.Is(err, domain.ErrServiceNotFound):
+	case errors.Is(err, domain.ErrAppGroupNotFound):
 		return nil, status.Errorf(codes.NotFound, "service for app_id id %d not found", req.AppId)
 	case errors.Is(err, domain.ErrDomainNotFound):
 		return nil, status.Errorf(codes.NotFound, "domain for app_id %d not found", req.AppId)

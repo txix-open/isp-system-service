@@ -3,10 +3,11 @@ package controller
 import (
 	"context"
 
+	"isp-system-service/domain"
+
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"isp-system-service/domain"
 )
 
 type ServiceService interface {
@@ -41,7 +42,7 @@ func NewService(service ServiceService) Service {
 func (c Service) GetById(ctx context.Context, req domain.Identity) (*domain.Service, error) {
 	result, err := c.service.GetById(ctx, req.Id)
 	switch {
-	case errors.Is(err, domain.ErrServiceNotFound):
+	case errors.Is(err, domain.ErrAppGroupNotFound):
 		return nil, status.Errorf(codes.NotFound, "service with id %d not found", req.Id)
 	case err != nil:
 		return nil, err
@@ -96,9 +97,9 @@ func (c Service) CreateUpdate(ctx context.Context, req domain.ServiceCreateUpdat
 	switch {
 	case errors.Is(err, domain.ErrDomainNotFound):
 		return nil, status.Errorf(codes.InvalidArgument, "domain with id %d not found", req.DomainId)
-	case errors.Is(err, domain.ErrServiceNotFound):
+	case errors.Is(err, domain.ErrAppGroupNotFound):
 		return nil, status.Errorf(codes.NotFound, "service with id %d not found", req.Id)
-	case errors.Is(err, domain.ErrServiceDuplicateName):
+	case errors.Is(err, domain.ErrAppGroupDuplicateName):
 		return nil, status.Errorf(codes.AlreadyExists, "service with name %s already exists", req.Name)
 	case err != nil:
 		return nil, err

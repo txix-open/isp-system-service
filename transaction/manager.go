@@ -88,7 +88,7 @@ func (m Manager) TokenRevokeTx(ctx context.Context, msgTx func(ctx context.Conte
 type baselineTx struct {
 	repository.Locker
 	repository.Domain
-	repository.Service
+	repository.AppGroup
 	repository.Application
 	repository.AccessList
 	repository.Token
@@ -99,7 +99,7 @@ func (m Manager) BaselineTx(ctx context.Context, txTx func(ctx context.Context, 
 		return txTx(ctx, baselineTx{
 			Locker:      repository.NewLocker(tx),
 			Domain:      repository.NewDomain(tx),
-			Service:     repository.NewService(tx),
+			AppGroup:    repository.NewAppGroup(tx),
 			Application: repository.NewApplication(tx),
 			AccessList:  repository.NewAccessList(tx),
 			Token:       repository.NewToken(tx),

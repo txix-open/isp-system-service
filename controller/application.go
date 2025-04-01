@@ -3,10 +3,11 @@ package controller
 import (
 	"context"
 
+	"isp-system-service/domain"
+
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"isp-system-service/domain"
 )
 
 type ApplicationService interface {
@@ -109,7 +110,7 @@ func (c Application) GetSystemTree(ctx context.Context) ([]*domain.DomainWithSer
 func (c Application) CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.ApplicationWithTokens, error) {
 	result, err := c.service.CreateUpdate(ctx, req)
 	switch {
-	case errors.Is(err, domain.ErrServiceNotFound):
+	case errors.Is(err, domain.ErrAppGroupNotFound):
 		return nil, status.Errorf(codes.InvalidArgument, "service with id %d not found", req.ServiceId)
 	case errors.Is(err, domain.ErrApplicationDuplicateName):
 		return nil, status.Errorf(codes.AlreadyExists, "application with name %s already exists", req.Name)

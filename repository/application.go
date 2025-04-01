@@ -24,7 +24,7 @@ func NewApplication(db db.DB) Application {
 
 func (r Application) GetApplicationById(ctx context.Context, id int) (*entity.Application, error) {
 	q := `
-	SELECT id, name, description, service_id, type, created_at, updated_at
+	SELECT id, name, description, application_group_id, type, created_at, updated_at
 	FROM application
 	WHERE id = $1
 `
@@ -34,7 +34,7 @@ func (r Application) GetApplicationById(ctx context.Context, id int) (*entity.Ap
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrApplicationNotFound
 		}
-		return nil, errors.WithMessage(err, "select row db")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	return &result, nil
@@ -42,7 +42,7 @@ func (r Application) GetApplicationById(ctx context.Context, id int) (*entity.Ap
 
 func (r Application) GetApplicationByIdList(ctx context.Context, idList []int) ([]entity.Application, error) {
 	q, args, err := query.New().
-		Select("id", "name", "description", "service_id", "type", "created_at", "updated_at").
+		Select("id", "name", "description", "application_group_id", "type", "created_at", "updated_at").
 		From("application").
 		Where(squirrel.Eq{"id": idList}).
 		OrderBy("created_at DESC").
@@ -54,37 +54,37 @@ func (r Application) GetApplicationByIdList(ctx context.Context, idList []int) (
 	result := make([]entity.Application, 0)
 	err = r.db.Select(ctx, &result, q, args...)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "select db")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	return result, nil
 }
 
-func (r Application) GetApplicationByServiceIdList(ctx context.Context, serviceIdList []int) ([]entity.Application, error) {
+func (r Application) GetApplicationByAppGroupIdList(ctx context.Context, appGroupIdList []int) ([]entity.Application, error) {
 	q, args, err := query.New().
-		Select("id", "name", "description", "service_id", "type", "created_at", "updated_at").
+		Select("id", "name", "description", "application_group_id", "type", "created_at", "updated_at").
 		From("application").
-		Where(squirrel.Eq{"service_id": serviceIdList}).
+		Where(squirrel.Eq{"application_group_id": appGroupIdList}).
 		OrderBy("created_at DESC").
 		ToSql()
 	if err != nil {
-		return nil, errors.WithMessage(err, "build query")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	result := make([]entity.Application, 0)
 	err = r.db.Select(ctx, &result, q, args...)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "select db")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	return result, nil
 }
 
-func (r Application) GetApplicationByNameAndServiceId(ctx context.Context, name string, serviceId int) (*entity.Application, error) {
+func (r Application) GetApplicationByNameAndAppGroupId(ctx context.Context, name string, serviceId int) (*entity.Application, error) {
 	q := `
-	SELECT id, name, description, service_id, type, created_at, updated_at
+	SELECT id, name, description, application_group_id, type, created_at, updated_at
 	FROM application 
-	WHERE name = $1 AND service_id = $2
+	WHERE name = $1 AND application_group_id = $2
 `
 	result := entity.Application{}
 	err := r.db.SelectRow(ctx, &result, q, name, serviceId)
@@ -92,41 +92,50 @@ func (r Application) GetApplicationByNameAndServiceId(ctx context.Context, name 
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil //nolint:nilnil
 		}
-		return nil, errors.WithMessagef(err, "select row db")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	return &result, nil
 }
 
-func (r Application) CreateApplication(ctx context.Context, name string, desc string, serviceId int, appType string) (
+func (r Application) CreateApplication(ctx context.Context, id int, name string, desc string, appGroupId int, appType string) (
 	*entity.Application, error) {
 	q := `
 	INSERT INTO application 
-	(name, description, service_id, type)
-	VALUES ($1, $2, $3, $4)
-	RETURNING id, name, description, service_id, type, created_at, updated_at
+	(id, name, description, application_group_id, type)
+	VALUES ($1, $2, $3, $4, $5)
+	ON CONFLICT (id) DO NOTHING
+	RETURNING id, name, description, application_group_id, type, created_at, updated_at
 `
 	result := entity.Application{}
-	err := r.db.SelectRow(ctx, &result, q, name, desc, serviceId, appType)
-	if err != nil {
-		return nil, errors.WithMessagef(err, "select row db")
+	err := r.db.SelectRow(ctx, &result, q, id, name, desc, appGroupId, appType)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, domain.ErrApplicationDuplicateId
+	case err != nil:
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-
-	return &result, nil
 }
 
-func (r Application) UpdateApplication(ctx context.Context, id int, name string, description string) (*entity.Application, error) {
+func (r Application) UpdateApplication(
+	ctx context.Context,
+	appGroupId int,
+	name string,
+	description string,
+) (*entity.Application, error) {
 	q := `
 	UPDATE application 
 	SET name = $2,
 		description = $3
 	WHERE id = $1
-	RETURNING id, name, description, service_id, type, created_at, updated_at
+	RETURNING id, name, description, application_group_id, type, created_at, updated_at
 `
 	result := entity.Application{}
-	err := r.db.SelectRow(ctx, &result, q, id, name, description)
+	err := r.db.SelectRow(ctx, &result, q, appGroupId, name, description)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "select row db")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	return &result, nil
@@ -152,4 +161,14 @@ func (r Application) DeleteApplicationByIdList(ctx context.Context, idList []int
 	}
 
 	return int(rowsAffected), nil
+}
+
+func (r Application) NextApplicationId(ctx context.Context) (int, error) {
+	q := `SELECT COALESCE(MAX(id)+1, 1) FROM application;`
+	nextAppId := 0
+	err := r.db.SelectRow(ctx, &nextAppId, q)
+	if err != nil {
+		return -1, errors.WithMessagef(err, "exec query %s", q)
+	}
+	return nextAppId, nil
 }
