@@ -12,7 +12,7 @@ type IAccessListAccessListRep interface {
 	GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error)
 }
 
-type IAccessListApplicationRep interface {
+type IAccessListApplicationRep interface { // nolint:iface
 	GetApplicationById(ctx context.Context, id int) (*entity.Application, error)
 }
 

@@ -17,7 +17,7 @@ type IApplicationApplicationRep interface {
 	UpdateApplication(ctx context.Context, id int, name string, description string) (*entity.Application, error)
 }
 
-type IApplicationTokenRep interface {
+type IApplicationTokenRep interface { // nolint:iface
 	GetTokenByAppIdList(ctx context.Context, appIdList []int) ([]entity.Token, error)
 }
 

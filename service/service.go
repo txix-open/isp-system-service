@@ -18,7 +18,7 @@ type IServiceServiceRep interface {
 	DeleteService(ctx context.Context, idList []int) (int, error)
 }
 
-type IServiceDomainRep interface {
+type IServiceDomainRep interface { // nolint:iface
 	GetDomainById(ctx context.Context, id int) (*entity.Domain, error)
 }
 

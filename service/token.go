@@ -16,7 +16,7 @@ type ITokenAppEnrich interface {
 	EnrichWithTokens(ctx context.Context, apps []entity.Application) ([]*domain.ApplicationWithTokens, error)
 }
 
-type ITokenApplicationRep interface {
+type ITokenApplicationRep interface { // nolint:iface
 	GetApplicationById(ctx context.Context, id int) (*entity.Application, error)
 }
 
@@ -24,11 +24,11 @@ type ITokenServiceRep interface {
 	GetServiceById(ctx context.Context, id int) (*entity.Service, error)
 }
 
-type ITokenDomainRep interface {
+type ITokenDomainRep interface { // nolint:iface
 	GetDomainById(ctx context.Context, id int) (*entity.Domain, error)
 }
 
-type ITokenTokenRep interface {
+type ITokenTokenRep interface { // nolint:iface
 	GetTokenByAppIdList(ctx context.Context, appIdList []int) ([]entity.Token, error)
 }
 
