@@ -77,28 +77,28 @@ func (s Token) GetByAppId(ctx context.Context, appId int) ([]domain.Token, error
 func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*domain.ApplicationWithTokens, error) {
 	applicationEntity, err := s.appRepo.GetApplicationById(ctx, req.AppId)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get application by id")
+		return nil, errors.WithMessage(err, "get application by id")
 	}
 
 	serviceEntity, err := s.serviceRepo.GetServiceById(ctx, applicationEntity.ServiceId)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get service by id")
+		return nil, errors.WithMessage(err, "get service by id")
 	}
 
 	_, err = s.domainRepo.GetDomainById(ctx, serviceEntity.DomainId)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get domain by id")
+		return nil, errors.WithMessage(err, "get domain by id")
 	}
 
 	token, err := s.jwt.CreateApplicationToken()
 	if err != nil {
-		return nil, errors.WithMessagef(err, "create application token")
+		return nil, errors.WithMessage(err, "create application token")
 	}
 
 	err = s.tx.TokenCreateTx(ctx, func(ctx context.Context, tx TokenCreateTx) error {
 		_, err = tx.SaveToken(ctx, token, req.AppId, req.ExpireTimeMs)
 		if err != nil {
-			return errors.WithMessagef(err, "tx save token")
+			return errors.WithMessage(err, "tx save token")
 		}
 
 		return nil
@@ -109,7 +109,7 @@ func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 
 	arr, err := s.appEnrich.EnrichWithTokens(ctx, []entity.Application{*applicationEntity})
 	if err != nil {
-		return nil, errors.WithMessagef(err, "application enrich with tokens")
+		return nil, errors.WithMessage(err, "application enrich with tokens")
 	}
 
 	return arr[0], nil
@@ -118,17 +118,17 @@ func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 func (s Token) Revoke(ctx context.Context, req domain.TokenRevokeRequest) (*domain.ApplicationWithTokens, error) {
 	app, err := s.appRepo.GetApplicationById(ctx, req.AppId)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get application by id")
+		return nil, errors.WithMessage(err, "get application by id")
 	}
 
 	_, err = s.revokeTokens(ctx, req.Tokens)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "reboke tokens")
+		return nil, errors.WithMessage(err, "reboke tokens")
 	}
 
 	res, err := s.appEnrich.EnrichWithTokens(ctx, []entity.Application{*app})
 	if err != nil {
-		return nil, errors.WithMessagef(err, "application enrich")
+		return nil, errors.WithMessage(err, "application enrich")
 	}
 
 	return res[0], nil
@@ -157,7 +157,7 @@ func (s Token) revokeTokens(ctx context.Context, tokens []string) (*domain.Delet
 	err := s.tx.TokenRevokeTx(ctx, func(ctx context.Context, tx TokenRevokeTx) error {
 		deleted, err := tx.DeleteToken(ctx, tokens)
 		if err != nil {
-			return errors.WithMessagef(err, "tx delete token")
+			return errors.WithMessage(err, "tx delete token")
 		}
 
 		count = deleted

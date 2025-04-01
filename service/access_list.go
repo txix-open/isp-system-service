@@ -55,7 +55,7 @@ func (s AccessList) GetById(ctx context.Context, appId int) ([]domain.MethodInfo
 
 	accessList, err := s.accessListRepo.GetAccessListByAppId(ctx, appId)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get access list by app_id")
+		return nil, errors.WithMessage(err, "get access list by app_id")
 	}
 
 	methodInfos := make([]domain.MethodInfo, len(accessList))
@@ -83,7 +83,7 @@ func (s AccessList) SetOne(ctx context.Context, request domain.AccessListSetOneR
 			Value:  request.Value,
 		})
 		if err != nil {
-			return errors.WithMessagef(err, "upsert access list")
+			return errors.WithMessage(err, "upsert access list")
 		}
 
 		return nil
@@ -142,7 +142,7 @@ func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 
 	accessList, err := s.accessListRepo.GetAccessListByAppId(ctx, req.AppId)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get access list by app_id")
+		return nil, errors.WithMessage(err, "get access list by app_id")
 	}
 
 	methodInfos := make([]domain.MethodInfo, len(accessList))

@@ -26,7 +26,7 @@ func NewService(
 func (s Service) GetById(ctx context.Context, id int) (*domain.Service, error) {
 	serviceEntity, err := s.serviceRepo.GetServiceById(ctx, id)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get service by id")
+		return nil, errors.WithMessage(err, "get service by id")
 	}
 
 	result := s.convertService(*serviceEntity)

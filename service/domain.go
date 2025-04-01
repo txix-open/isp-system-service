@@ -56,7 +56,7 @@ func (s Domain) CreateUpdate(ctx context.Context, req domain.DomainCreateUpdateR
 
 		domainEntity, err := s.repo.CreateDomain(ctx, req.Name, req.Description, systemId)
 		if err != nil {
-			return nil, errors.WithMessagef(err, "create domain")
+			return nil, errors.WithMessage(err, "create domain")
 		}
 
 		result := s.convertDomain(*domainEntity)

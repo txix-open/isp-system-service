@@ -132,7 +132,7 @@ func (s Application) SystemTree(ctx context.Context, systemId int) ([]*domain.Do
 
 	applicationEntityList, err := s.appRepo.GetApplicationByServiceIdList(ctx, serviceIdList)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get application by service_id")
+		return nil, errors.WithMessage(err, "get application by service_id")
 	}
 
 	for _, applicationEntity := range applicationEntityList {
