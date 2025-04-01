@@ -17,6 +17,7 @@ type ApplicationService interface {
 	SystemTree(ctx context.Context, systemId int) ([]*domain.DomainWithService, error)
 	CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.ApplicationWithTokens, error)
 	Delete(ctx context.Context, idList []int) (int, error)
+	NextId(ctx context.Context) (int, error)
 }
 
 type Application struct {
@@ -147,4 +148,17 @@ func (c Application) Delete(ctx context.Context, req []int) (*domain.DeleteRespo
 	return &domain.DeleteResponse{
 		Deleted: result,
 	}, nil
+}
+
+// NextId godoc
+// @Tags application
+// @Summary Получить следующий идентификатор приложения
+// @Description Возвращает следующий идентификатор приложения
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} integer
+// @Failure 500 {object} domain.GrpcError
+// @Router /application/next_id [POST]
+func (c Application) NextId(ctx context.Context) (int, error) {
+	return c.service.NextId(ctx)
 }

@@ -256,6 +256,14 @@ func (s Application) EnrichWithTokens(ctx context.Context, apps []entity.Applica
 	return result, nil
 }
 
+func (s Application) NextId(ctx context.Context) (int, error) {
+	nextId, err := s.appRepo.NextApplicationId(ctx)
+	if err != nil {
+		return 0, errors.WithMessage(err, "get next application id")
+	}
+	return nextId, nil
+}
+
 func (s Application) convertApplication(req entity.Application) domain.Application {
 	desc := ""
 	if req.Description != nil {

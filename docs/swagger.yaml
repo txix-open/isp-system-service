@@ -571,6 +571,25 @@ paths:
       summary: Метод получения системного дерева
       tags:
       - application
+  /application/next_id:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает следующий идентификатор приложения
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+      summary: Получить следующий идентификатор приложения
+      tags:
+      - application
   /domain/create_update_domain:
     post:
       consumes:
