@@ -26,6 +26,7 @@ type ApplicationRepo interface {
 	CreateApplication(ctx context.Context, id int, name string, desc string, appGroupId int, appType string) (*entity.Application, error)
 	UpdateApplication(ctx context.Context, id int, name string, description string) (*entity.Application, error)
 	NextApplicationId(ctx context.Context) (int, error)
+	GetAllApplications(ctx context.Context) ([]entity.Application, error)
 }
 
 type AppGroupRepo interface {

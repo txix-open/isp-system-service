@@ -172,3 +172,22 @@ func (r Application) NextApplicationId(ctx context.Context) (int, error) {
 	}
 	return nextAppId, nil
 }
+
+func (r Application) GetAllApplications(ctx context.Context) ([]entity.Application, error) {
+	q, args, err := query.New().
+		Select("id", "name", "description", "application_group_id", "type", "created_at", "updated_at").
+		From("application").
+		OrderBy("created_at DESC").
+		ToSql()
+	if err != nil {
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	}
+
+	result := make([]entity.Application, 0)
+	err = r.db.Select(ctx, &result, q, args...)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	}
+
+	return result, nil
+}

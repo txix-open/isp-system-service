@@ -264,6 +264,19 @@ func (s Application) NextId(ctx context.Context) (int, error) {
 	return nextId, nil
 }
 
+func (s Application) GetAll(ctx context.Context) ([]domain.Application, error) {
+	apps, err := s.appRepo.GetAllApplications(ctx)
+	if err != nil {
+		return nil, errors.WithMessage(err, "get applications list")
+	}
+
+	result := make([]domain.Application, 0, len(apps))
+	for _, app := range apps {
+		result = append(result, s.convertApplication(app))
+	}
+	return result, nil
+}
+
 func (s Application) convertApplication(req entity.Application) domain.Application {
 	desc := ""
 	if req.Description != nil {

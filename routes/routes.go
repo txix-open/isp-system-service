@@ -166,6 +166,11 @@ func applicationCluster(c Controllers) []cluster.EndpointDescriptor {
 			Inner:   true,
 			Handler: c.Application.NextId,
 		},
+		{
+			Path:    "system/application/get_all",
+			Inner:   true,
+			Handler: c.Application.GetAll,
+		},
 	}
 }
 

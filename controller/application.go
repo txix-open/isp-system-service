@@ -18,6 +18,7 @@ type ApplicationService interface {
 	CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.ApplicationWithTokens, error)
 	Delete(ctx context.Context, idList []int) (int, error)
 	NextId(ctx context.Context) (int, error)
+	GetAll(ctx context.Context) ([]domain.Application, error)
 }
 
 type Application struct {
@@ -161,4 +162,17 @@ func (c Application) Delete(ctx context.Context, req []int) (*domain.DeleteRespo
 // @Router /application/next_id [POST]
 func (c Application) NextId(ctx context.Context) (int, error) {
 	return c.service.NextId(ctx)
+}
+
+// GetAll godoc
+// @Tags application
+// @Summary Получить список приложений
+// @Description Возвращает список приложений
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} domain.Application
+// @Failure 500 {object} domain.GrpcError
+// @Router /application/get_all [POST]
+func (c Application) GetAll(ctx context.Context) ([]domain.Application, error) {
+	return c.service.GetAll(ctx)
 }
