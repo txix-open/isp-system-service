@@ -9,12 +9,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-type AccessListAccessListRep interface {
+type AccessListRepo interface {
 	GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error)
-}
-
-type AccessListApplicationRep interface { // nolint:iface
-	GetApplicationById(ctx context.Context, id int) (*entity.Application, error)
 }
 
 type AccessListSetOneTx interface {
@@ -35,29 +31,29 @@ type AccessListTxRunner interface {
 
 type AccessList struct {
 	tx             AccessListTxRunner
-	accessListRep  AccessListAccessListRep
-	applicationRep AccessListApplicationRep
+	accessListRepo AccessListRepo
+	appRepo        ApplicationRepo
 }
 
 func NewAccessList(
 	tx AccessListTxRunner,
-	accessListRep AccessListAccessListRep,
-	applicationRep AccessListApplicationRep,
+	accessListRepo AccessListRepo,
+	appRepo ApplicationRepo,
 ) AccessList {
 	return AccessList{
 		tx:             tx,
-		accessListRep:  accessListRep,
-		applicationRep: applicationRep,
+		accessListRepo: accessListRepo,
+		appRepo:        appRepo,
 	}
 }
 
 func (s AccessList) GetById(ctx context.Context, appId int) ([]domain.MethodInfo, error) {
-	_, err := s.applicationRep.GetApplicationById(ctx, appId)
+	_, err := s.appRepo.GetApplicationById(ctx, appId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get application by id")
 	}
 
-	accessList, err := s.accessListRep.GetAccessListByAppId(ctx, appId)
+	accessList, err := s.accessListRepo.GetAccessListByAppId(ctx, appId)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get access list by app_id")
 	}
@@ -74,7 +70,7 @@ func (s AccessList) GetById(ctx context.Context, appId int) ([]domain.MethodInfo
 }
 
 func (s AccessList) SetOne(ctx context.Context, request domain.AccessListSetOneRequest) (*domain.AccessListSetOneResponse, error) {
-	_, err := s.applicationRep.GetApplicationById(ctx, request.AppId)
+	_, err := s.appRepo.GetApplicationById(ctx, request.AppId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get application by id")
 	}
@@ -102,7 +98,7 @@ func (s AccessList) SetOne(ctx context.Context, request domain.AccessListSetOneR
 }
 
 func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListRequest) ([]domain.MethodInfo, error) {
-	_, err := s.applicationRep.GetApplicationById(ctx, req.AppId)
+	_, err := s.appRepo.GetApplicationById(ctx, req.AppId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get application by id")
 	}
@@ -144,7 +140,7 @@ func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 		return nil, errors.WithMessage(err, "transaction access list set list")
 	}
 
-	accessList, err := s.accessListRep.GetAccessListByAppId(ctx, req.AppId)
+	accessList, err := s.accessListRepo.GetAccessListByAppId(ctx, req.AppId)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get access list by app_id")
 	}

@@ -37,7 +37,7 @@ type accessListSetListTx struct {
 	repository.AccessList
 }
 
-func (m Manager) AccessListSetListTx(ctx context.Context, msgTx func(ctx context.Context, tx service.IAccessListSetListTx) error) error {
+func (m Manager) AccessListSetListTx(ctx context.Context, msgTx func(ctx context.Context, tx service.AccessListSetListTx) error) error {
 	return m.db.RunInTransaction(ctx, func(ctx context.Context, tx *db.Tx) error {
 		accessListRep := repository.NewAccessList(tx)
 		return msgTx(ctx, accessListSetListTx{
@@ -63,7 +63,7 @@ type tokenCreateTx struct {
 	repository.Token
 }
 
-func (m Manager) TokenCreateTx(ctx context.Context, msgTx func(ctx context.Context, tx service.ITokenCreateTx) error) error {
+func (m Manager) TokenCreateTx(ctx context.Context, msgTx func(ctx context.Context, tx service.TokenCreateTx) error) error {
 	return m.db.RunInTransaction(ctx, func(ctx context.Context, tx *db.Tx) error {
 		tokenRep := repository.NewToken(tx)
 		return msgTx(ctx, tokenCreateTx{
@@ -76,7 +76,7 @@ type tokenRevokeTx struct {
 	repository.Token
 }
 
-func (m Manager) TokenRevokeTx(ctx context.Context, msgTx func(ctx context.Context, tx service.ITokenRevokeTx) error) error {
+func (m Manager) TokenRevokeTx(ctx context.Context, msgTx func(ctx context.Context, tx service.TokenRevokeTx) error) error {
 	return m.db.RunInTransaction(ctx, func(ctx context.Context, tx *db.Tx) error {
 		tokenRep := repository.NewToken(tx)
 		return msgTx(ctx, tokenRevokeTx{

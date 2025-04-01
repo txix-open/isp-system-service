@@ -3,33 +3,18 @@ package service
 import (
 	"context"
 
-	"github.com/pkg/errors"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
+
+	"github.com/pkg/errors"
 )
 
 type ApplicationTokenCreator interface {
 	CreateApplicationToken() (string, error)
 }
 
-type TokenAppEnrich interface {
+type TokenAppEnricher interface {
 	EnrichWithTokens(ctx context.Context, apps []entity.Application) ([]*domain.ApplicationWithTokens, error)
-}
-
-type TokenApplicationRep interface { // nolint:iface
-	GetApplicationById(ctx context.Context, id int) (*entity.Application, error)
-}
-
-type TokenServiceRep interface {
-	GetServiceById(ctx context.Context, id int) (*entity.Service, error)
-}
-
-type TokenDomainRep interface { // nolint:iface
-	GetDomainById(ctx context.Context, id int) (*entity.Domain, error)
-}
-
-type TokenTokenRep interface { // nolint:iface
-	GetTokenByAppIdList(ctx context.Context, appIdList []int) ([]entity.Token, error)
 }
 
 type TokenCreateTx interface {
@@ -46,37 +31,37 @@ type TokenTxRunner interface {
 }
 
 type Token struct {
-	jwt        ApplicationTokenCreator
-	appEnrich  TokenAppEnrich
-	tx         TokenTxRunner
-	appRep     TokenApplicationRep
-	domainRep  TokenDomainRep
-	serviceRep TokenServiceRep
-	tokenRep   TokenTokenRep
+	jwt         ApplicationTokenCreator
+	appEnrich   TokenAppEnricher
+	tx          TokenTxRunner
+	appRepo     ApplicationRepo
+	domainRepo  DomainRepo
+	serviceRepo ServiceRepo
+	tokenRepo   TokenRepo
 }
 
 func NewToken(
 	jwtGenerate ApplicationTokenCreator,
-	appEnrich TokenAppEnrich,
+	appEnrich TokenAppEnricher,
 	tx TokenTxRunner,
-	appRep TokenApplicationRep,
-	domainRep TokenDomainRep,
-	serviceRep TokenServiceRep,
-	tokenRep TokenTokenRep,
+	appRepo ApplicationRepo,
+	domainRepo DomainRepo,
+	serviceRepo ServiceRepo,
+	tokenRepo TokenRepo,
 ) Token {
 	return Token{
-		appEnrich:  appEnrich,
-		jwt:        jwtGenerate,
-		tx:         tx,
-		appRep:     appRep,
-		domainRep:  domainRep,
-		serviceRep: serviceRep,
-		tokenRep:   tokenRep,
+		appEnrich:   appEnrich,
+		jwt:         jwtGenerate,
+		tx:          tx,
+		appRepo:     appRepo,
+		domainRepo:  domainRepo,
+		serviceRepo: serviceRepo,
+		tokenRepo:   tokenRepo,
 	}
 }
 
 func (s Token) GetByAppId(ctx context.Context, appId int) ([]domain.Token, error) {
-	tokenEntity, err := s.tokenRep.GetTokenByAppIdList(ctx, []int{appId})
+	tokenEntity, err := s.tokenRepo.GetTokenByAppIdList(ctx, []int{appId})
 	if err != nil {
 		return nil, errors.WithMessage(err, "get token by app_id list")
 	}
@@ -90,17 +75,17 @@ func (s Token) GetByAppId(ctx context.Context, appId int) ([]domain.Token, error
 }
 
 func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*domain.ApplicationWithTokens, error) {
-	applicationEntity, err := s.appRep.GetApplicationById(ctx, req.AppId)
+	applicationEntity, err := s.appRepo.GetApplicationById(ctx, req.AppId)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get application by id")
 	}
 
-	serviceEntity, err := s.serviceRep.GetServiceById(ctx, applicationEntity.ServiceId)
+	serviceEntity, err := s.serviceRepo.GetServiceById(ctx, applicationEntity.ServiceId)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get service by id")
 	}
 
-	_, err = s.domainRep.GetDomainById(ctx, serviceEntity.DomainId)
+	_, err = s.domainRepo.GetDomainById(ctx, serviceEntity.DomainId)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get domain by id")
 	}
@@ -131,7 +116,7 @@ func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 }
 
 func (s Token) Revoke(ctx context.Context, req domain.TokenRevokeRequest) (*domain.ApplicationWithTokens, error) {
-	app, err := s.appRep.GetApplicationById(ctx, req.AppId)
+	app, err := s.appRepo.GetApplicationById(ctx, req.AppId)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get application by id")
 	}
@@ -150,7 +135,7 @@ func (s Token) Revoke(ctx context.Context, req domain.TokenRevokeRequest) (*doma
 }
 
 func (s Token) RevokeByAppId(ctx context.Context, appId int) (*domain.DeleteResponse, error) {
-	tokens, err := s.tokenRep.GetTokenByAppIdList(ctx, []int{appId})
+	tokens, err := s.tokenRepo.GetTokenByAppIdList(ctx, []int{appId})
 	if err != nil {
 		return nil, errors.WithMessage(err, "get token by app_id list")
 	}

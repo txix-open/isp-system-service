@@ -9,26 +9,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ApplicationApplicationRep interface {
-	GetApplicationById(ctx context.Context, id int) (*entity.Application, error)
-	GetApplicationByIdList(ctx context.Context, idList []int) ([]entity.Application, error)
-	GetApplicationByServiceIdList(ctx context.Context, serviceIdList []int) ([]entity.Application, error)
-	GetApplicationByNameAndServiceId(ctx context.Context, name string, serviceId int) (*entity.Application, error)
-	CreateApplication(ctx context.Context, name string, desc string, serviceId int, appType string) (*entity.Application, error)
-	UpdateApplication(ctx context.Context, id int, name string, description string) (*entity.Application, error)
-}
-
-type ApplicationTokenRep interface { // nolint:iface
-	GetTokenByAppIdList(ctx context.Context, appIdList []int) ([]entity.Token, error)
-}
-
 type ApplicationServiceRep interface {
 	GetServiceById(ctx context.Context, id int) (*entity.Service, error)
 	GetServiceByDomainId(ctx context.Context, domainIdList []int) ([]entity.Service, error)
-}
-
-type ApplicationDomainRep interface {
-	GetDomainBySystemId(ctx context.Context, systemId int) ([]entity.Domain, error)
 }
 
 type ApplicationDeleteTx interface {
@@ -40,31 +23,31 @@ type ApplicationTxRunner interface {
 }
 
 type Application struct {
-	txRunner       ApplicationTxRunner
-	applicationRep ApplicationApplicationRep
-	domainRep      ApplicationDomainRep
-	serviceRep     ApplicationServiceRep
-	tokenRep       ApplicationTokenRep
+	txRunner    ApplicationTxRunner
+	appRepo     ApplicationRepo
+	domainRepo  DomainRepo
+	serviceRepo ApplicationServiceRep
+	tokenRepo   TokenRepo
 }
 
 func NewApplication(
 	txRunner ApplicationTxRunner,
-	applicationRep ApplicationApplicationRep,
-	domainRep ApplicationDomainRep,
-	serviceRep ApplicationServiceRep,
-	tokenRep ApplicationTokenRep,
+	applicationRepo ApplicationRepo,
+	domainRepo DomainRepo,
+	serviceRepo ApplicationServiceRep,
+	tokenRepo TokenRepo,
 ) Application {
 	return Application{
-		txRunner:       txRunner,
-		applicationRep: applicationRep,
-		domainRep:      domainRep,
-		serviceRep:     serviceRep,
-		tokenRep:       tokenRep,
+		txRunner:    txRunner,
+		appRepo:     applicationRepo,
+		domainRepo:  domainRepo,
+		serviceRepo: serviceRepo,
+		tokenRepo:   tokenRepo,
 	}
 }
 
 func (s Application) GetById(ctx context.Context, appId int) (*domain.ApplicationWithTokens, error) {
-	application, err := s.applicationRep.GetApplicationById(ctx, appId)
+	application, err := s.appRepo.GetApplicationById(ctx, appId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get application by id")
 	}
@@ -78,7 +61,7 @@ func (s Application) GetById(ctx context.Context, appId int) (*domain.Applicatio
 }
 
 func (s Application) GetByIdList(ctx context.Context, idList []int) ([]*domain.ApplicationWithTokens, error) {
-	res, err := s.applicationRep.GetApplicationByIdList(ctx, idList)
+	res, err := s.appRepo.GetApplicationByIdList(ctx, idList)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get application by id list")
 	}
@@ -87,7 +70,7 @@ func (s Application) GetByIdList(ctx context.Context, idList []int) ([]*domain.A
 }
 
 func (s Application) GetByServiceId(ctx context.Context, id int) ([]*domain.ApplicationWithTokens, error) {
-	arr, err := s.applicationRep.GetApplicationByServiceIdList(ctx, []int{id})
+	arr, err := s.appRepo.GetApplicationByServiceIdList(ctx, []int{id})
 	if err != nil {
 		return nil, errors.WithMessage(err, "get application by service_id")
 	}
@@ -96,7 +79,7 @@ func (s Application) GetByServiceId(ctx context.Context, id int) ([]*domain.Appl
 }
 
 func (s Application) SystemTree(ctx context.Context, systemId int) ([]*domain.DomainWithService, error) {
-	domainEntityList, err := s.domainRep.GetDomainBySystemId(ctx, systemId)
+	domainEntityList, err := s.domainRepo.GetDomainBySystemId(ctx, systemId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get domains by system_id")
 	}
@@ -123,7 +106,7 @@ func (s Application) SystemTree(ctx context.Context, systemId int) ([]*domain.Do
 		result[i] = r
 	}
 
-	serviceEntityList, err := s.serviceRep.GetServiceByDomainId(ctx, domainIdList)
+	serviceEntityList, err := s.serviceRepo.GetServiceByDomainId(ctx, domainIdList)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get service by domain_id")
 	}
@@ -147,7 +130,7 @@ func (s Application) SystemTree(ctx context.Context, systemId int) ([]*domain.Do
 		resultServiceByServiceId[serviceEntity.Id] = resultService
 	}
 
-	applicationEntityList, err := s.applicationRep.GetApplicationByServiceIdList(ctx, serviceIdList)
+	applicationEntityList, err := s.appRepo.GetApplicationByServiceIdList(ctx, serviceIdList)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get application by service_id")
 	}
@@ -171,14 +154,14 @@ func (s Application) SystemTree(ctx context.Context, systemId int) ([]*domain.Do
 }
 
 func (s Application) CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.ApplicationWithTokens, error) {
-	existed, err := s.applicationRep.GetApplicationByNameAndServiceId(ctx, req.Name, req.ServiceId)
+	existed, err := s.appRepo.GetApplicationByNameAndServiceId(ctx, req.Name, req.ServiceId)
 	switch {
 	case errors.Is(err, domain.ErrApplicationNotFound):
 	case err != nil:
 		return nil, errors.WithMessage(err, "get application by name and service_id")
 	}
 
-	_, err = s.serviceRep.GetServiceById(ctx, req.ServiceId)
+	_, err = s.serviceRepo.GetServiceById(ctx, req.ServiceId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get service by id")
 	}
@@ -188,12 +171,12 @@ func (s Application) CreateUpdate(ctx context.Context, req domain.ApplicationCre
 			return nil, domain.ErrApplicationDuplicateName
 		}
 
-		_, err = s.applicationRep.GetApplicationByNameAndServiceId(ctx, req.Name, req.ServiceId)
+		_, err = s.appRepo.GetApplicationByNameAndServiceId(ctx, req.Name, req.ServiceId)
 		if err != nil {
 			return nil, errors.WithMessage(err, "get application by name and service_id")
 		}
 
-		app, err := s.applicationRep.CreateApplication(ctx, req.Name, req.Description, req.ServiceId, req.Type)
+		app, err := s.appRepo.CreateApplication(ctx, req.Name, req.Description, req.ServiceId, req.Type)
 		if err != nil {
 			return nil, errors.WithMessage(err, "create application")
 		}
@@ -210,12 +193,12 @@ func (s Application) CreateUpdate(ctx context.Context, req domain.ApplicationCre
 		return nil, domain.ErrApplicationDuplicateName
 	}
 
-	_, err = s.applicationRep.GetApplicationById(ctx, req.Id)
+	_, err = s.appRepo.GetApplicationById(ctx, req.Id)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get application by id")
 	}
 
-	app, err := s.applicationRep.UpdateApplication(ctx, req.Id, req.Name, req.Description)
+	app, err := s.appRepo.UpdateApplication(ctx, req.Id, req.Name, req.Description)
 	if err != nil {
 		return nil, errors.WithMessage(err, "update application")
 	}
@@ -264,7 +247,7 @@ func (s Application) EnrichWithTokens(ctx context.Context, apps []entity.Applica
 		result[i] = awt
 	}
 
-	tokens, err := s.tokenRep.GetTokenByAppIdList(ctx, appIdList)
+	tokens, err := s.tokenRepo.GetTokenByAppIdList(ctx, appIdList)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get token by app_id list")
 	}

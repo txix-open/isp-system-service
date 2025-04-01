@@ -8,22 +8,11 @@ import (
 	"isp-system-service/entity"
 )
 
-type DomainDomainRep interface {
-	GetDomainById(ctx context.Context, id int) (*entity.Domain, error)
-	GetDomainBySystemId(ctx context.Context, systemId int) ([]entity.Domain, error)
-	GetDomainByNameAndSystemId(ctx context.Context, name string, systemId int) (*entity.Domain, error)
-	CreateDomain(ctx context.Context, name string, desc string, systemId int) (*entity.Domain, error)
-	UpdateDomain(ctx context.Context, id int, name string, description string) (*entity.Domain, error)
-	DeleteDomain(ctx context.Context, idList []int) (int, error)
-}
-
 type Domain struct {
-	repo DomainDomainRep
+	repo DomainRepo
 }
 
-func NewDomain(
-	repo DomainDomainRep,
-) Domain {
+func NewDomain(repo DomainRepo) Domain {
 	return Domain{
 		repo: repo,
 	}
