@@ -30,14 +30,14 @@ func (r Application) GetApplicationById(ctx context.Context, id int) (*entity.Ap
 `
 	result := entity.Application{}
 	err := r.db.SelectRow(ctx, &result, q, id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrApplicationNotFound
-		}
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, domain.ErrApplicationNotFound
+	case err != nil:
 		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-
-	return &result, nil
 }
 
 func (r Application) GetApplicationByIdList(ctx context.Context, idList []int) ([]entity.Application, error) {
@@ -88,14 +88,14 @@ func (r Application) GetApplicationByNameAndAppGroupId(ctx context.Context, name
 `
 	result := entity.Application{}
 	err := r.db.SelectRow(ctx, &result, q, name, serviceId)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil //nolint:nilnil
-		}
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, nil // nolint:nilnil
+	case err != nil:
 		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-
-	return &result, nil
 }
 
 func (r Application) CreateApplication(ctx context.Context, id int, name string, desc string, appGroupId int, appType string) (

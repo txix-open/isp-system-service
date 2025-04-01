@@ -31,14 +31,14 @@ func (r AppGroup) GetAppGroupById(ctx context.Context, id int) (*entity.AppGroup
 `
 	result := entity.AppGroup{}
 	err := r.db.SelectRow(ctx, &result, q, id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrAppGroupNotFound
-		}
-		return nil, errors.WithMessage(err, "select row db")
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, domain.ErrAppGroupNotFound
+	case err != nil:
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-
-	return &result, nil
 }
 
 func (r AppGroup) GetAppGroupByIdList(ctx context.Context, idList []int) ([]entity.AppGroup, error) {
@@ -55,7 +55,7 @@ func (r AppGroup) GetAppGroupByIdList(ctx context.Context, idList []int) ([]enti
 	result := make([]entity.AppGroup, 0)
 	err = r.db.Select(ctx, &result, q, arg...)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "select db")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	return result, nil
@@ -75,7 +75,7 @@ func (r AppGroup) GetAppGroupByDomainId(ctx context.Context, domainIdList []int)
 	result := make([]entity.AppGroup, 0)
 	err = r.db.Select(ctx, &result, q, arg...)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "select db")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	return result, nil
@@ -89,14 +89,14 @@ func (r AppGroup) GetAppGroupByNameAndDomainId(ctx context.Context, name string,
 `
 	result := entity.AppGroup{}
 	err := r.db.SelectRow(ctx, &result, q, name, domainId)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrAppGroupNotFound
-		}
-		return nil, errors.WithMessage(err, "select db")
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, domain.ErrAppGroupNotFound
+	case err != nil:
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-
-	return &result, nil
 }
 
 func (r AppGroup) CreateAppGroup(ctx context.Context, name string, desc string, domainId int) (*entity.AppGroup, error) {
@@ -109,7 +109,7 @@ func (r AppGroup) CreateAppGroup(ctx context.Context, name string, desc string, 
 	result := entity.AppGroup{}
 	err := r.db.SelectRow(ctx, &result, q, name, desc, domainId)
 	if err != nil {
-		return nil, errors.WithMessage(err, "select row db")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	return &result, nil
@@ -124,14 +124,14 @@ func (r AppGroup) UpdateAppGroup(ctx context.Context, id int, name string, descr
 `
 	result := entity.AppGroup{}
 	err := r.db.SelectRow(ctx, &result, q, name, description, id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrAppGroupNotFound
-		}
-		return nil, errors.WithMessage(err, "select row db")
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, domain.ErrAppGroupNotFound
+	case err != nil:
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-
-	return &result, nil
 }
 
 func (r AppGroup) DeleteAppGroup(ctx context.Context, idList []int) (int, error) {
@@ -145,7 +145,7 @@ func (r AppGroup) DeleteAppGroup(ctx context.Context, idList []int) (int, error)
 
 	result, err := r.db.Exec(ctx, q, args...)
 	if err != nil {
-		return 0, errors.WithMessagef(err, "exec db")
+		return 0, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	rowsAffected, err := result.RowsAffected()
