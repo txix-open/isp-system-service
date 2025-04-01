@@ -13,7 +13,7 @@ type ApplicationTokenCreator interface {
 	CreateApplicationToken() (string, error)
 }
 
-type TokenAppEnricher interface {
+type AppEnricher interface {
 	EnrichWithTokens(ctx context.Context, apps []entity.Application) ([]*domain.ApplicationWithTokens, error)
 }
 
@@ -32,7 +32,7 @@ type TokenTxRunner interface {
 
 type Token struct {
 	jwt         ApplicationTokenCreator
-	appEnrich   TokenAppEnricher
+	appEnricher AppEnricher
 	tx          TokenTxRunner
 	appRepo     ApplicationRepo
 	domainRepo  DomainRepo
@@ -42,7 +42,7 @@ type Token struct {
 
 func NewToken(
 	jwtGenerate ApplicationTokenCreator,
-	appEnrich TokenAppEnricher,
+	appEnricher AppEnricher,
 	tx TokenTxRunner,
 	appRepo ApplicationRepo,
 	domainRepo DomainRepo,
@@ -50,7 +50,7 @@ func NewToken(
 	tokenRepo TokenRepo,
 ) Token {
 	return Token{
-		appEnrich:   appEnrich,
+		appEnricher: appEnricher,
 		jwt:         jwtGenerate,
 		tx:          tx,
 		appRepo:     appRepo,
@@ -107,7 +107,7 @@ func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 		return nil, errors.WithMessage(err, "token create transaction")
 	}
 
-	arr, err := s.appEnrich.EnrichWithTokens(ctx, []entity.Application{*applicationEntity})
+	arr, err := s.appEnricher.EnrichWithTokens(ctx, []entity.Application{*applicationEntity})
 	if err != nil {
 		return nil, errors.WithMessage(err, "application enrich with tokens")
 	}
@@ -126,7 +126,7 @@ func (s Token) Revoke(ctx context.Context, req domain.TokenRevokeRequest) (*doma
 		return nil, errors.WithMessage(err, "reboke tokens")
 	}
 
-	res, err := s.appEnrich.EnrichWithTokens(ctx, []entity.Application{*app})
+	res, err := s.appEnricher.EnrichWithTokens(ctx, []entity.Application{*app})
 	if err != nil {
 		return nil, errors.WithMessage(err, "application enrich")
 	}
