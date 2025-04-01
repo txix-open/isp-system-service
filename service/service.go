@@ -8,7 +8,7 @@ import (
 	"isp-system-service/entity"
 )
 
-type IServiceServiceRep interface {
+type ServiceServiceRep interface {
 	GetServiceById(ctx context.Context, id int) (*entity.Service, error)
 	GetServiceByIdList(ctx context.Context, idList []int) ([]entity.Service, error)
 	GetServiceByDomainId(ctx context.Context, domainIdList []int) ([]entity.Service, error)
@@ -18,18 +18,18 @@ type IServiceServiceRep interface {
 	DeleteService(ctx context.Context, idList []int) (int, error)
 }
 
-type IServiceDomainRep interface { // nolint:iface
+type ServiceDomainRep interface { // nolint:iface
 	GetDomainById(ctx context.Context, id int) (*entity.Domain, error)
 }
 
 type Service struct {
-	domainRep  IServiceDomainRep
-	serviceRep IServiceServiceRep
+	domainRep  ServiceDomainRep
+	serviceRep ServiceServiceRep
 }
 
 func NewService(
-	domainRep IServiceDomainRep,
-	serviceRep IServiceServiceRep,
+	domainRep ServiceDomainRep,
+	serviceRep ServiceServiceRep,
 ) Service {
 	return Service{
 		domainRep:  domainRep,

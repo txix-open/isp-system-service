@@ -9,7 +9,7 @@ import (
 	"isp-system-service/domain"
 )
 
-type ITokenService interface {
+type TokenService interface {
 	GetByAppId(ctx context.Context, appId int) ([]domain.Token, error)
 	Create(ctx context.Context, req domain.TokenCreateRequest) (*domain.ApplicationWithTokens, error)
 	Revoke(ctx context.Context, req domain.TokenRevokeRequest) (*domain.ApplicationWithTokens, error)
@@ -17,10 +17,10 @@ type ITokenService interface {
 }
 
 type Token struct {
-	service ITokenService
+	service TokenService
 }
 
-func NewToken(service ITokenService) Token {
+func NewToken(service TokenService) Token {
 	return Token{
 		service: service,
 	}

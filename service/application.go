@@ -3,12 +3,13 @@ package service
 import (
 	"context"
 
-	"github.com/pkg/errors"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
+
+	"github.com/pkg/errors"
 )
 
-type IApplicationApplicationRep interface {
+type ApplicationApplicationRep interface {
 	GetApplicationById(ctx context.Context, id int) (*entity.Application, error)
 	GetApplicationByIdList(ctx context.Context, idList []int) ([]entity.Application, error)
 	GetApplicationByServiceIdList(ctx context.Context, serviceIdList []int) ([]entity.Application, error)
@@ -17,44 +18,44 @@ type IApplicationApplicationRep interface {
 	UpdateApplication(ctx context.Context, id int, name string, description string) (*entity.Application, error)
 }
 
-type IApplicationTokenRep interface { // nolint:iface
+type ApplicationTokenRep interface { // nolint:iface
 	GetTokenByAppIdList(ctx context.Context, appIdList []int) ([]entity.Token, error)
 }
 
-type IApplicationServiceRep interface {
+type ApplicationServiceRep interface {
 	GetServiceById(ctx context.Context, id int) (*entity.Service, error)
 	GetServiceByDomainId(ctx context.Context, domainIdList []int) ([]entity.Service, error)
 }
 
-type IApplicationDomainRep interface {
+type ApplicationDomainRep interface {
 	GetDomainBySystemId(ctx context.Context, systemId int) ([]entity.Domain, error)
 }
 
-type IApplicationDeleteTx interface {
+type ApplicationDeleteTx interface {
 	DeleteApplicationByIdList(ctx context.Context, idList []int) (int, error)
 }
 
-type IApplicationTxRunner interface {
-	ApplicationDeleteTx(ctx context.Context, tx func(ctx context.Context, tx IApplicationDeleteTx) error) error
+type ApplicationTxRunner interface {
+	ApplicationDeleteTx(ctx context.Context, tx func(ctx context.Context, tx ApplicationDeleteTx) error) error
 }
 
 type Application struct {
-	tx             IApplicationTxRunner
-	applicationRep IApplicationApplicationRep
-	domainRep      IApplicationDomainRep
-	serviceRep     IApplicationServiceRep
-	tokenRep       IApplicationTokenRep
+	txRunner       ApplicationTxRunner
+	applicationRep ApplicationApplicationRep
+	domainRep      ApplicationDomainRep
+	serviceRep     ApplicationServiceRep
+	tokenRep       ApplicationTokenRep
 }
 
 func NewApplication(
-	tx IApplicationTxRunner,
-	applicationRep IApplicationApplicationRep,
-	domainRep IApplicationDomainRep,
-	serviceRep IApplicationServiceRep,
-	tokenRep IApplicationTokenRep,
+	txRunner ApplicationTxRunner,
+	applicationRep ApplicationApplicationRep,
+	domainRep ApplicationDomainRep,
+	serviceRep ApplicationServiceRep,
+	tokenRep ApplicationTokenRep,
 ) Application {
 	return Application{
-		tx:             tx,
+		txRunner:       txRunner,
 		applicationRep: applicationRep,
 		domainRep:      domainRep,
 		serviceRep:     serviceRep,
@@ -229,7 +230,7 @@ func (s Application) CreateUpdate(ctx context.Context, req domain.ApplicationCre
 
 func (s Application) Delete(ctx context.Context, idList []int) (int, error) {
 	count := 0
-	err := s.tx.ApplicationDeleteTx(ctx, func(ctx context.Context, tx IApplicationDeleteTx) error {
+	err := s.txRunner.ApplicationDeleteTx(ctx, func(ctx context.Context, tx ApplicationDeleteTx) error {
 		deletedApp, err := tx.DeleteApplicationByIdList(ctx, idList)
 		if err != nil {
 			return errors.WithMessage(err, "delete application by id list")

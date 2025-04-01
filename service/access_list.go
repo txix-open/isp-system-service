@@ -3,45 +3,46 @@ package service
 import (
 	"context"
 
-	"github.com/pkg/errors"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
+
+	"github.com/pkg/errors"
 )
 
-type IAccessListAccessListRep interface {
+type AccessListAccessListRep interface {
 	GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error)
 }
 
-type IAccessListApplicationRep interface { // nolint:iface
+type AccessListApplicationRep interface { // nolint:iface
 	GetApplicationById(ctx context.Context, id int) (*entity.Application, error)
 }
 
-type IAccessListSetOneTx interface {
+type AccessListSetOneTx interface {
 	UpsertAccessList(ctx context.Context, e entity.AccessList) (int, error)
 }
 
-type IAccessListSetListTx interface {
+type AccessListSetListTx interface {
 	GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error)
 	InsertArrayAccessList(ctx context.Context, entity []entity.AccessList) error
 	DeleteAccessList(ctx context.Context, appId int, methods []string) error
 	DeleteAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error)
 }
 
-type IAccessListTxRunner interface {
-	AccessListSetOneTx(ctx context.Context, tx func(ctx context.Context, tx IAccessListSetOneTx) error) error
-	AccessListSetListTx(ctx context.Context, tx func(ctx context.Context, tx IAccessListSetListTx) error) error
+type AccessListTxRunner interface {
+	AccessListSetOneTx(ctx context.Context, tx func(ctx context.Context, tx AccessListSetOneTx) error) error
+	AccessListSetListTx(ctx context.Context, tx func(ctx context.Context, tx AccessListSetListTx) error) error
 }
 
 type AccessList struct {
-	tx             IAccessListTxRunner
-	accessListRep  IAccessListAccessListRep
-	applicationRep IAccessListApplicationRep
+	tx             AccessListTxRunner
+	accessListRep  AccessListAccessListRep
+	applicationRep AccessListApplicationRep
 }
 
 func NewAccessList(
-	tx IAccessListTxRunner,
-	accessListRep IAccessListAccessListRep,
-	applicationRep IAccessListApplicationRep,
+	tx AccessListTxRunner,
+	accessListRep AccessListAccessListRep,
+	applicationRep AccessListApplicationRep,
 ) AccessList {
 	return AccessList{
 		tx:             tx,
@@ -79,7 +80,7 @@ func (s AccessList) SetOne(ctx context.Context, request domain.AccessListSetOneR
 	}
 
 	var resp int
-	err = s.tx.AccessListSetOneTx(ctx, func(ctx context.Context, tx IAccessListSetOneTx) error {
+	err = s.tx.AccessListSetOneTx(ctx, func(ctx context.Context, tx AccessListSetOneTx) error {
 		resp, err = tx.UpsertAccessList(ctx, entity.AccessList{
 			AppId:  request.AppId,
 			Method: request.Method,
@@ -106,7 +107,7 @@ func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 		return nil, errors.WithMessage(err, "get application by id")
 	}
 
-	err = s.tx.AccessListSetListTx(ctx, func(ctx context.Context, tx IAccessListSetListTx) error {
+	err = s.tx.AccessListSetListTx(ctx, func(ctx context.Context, tx AccessListSetListTx) error {
 		if req.RemoveOld {
 			_, err = tx.DeleteAccessListByAppId(ctx, req.AppId)
 			if err != nil {

@@ -8,7 +8,7 @@ import (
 	"isp-system-service/entity"
 )
 
-type IDomainDomainRep interface {
+type DomainDomainRep interface {
 	GetDomainById(ctx context.Context, id int) (*entity.Domain, error)
 	GetDomainBySystemId(ctx context.Context, systemId int) ([]entity.Domain, error)
 	GetDomainByNameAndSystemId(ctx context.Context, name string, systemId int) (*entity.Domain, error)
@@ -18,19 +18,19 @@ type IDomainDomainRep interface {
 }
 
 type Domain struct {
-	domainRep IDomainDomainRep
+	repo DomainDomainRep
 }
 
 func NewDomain(
-	domainRep IDomainDomainRep,
+	repo DomainDomainRep,
 ) Domain {
 	return Domain{
-		domainRep: domainRep,
+		repo: repo,
 	}
 }
 
 func (s Domain) GetById(ctx context.Context, id int) (*domain.Domain, error) {
-	domainEntity, err := s.domainRep.GetDomainById(ctx, id)
+	domainEntity, err := s.repo.GetDomainById(ctx, id)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get domain by id")
 	}
@@ -40,7 +40,7 @@ func (s Domain) GetById(ctx context.Context, id int) (*domain.Domain, error) {
 }
 
 func (s Domain) GetBySystemId(ctx context.Context, systemId int) ([]domain.Domain, error) {
-	domainEntity, err := s.domainRep.GetDomainBySystemId(ctx, systemId)
+	domainEntity, err := s.repo.GetDomainBySystemId(ctx, systemId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get domain by system_id")
 	}
@@ -53,7 +53,7 @@ func (s Domain) GetBySystemId(ctx context.Context, systemId int) ([]domain.Domai
 }
 
 func (s Domain) CreateUpdate(ctx context.Context, req domain.DomainCreateUpdateRequest, systemId int) (*domain.Domain, error) {
-	existed, err := s.domainRep.GetDomainByNameAndSystemId(ctx, req.Name, systemId)
+	existed, err := s.repo.GetDomainByNameAndSystemId(ctx, req.Name, systemId)
 	switch {
 	case errors.Is(err, domain.ErrDomainNotFound):
 	case err != nil:
@@ -65,7 +65,7 @@ func (s Domain) CreateUpdate(ctx context.Context, req domain.DomainCreateUpdateR
 			return nil, domain.ErrDomainDuplicateName
 		}
 
-		domainEntity, err := s.domainRep.CreateDomain(ctx, req.Name, req.Description, systemId)
+		domainEntity, err := s.repo.CreateDomain(ctx, req.Name, req.Description, systemId)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "create domain")
 		}
@@ -78,12 +78,12 @@ func (s Domain) CreateUpdate(ctx context.Context, req domain.DomainCreateUpdateR
 		return nil, domain.ErrDomainDuplicateName
 	}
 
-	_, err = s.domainRep.GetDomainById(ctx, req.Id)
+	_, err = s.repo.GetDomainById(ctx, req.Id)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get domain by id")
 	}
 
-	domainEntity, err := s.domainRep.UpdateDomain(ctx, req.Id, req.Name, req.Description)
+	domainEntity, err := s.repo.UpdateDomain(ctx, req.Id, req.Name, req.Description)
 	if err != nil {
 		return nil, errors.WithMessage(err, "update domain")
 	}
@@ -93,7 +93,7 @@ func (s Domain) CreateUpdate(ctx context.Context, req domain.DomainCreateUpdateR
 }
 
 func (s Domain) Delete(ctx context.Context, idList []int) (int, error) {
-	result, err := s.domainRep.DeleteDomain(ctx, idList)
+	result, err := s.repo.DeleteDomain(ctx, idList)
 	if err != nil {
 		return 0, errors.WithMessage(err, "delete domain")
 	}

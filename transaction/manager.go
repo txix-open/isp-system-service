@@ -4,9 +4,10 @@ import (
 	"context"
 	"isp-system-service/service/baseline"
 
-	"github.com/txix-open/isp-kit/db"
 	"isp-system-service/repository"
 	"isp-system-service/service"
+
+	"github.com/txix-open/isp-kit/db"
 )
 
 type Manager struct {
@@ -23,7 +24,7 @@ type accessListSetOneTx struct {
 	repository.AccessList
 }
 
-func (m Manager) AccessListSetOneTx(ctx context.Context, msgTx func(ctx context.Context, tx service.IAccessListSetOneTx) error) error {
+func (m Manager) AccessListSetOneTx(ctx context.Context, msgTx func(ctx context.Context, tx service.AccessListSetOneTx) error) error {
 	return m.db.RunInTransaction(ctx, func(ctx context.Context, tx *db.Tx) error {
 		accessListRepository := repository.NewAccessList(tx)
 		return msgTx(ctx, accessListSetOneTx{
@@ -49,7 +50,7 @@ type applicationDeleteTx struct {
 	repository.Application
 }
 
-func (m Manager) ApplicationDeleteTx(ctx context.Context, msgTx func(ctx context.Context, tx service.IApplicationDeleteTx) error) error {
+func (m Manager) ApplicationDeleteTx(ctx context.Context, msgTx func(ctx context.Context, tx service.ApplicationDeleteTx) error) error {
 	return m.db.RunInTransaction(ctx, func(ctx context.Context, tx *db.Tx) error {
 		applicationRep := repository.NewApplication(tx)
 		return msgTx(ctx, applicationDeleteTx{
