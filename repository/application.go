@@ -14,14 +14,6 @@ import (
 	"github.com/txix-open/isp-kit/db/query"
 )
 
-const (
-	pgUniqueViolationErrorCode          = "23505"
-	pgFkViolationErrorCode              = "23503"
-	applicationPkConstrainName          = "application_pkey"
-	applicationUniqueNameConstrainName  = "uq_name_application_group_id"
-	applicationFkAppGroupConstraintName = "fk_application_group_id"
-)
-
 type Application struct {
 	db db.DB
 }
