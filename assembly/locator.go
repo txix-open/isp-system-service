@@ -65,6 +65,8 @@ func (l Locator) Config(cfg conf.Remote) Config {
 	serviceController := controller.NewService(serviceService)
 	tokenController := controller.NewToken(tokenService)
 
+	appGroupService := service.NewAppGroup(appGroupRep)
+	appGroupController := controller.NewAppGroup(appGroupService)
 	c := routes.Controllers{
 		Secure:      secureController,
 		AccessList:  accessListController,
@@ -72,6 +74,7 @@ func (l Locator) Config(cfg conf.Remote) Config {
 		Service:     serviceController,
 		Application: applicationController,
 		Token:       tokenController,
+		AppGroup:    appGroupController,
 	}
 	mapper := endpoint.DefaultWrapper(l.logger, grpclog.Log(l.logger, true))
 	server := routes.Handler(mapper, c)

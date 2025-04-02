@@ -12,6 +12,7 @@ type Controllers struct {
 	Domain      controller.Domain
 	Service     controller.Service
 	Application controller.Application
+	AppGroup    controller.AppGroup
 	Token       controller.Token
 	Secure      controller.Secure
 }
@@ -36,7 +37,8 @@ func endpointDescriptors(c Controllers) []cluster.EndpointDescriptor {
 		serviceCluster(c),
 		applicationCluster(c),
 		tokenCluster(c),
-	})
+		applicationGroupCluster(c),
+	)
 }
 
 func secureCluster(c Controllers) []cluster.EndpointDescriptor {
@@ -99,6 +101,7 @@ func domainCluster(c Controllers) []cluster.EndpointDescriptor {
 	}
 }
 
+// deprecated
 func serviceCluster(c Controllers) []cluster.EndpointDescriptor {
 	return []cluster.EndpointDescriptor{
 		{
@@ -204,6 +207,28 @@ func tokenCluster(c Controllers) []cluster.EndpointDescriptor {
 			Path:    "system/token/get_tokens_by_app_id",
 			Inner:   true,
 			Handler: c.Token.GetByAppId,
+		},
+	}
+}
+
+func applicationGroupCluster(c Controllers) []cluster.EndpointDescriptor {
+	return []cluster.EndpointDescriptor{
+		{
+			Path:    "system/application_group/create",
+			Inner:   true,
+			Handler: c.AppGroup.Create,
+		}, {
+			Path:    "system/application_group/update",
+			Inner:   true,
+			Handler: c.AppGroup.Update,
+		}, {
+			Path:    "system/application_group/delete_list",
+			Inner:   true,
+			Handler: c.AppGroup.DeleteList,
+		}, {
+			Path:    "system/application_group/get_by_id_list",
+			Inner:   true,
+			Handler: c.AppGroup.GetByIdList,
 		},
 	}
 }

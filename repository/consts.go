@@ -1,10 +1,9 @@
 package repository
 
 const (
-	pgUniqueViolationErrorCode = "23505"
-	pgFkViolationErrorCode     = "23503"
-
 	applicationPkConstrainName          = "application_pkey"
 	applicationUniqueNameConstraintName = "uq_name_application_group_id"
 	applicationFkAppGroupConstraintName = "fk_application_group_id"
+
+	applicationGroupUniqueNameConstraint = "uq_name_domain_name"
 )

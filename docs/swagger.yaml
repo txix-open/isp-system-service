@@ -30,6 +30,19 @@ definitions:
       count:
         type: integer
     type: object
+  domain.AppGroup:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
+    type: object
   domain.Application:
     properties:
       createdAt:
@@ -133,6 +146,15 @@ definitions:
       authorized:
         type: boolean
     type: object
+  domain.CreateAppGroupRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
   domain.CreateApplicationRequest:
     properties:
       applicationGroupId:
@@ -206,6 +228,16 @@ definitions:
         type: string
       errorMessage:
         type: string
+    type: object
+  domain.IdListRequest:
+    properties:
+      idList:
+        items:
+          type: integer
+        minItems: 1
+        type: array
+    required:
+    - idList
     type: object
   domain.Identity:
     properties:
@@ -294,6 +326,18 @@ definitions:
         type: array
     required:
     - appId
+    type: object
+  domain.UpdateAppGroupRequest:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    required:
+    - id
+    - name
     type: object
   domain.UpdateApplicationRequest:
     properties:
@@ -442,10 +486,6 @@ paths:
             $ref: '#/definitions/domain.ApplicationWithTokens'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/domain.GrpcError'
-        "404":
-          description: Not Found
           schema:
             $ref: '#/definitions/domain.GrpcError'
         "409":
@@ -721,6 +761,142 @@ paths:
       summary: Обновить приложение
       tags:
       - application
+  /application_group/create:
+    post:
+      consumes:
+      - application/json
+      description: Если группа приложений таким именем существует, возвращает ошибку
+      parameters:
+      - description: Объект группы приложений
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateAppGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.AppGroup'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+      summary: Создать группу приложений
+      tags:
+      - application_group
+  /application_group/delete_list:
+    post:
+      consumes:
+      - application/json
+      description: Удаляет группы приложений по списку их идентификаторов, возвращает
+        количество удаленных групп приложений
+      parameters:
+      - description: список идентификаторов групп приложений
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.IdListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.DeleteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+      summary: Удалить группы приложений
+      tags:
+      - application_group
+  /application_group/get_by_id_list:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает группы приложений с указанными идентификаторами
+      parameters:
+      - description: список идентификаторов групп приложений
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.IdListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.AppGroup'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+      summary: Получить группы приложений по списку идентификаторов
+      tags:
+      - application_group
+  /application_group/update:
+    post:
+      consumes:
+      - application/json
+      description: Если группа приложений таким именем существует или группы приложений
+        с указанным id не существует, возвращает ошибку
+      parameters:
+      - description: Объект группы приложений
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateAppGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.AppGroup'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+      summary: Обновить группу приложений
+      tags:
+      - application_group
   /domain/create_update_domain:
     post:
       consumes:

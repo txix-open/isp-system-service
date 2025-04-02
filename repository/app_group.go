@@ -8,6 +8,7 @@ import (
 	"isp-system-service/entity"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/pkg/errors"
 	"github.com/txix-open/isp-kit/db"
 	"github.com/txix-open/isp-kit/db/query"
@@ -104,15 +105,19 @@ func (r AppGroup) CreateAppGroup(ctx context.Context, name string, desc string, 
 	INSERT INTO application_group
 	(name, description, domain_id)
 	VALUES ($1, $2, $3)
+	ON CONFLICT (name, domain_id) DO NOTHING
 	RETURNING id, name, description, domain_id, created_at, updated_at
 `
 	result := entity.AppGroup{}
 	err := r.db.SelectRow(ctx, &result, q, name, desc, domainId)
-	if err != nil {
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, domain.ErrAppGroupDuplicateName
+	case err != nil:
 		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-
-	return &result, nil
 }
 
 func (r AppGroup) UpdateAppGroup(ctx context.Context, id int, name string, description string) (*entity.AppGroup, error) {
@@ -124,7 +129,10 @@ func (r AppGroup) UpdateAppGroup(ctx context.Context, id int, name string, descr
 `
 	result := entity.AppGroup{}
 	err := r.db.SelectRow(ctx, &result, q, name, description, id)
+	var pgErr *pgconn.PgError
 	switch {
+	case errors.As(err, &pgErr) && pgErr.ConstraintName == applicationGroupUniqueNameConstraint:
+		return nil, domain.ErrAppGroupDuplicateName
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, domain.ErrAppGroupNotFound
 	case err != nil:

@@ -63,23 +63,12 @@ func (s Service) GetByDomainId(ctx context.Context, domainId int) ([]domain.Serv
 func (s Service) CreateUpdate(ctx context.Context, req domain.ServiceCreateUpdateRequest) (*domain.Service, error) {
 	req.DomainId = 1 // temporary use only 1 domain, soon domain entity will be removed
 
-	existed, err := s.serviceRepo.GetAppGroupByNameAndDomainId(ctx, req.Name, req.DomainId)
-	switch {
-	case errors.Is(err, domain.ErrAppGroupNotFound):
-	case err != nil:
-		return nil, errors.WithMessage(err, "get service by name and domain_id")
-	}
-
-	_, err = s.domainRepo.GetDomainById(ctx, req.DomainId)
+	_, err := s.domainRepo.GetDomainById(ctx, req.DomainId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get domain by id")
 	}
 
 	if req.Id == 0 {
-		if existed != nil {
-			return nil, domain.ErrDomainDuplicateName
-		}
-
 		serviceEntity, err := s.serviceRepo.CreateAppGroup(ctx, req.Name, req.Description, req.DomainId)
 		if err != nil {
 			return nil, errors.WithMessage(err, "create service")
@@ -87,10 +76,6 @@ func (s Service) CreateUpdate(ctx context.Context, req domain.ServiceCreateUpdat
 
 		result := s.convertService(*serviceEntity)
 		return &result, nil
-	}
-
-	if existed != nil && existed.Id != req.Id {
-		return nil, domain.ErrDomainDuplicateName
 	}
 
 	_, err = s.serviceRepo.GetAppGroupById(ctx, req.Id)
