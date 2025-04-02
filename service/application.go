@@ -173,11 +173,6 @@ func (s Application) CreateUpdate(ctx context.Context, req domain.ApplicationCre
 		return result[0], nil
 	}
 
-	_, err := s.appRepo.GetApplicationById(ctx, req.Id)
-	if err != nil {
-		return nil, errors.WithMessage(err, "get application by id")
-	}
-
 	app, err := s.appRepo.UpdateApplication(ctx, req.Id, req.Name, req.Description)
 	if err != nil {
 		return nil, errors.WithMessage(err, "update application")
