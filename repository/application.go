@@ -134,7 +134,7 @@ func (r Application) UpdateApplication(
 	var pgErr *pgconn.PgError
 	switch {
 	case errors.As(err, &pgErr) && pgErr.Code == pgUniqueViolationErrorCode &&
-		pgErr.ConstraintName == applicationUniqueNameConstrainName:
+		pgErr.ConstraintName == applicationUniqueNameConstraintName:
 		return nil, domain.ErrApplicationDuplicateName
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, domain.ErrApplicationNotFound
@@ -206,7 +206,7 @@ func (r Application) handleCreateError(err error, q string) error {
 		switch pgErr.ConstraintName {
 		case applicationPkConstrainName:
 			return domain.ErrApplicationDuplicateId
-		case applicationUniqueNameConstrainName:
+		case applicationUniqueNameConstraintName:
 			return domain.ErrApplicationDuplicateName
 		}
 	case pgErr.Code == pgFkViolationErrorCode && pgErr.ConstraintName == applicationFkAppGroupConstraintName:
