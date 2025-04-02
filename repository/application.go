@@ -133,8 +133,7 @@ func (r Application) UpdateApplication(
 	err := r.db.SelectRow(ctx, &result, q, id, name, description)
 	var pgErr *pgconn.PgError
 	switch {
-	case errors.As(err, &pgErr) && pgErr.Code == pgUniqueViolationErrorCode &&
-		pgErr.ConstraintName == applicationUniqueNameConstraintName:
+	case errors.As(err, &pgErr) && pgErr.ConstraintName == applicationUniqueNameConstraintName:
 		return nil, domain.ErrApplicationDuplicateName
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, domain.ErrApplicationNotFound
@@ -201,15 +200,12 @@ func (r Application) handleCreateError(err error, q string) error {
 	if !errors.As(err, &pgErr) {
 		return errors.WithMessagef(err, "exec query %s", q)
 	}
-	switch {
-	case pgErr.Code == pgUniqueViolationErrorCode:
-		switch pgErr.ConstraintName {
-		case applicationPkConstrainName:
-			return domain.ErrApplicationDuplicateId
-		case applicationUniqueNameConstraintName:
-			return domain.ErrApplicationDuplicateName
-		}
-	case pgErr.Code == pgFkViolationErrorCode && pgErr.ConstraintName == applicationFkAppGroupConstraintName:
+	switch pgErr.ConstraintName {
+	case applicationPkConstrainName:
+		return domain.ErrApplicationDuplicateId
+	case applicationUniqueNameConstraintName:
+		return domain.ErrApplicationDuplicateName
+	case applicationFkAppGroupConstraintName:
 		return domain.ErrAppGroupNotFound
 	}
 	return errors.WithMessagef(err, "exec query %s", q)
