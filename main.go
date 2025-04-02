@@ -12,14 +12,14 @@ var (
 	version = "1.0.0"
 )
 
-// @title isp-system-service
-// @version 1.0.0
-// @description Сервис управления реестром внешних приложений и токенами аутентификации
+//	@title			isp-system-service
+//	@version		1.0.0
+//	@description	Сервис управления реестром внешних приложений и токенами аутентификации
 
-// @license.name GNU GPL v3.0
+//	@license.name	GNU GPL v3.0
 
-// @host localhost:9000
-// @BasePath /api/system
+//	@host		localhost:9000
+//	@BasePath	/api/system
 
 //go:generate swag init --parseDependency
 //go:generate rm -f docs/swagger.json

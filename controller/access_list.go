@@ -26,16 +26,17 @@ func NewAccessList(service AccessListService) AccessList {
 }
 
 // GetById godoc
-// @Tags accessList
-// @Summary Получить список доступности методов для приложения
-// @Description Возвращает список методов для приложения, для которых заданы настройки доступа
-// @Accept  json
-// @Produce  json
-// @Param body body domain.Identity false "идентификатор приложения"
-// @Success 200 {array} domain.MethodInfo "список доступности методов"
-// @Failure 404 {object} domain.GrpcError
-// @Failure 500 {object} domain.GrpcError
-// @Router /access_list/get_by_id [POST]
+//
+//	@Tags			accessList
+//	@Summary		Получить список доступности методов для приложения
+//	@Description	Возвращает список методов для приложения, для которых заданы настройки доступа
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		domain.Identity		false	"идентификатор приложения"
+//	@Success		200		{array}		domain.MethodInfo	"список доступности методов"
+//	@Failure		404		{object}	domain.GrpcError
+//	@Failure		500		{object}	domain.GrpcError
+//	@Router			/access_list/get_by_id [POST]
 func (c AccessList) GetById(ctx context.Context, req domain.Identity) ([]domain.MethodInfo, error) {
 	result, err := c.service.GetById(ctx, req.Id)
 	switch {
@@ -49,16 +50,17 @@ func (c AccessList) GetById(ctx context.Context, req domain.Identity) ([]domain.
 }
 
 // SetOne godoc
-// @Tags accessList
-// @Summary Настроить доступность метода для приложения
-// @Description Возвращает количество измененных строк
-// @Accept  json
-// @Produce  json
-// @Param body body domain.AccessListSetOneRequest false "объект для настройки доступа"
-// @Success 200 {object} domain.AccessListSetOneResponse "количество измененных строк"
-// @Failure 404 {object} domain.GrpcError
-// @Failure 500 {object} domain.GrpcError
-// @Router /access_list/set_one [POST]
+//
+//	@Tags			accessList
+//	@Summary		Настроить доступность метода для приложения
+//	@Description	Возвращает количество измененных строк
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		domain.AccessListSetOneRequest	false	"объект для настройки доступа"
+//	@Success		200		{object}	domain.AccessListSetOneResponse	"количество измененных строк"
+//	@Failure		404		{object}	domain.GrpcError
+//	@Failure		500		{object}	domain.GrpcError
+//	@Router			/access_list/set_one [POST]
 func (c AccessList) SetOne(ctx context.Context, req domain.AccessListSetOneRequest) (*domain.AccessListSetOneResponse, error) {
 	result, err := c.service.SetOne(ctx, req)
 	switch {
@@ -72,16 +74,17 @@ func (c AccessList) SetOne(ctx context.Context, req domain.AccessListSetOneReque
 }
 
 // SetList godoc
-// @Tags accessList
-// @Summary Настроить доступность списка методов для приложения
-// @Description Возвращает список методов для приложения, для которых заданы настройки доступа
-// @Accept  json
-// @Produce  json
-// @Param body body domain.AccessListSetListRequest false "объект настройки доступа"
-// @Success 200 {array} domain.MethodInfo "список доступности методов"
-// @Failure 404 {object} domain.GrpcError
-// @Failure 500 {object} domain.GrpcError
-// @Router /access_list/set_list [POST]
+//
+//	@Tags			accessList
+//	@Summary		Настроить доступность списка методов для приложения
+//	@Description	Возвращает список методов для приложения, для которых заданы настройки доступа
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		domain.AccessListSetListRequest	false	"объект настройки доступа"
+//	@Success		200		{array}		domain.MethodInfo				"список доступности методов"
+//	@Failure		404		{object}	domain.GrpcError
+//	@Failure		500		{object}	domain.GrpcError
+//	@Router			/access_list/set_list [POST]
 func (c AccessList) SetList(ctx context.Context, req domain.AccessListSetListRequest) ([]domain.MethodInfo, error) {
 	result, err := c.service.SetList(ctx, req)
 	switch {
