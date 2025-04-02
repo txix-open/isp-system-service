@@ -4,6 +4,7 @@ import (
 	"isp-system-service/assembly"
 	"isp-system-service/conf"
 	"isp-system-service/domain"
+	"isp-system-service/entity"
 	"isp-system-service/repository"
 	"testing"
 	"time"
@@ -15,6 +16,8 @@ import (
 	"github.com/txix-open/isp-kit/test/dbt"
 	"github.com/txix-open/isp-kit/test/fake"
 	"github.com/txix-open/isp-kit/test/grpct"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestApplicationSuite(t *testing.T) {
@@ -64,7 +67,120 @@ func (s *ApplicationSuite) TestGetAllApplications() {
 	s.Require().ElementsMatch(expectedApps, result)
 }
 
-func (s *ApplicationSuite) insertApps(toInsert []domain.Application) []domain.Application {
+func (s *ApplicationSuite) TestCreate_HappyPath() {
+	result := domain.ApplicationWithTokens{}
+	apiReq := fake.It[domain.CreateApplicationRequest]()
+	apiReq.Type = domain.ApplicationSystemType
+	appGroup := s.createAppGroup()
+	apiReq.ApplicationGroupId = appGroup.Id
+
+	err := s.api.Invoke("system/application/create_application").
+		JsonRequestBody(apiReq).
+		JsonResponseBody(&result).
+		Do(s.T().Context())
+	s.Require().NoError(err)
+
+	s.Require().NotEmpty(result.App.CreatedAt)
+	result.App.CreatedAt = time.Time{}
+
+	s.Require().NotEmpty(result.App.UpdatedAt)
+	result.App.UpdatedAt = time.Time{}
+
+	expectedApp := domain.Application{
+		Id:          apiReq.Id,
+		Name:        apiReq.Name,
+		Description: apiReq.Description,
+		Type:        apiReq.Type,
+		ServiceId:   apiReq.ApplicationGroupId,
+	}
+	s.Require().Equal(expectedApp, result.App)
+	s.Require().Empty(result.Tokens)
+}
+
+func (s *ApplicationSuite) TestCreate_WithEmptyAppId_HappyPath() {
+	nextAppId, err := s.appRepo.NextApplicationId(s.T().Context())
+	s.Require().NoError(err)
+
+	result := domain.ApplicationWithTokens{}
+	apiReq := fake.It[domain.CreateApplicationRequest]()
+	apiReq.Type = domain.ApplicationMobileType
+	appGroup := s.createAppGroup()
+	apiReq.ApplicationGroupId = appGroup.Id
+	apiReq.Id = 0
+
+	err = s.api.Invoke("system/application/create_application").
+		JsonRequestBody(apiReq).
+		JsonResponseBody(&result).
+		Do(s.T().Context())
+	s.Require().NoError(err)
+
+	s.Require().NotEmpty(result.App.CreatedAt)
+	result.App.CreatedAt = time.Time{}
+
+	s.Require().NotEmpty(result.App.UpdatedAt)
+	result.App.UpdatedAt = time.Time{}
+
+	expectedApp := domain.Application{
+		Id:          nextAppId,
+		Name:        apiReq.Name,
+		Description: apiReq.Description,
+		Type:        apiReq.Type,
+		ServiceId:   apiReq.ApplicationGroupId,
+	}
+	s.Require().Equal(expectedApp, result.App)
+	s.Require().Empty(result.Tokens)
+}
+
+func (s *ApplicationSuite) TestCreate_AppGroupNotFound() {
+	apiReq := fake.It[domain.CreateApplicationRequest]()
+	apiReq.Type = domain.ApplicationSystemType
+
+	err := s.api.Invoke("system/application/create_application").
+		JsonRequestBody(apiReq).
+		Do(s.T().Context())
+	statusErr, ok := status.FromError(err)
+	s.Require().True(ok)
+	s.Require().NotNil(statusErr)
+	s.Require().Equal(codes.InvalidArgument, statusErr.Code())
+}
+
+func (s *ApplicationSuite) TestCreate_ApplicationNameNotUniqueInAppGroup() {
+	apiReq := fake.It[domain.CreateApplicationRequest]()
+	apiReq.Type = domain.ApplicationSystemType
+
+	inserted := s.insertApps(fake.It[[]domain.Application](fake.MinSliceSize(1), fake.MaxSliceSize(1)))
+
+	apiReq.ApplicationGroupId = inserted[0].ServiceId
+	apiReq.Name = inserted[0].Name
+
+	err := s.api.Invoke("system/application/create_application").
+		JsonRequestBody(apiReq).
+		Do(s.T().Context())
+	statusErr, ok := status.FromError(err)
+	s.Require().True(ok)
+	s.Require().NotNil(statusErr)
+	s.Require().Equal(codes.AlreadyExists, statusErr.Code())
+}
+
+func (s *ApplicationSuite) TestCreate_ApplicationIdNotUnique() {
+	apiReq := fake.It[domain.CreateApplicationRequest]()
+	apiReq.Type = "SYSTEM"
+	appGroup := s.createAppGroup()
+	apiReq.ApplicationGroupId = appGroup.Id
+
+	inserted := s.insertApps(fake.It[[]domain.Application](fake.MinSliceSize(1), fake.MaxSliceSize(1)))
+	apiReq.Id = inserted[0].Id
+
+	err := s.api.Invoke("system/application/create_application").
+		JsonRequestBody(apiReq).
+		Do(s.T().Context())
+	statusErr, ok := status.FromError(err)
+	s.Require().True(ok)
+	s.Require().NotNil(statusErr)
+	s.Require().Equal(codes.AlreadyExists, statusErr.Code())
+}
+
+func (s *ApplicationSuite) createAppGroup() *entity.AppGroup {
 	createdDomain, err := s.domainRepo.CreateDomain(
 		s.T().Context(),
 		fake.It[string](),
@@ -80,7 +196,11 @@ func (s *ApplicationSuite) insertApps(toInsert []domain.Application) []domain.Ap
 		createdDomain.Id,
 	)
 	s.Require().NoError(err)
+	return appGroup
+}
 
+func (s *ApplicationSuite) insertApps(toInsert []domain.Application) []domain.Application {
+	appGroup := s.createAppGroup()
 	toExpect := make([]domain.Application, 0, len(toInsert))
 	for _, app := range toInsert {
 		createdApp, err := s.appRepo.CreateApplication(

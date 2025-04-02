@@ -4,12 +4,22 @@ import (
 	"context"
 	"database/sql"
 
+	"isp-system-service/domain"
+	"isp-system-service/entity"
+
 	"github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/pkg/errors"
 	"github.com/txix-open/isp-kit/db"
 	"github.com/txix-open/isp-kit/db/query"
-	"isp-system-service/domain"
-	"isp-system-service/entity"
+)
+
+const (
+	pgUniqueViolationErrorCode          = "23505"
+	pgFkViolationErrorCode              = "23503"
+	applicationPkConstrainName          = "application_pkey"
+	applicationUniqueNameConstrainName  = "uq_name_application_group_id"
+	applicationFkAppGroupConstraintName = "fk_application_group_id"
 )
 
 type Application struct {
@@ -104,19 +114,14 @@ func (r Application) CreateApplication(ctx context.Context, id int, name string,
 	INSERT INTO application 
 	(id, name, description, application_group_id, type)
 	VALUES ($1, $2, $3, $4, $5)
-	ON CONFLICT (id) DO NOTHING
 	RETURNING id, name, description, application_group_id, type, created_at, updated_at
 `
 	result := entity.Application{}
 	err := r.db.SelectRow(ctx, &result, q, id, name, desc, appGroupId, appType)
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		return nil, domain.ErrApplicationDuplicateId
-	case err != nil:
-		return nil, errors.WithMessagef(err, "exec query %s", q)
-	default:
-		return &result, nil
+	if err != nil {
+		return nil, r.handleCreateError(err, q)
 	}
+	return &result, nil
 }
 
 func (r Application) UpdateApplication(
@@ -190,4 +195,23 @@ func (r Application) GetAllApplications(ctx context.Context) ([]entity.Applicati
 	}
 
 	return result, nil
+}
+
+func (r Application) handleCreateError(err error, q string) error {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return errors.WithMessagef(err, "exec query %s", q)
+	}
+	switch {
+	case pgErr.Code == pgUniqueViolationErrorCode:
+		switch pgErr.ConstraintName {
+		case applicationPkConstrainName:
+			return domain.ErrApplicationDuplicateId
+		case applicationUniqueNameConstrainName:
+			return domain.ErrApplicationDuplicateName
+		}
+	case pgErr.Code == pgFkViolationErrorCode && pgErr.ConstraintName == applicationFkAppGroupConstraintName:
+		return domain.ErrAppGroupNotFound
+	}
+	return errors.WithMessagef(err, "exec query %s", q)
 }

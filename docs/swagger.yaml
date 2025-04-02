@@ -133,6 +133,26 @@ definitions:
       authorized:
         type: boolean
     type: object
+  domain.CreateApplicationRequest:
+    properties:
+      applicationGroupId:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      type:
+        enum:
+        - SYSTEM
+        - MOBILE
+        type: string
+    required:
+    - applicationGroupId
+    - name
+    - type
+    type: object
   domain.DeleteResponse:
     properties:
       deleted:
@@ -388,6 +408,45 @@ paths:
       summary: Настроить доступность метода для приложения
       tags:
       - accessList
+  /application/create_application:
+    post:
+      consumes:
+      - application/json
+      description: Если приложение с такими идентификатором или связкой `applicationGroupId`-`name`
+        существует, то возвращает ошибку
+      parameters:
+      - description: Объект приложения
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateApplicationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.ApplicationWithTokens'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+      summary: Создать приложение
+      tags:
+      - application
   /application/create_update_application:
     post:
       consumes:

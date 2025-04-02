@@ -4,6 +4,11 @@ import (
 	"time"
 )
 
+const (
+	ApplicationSystemType = "SYSTEM"
+	ApplicationMobileType = "MOBILE"
+)
+
 type Application struct {
 	Id          int
 	Name        string
@@ -33,4 +38,12 @@ type ApplicationSimple struct {
 	Description string
 	Type        string
 	Tokens      []Token
+}
+
+type CreateApplicationRequest struct {
+	Id                 int
+	Name               string `validate:"required"`
+	Description        string
+	ApplicationGroupId int    `validate:"required"`
+	Type               string `validate:"required,oneof=SYSTEM MOBILE"`
 }

@@ -171,6 +171,11 @@ func applicationCluster(c Controllers) []cluster.EndpointDescriptor {
 			Inner:   true,
 			Handler: c.Application.GetAll,
 		},
+		{
+			Path:    "system/application/create_application",
+			Inner:   true,
+			Handler: c.Application.Create,
+		},
 	}
 }
 
