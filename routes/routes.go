@@ -29,7 +29,7 @@ func Handler(wrapper endpoint.Wrapper, c Controllers) *grpc.Mux {
 }
 
 func endpointDescriptors(c Controllers) []cluster.EndpointDescriptor {
-	return concatCluster([][]cluster.EndpointDescriptor{
+	return concatCluster(
 		secureCluster(c),
 		accessListCluster(c),
 		domainCluster(c),
@@ -208,7 +208,7 @@ func tokenCluster(c Controllers) []cluster.EndpointDescriptor {
 	}
 }
 
-func concatCluster(clusters [][]cluster.EndpointDescriptor) []cluster.EndpointDescriptor {
+func concatCluster(clusters ...[]cluster.EndpointDescriptor) []cluster.EndpointDescriptor {
 	var result []cluster.EndpointDescriptor
 	for _, c := range clusters {
 		result = append(result, c...)
