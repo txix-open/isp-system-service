@@ -149,24 +149,8 @@ func (s Application) SystemTree(ctx context.Context, systemId int) ([]*domain.Do
 }
 
 func (s Application) CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.ApplicationWithTokens, error) {
-	existed, err := s.appRepo.GetApplicationByNameAndAppGroupId(ctx, req.Name, req.ServiceId)
-	switch {
-	case errors.Is(err, domain.ErrApplicationNotFound):
-	case err != nil:
-		return nil, errors.WithMessage(err, "get application by name and service_id")
-	}
-
-	_, err = s.serviceRepo.GetAppGroupById(ctx, req.ServiceId)
-	if err != nil {
-		return nil, errors.WithMessage(err, "get service by id")
-	}
-
-	if existed != nil && (existed.Id != req.Id || req.Id == 0) {
-		return nil, domain.ErrApplicationDuplicateName
-	}
-
 	if req.Id == 0 {
-		_, err = s.appRepo.GetApplicationByNameAndAppGroupId(ctx, req.Name, req.ServiceId)
+		_, err := s.appRepo.GetApplicationByNameAndAppGroupId(ctx, req.Name, req.ServiceId)
 		if err != nil {
 			return nil, errors.WithMessage(err, "get application by name and service_id")
 		}
@@ -189,7 +173,7 @@ func (s Application) CreateUpdate(ctx context.Context, req domain.ApplicationCre
 		return result[0], nil
 	}
 
-	_, err = s.appRepo.GetApplicationById(ctx, req.Id)
+	_, err := s.appRepo.GetApplicationById(ctx, req.Id)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get application by id")
 	}
