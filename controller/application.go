@@ -20,6 +20,7 @@ type ApplicationService interface {
 	NextId(ctx context.Context) (int, error)
 	GetAll(ctx context.Context) ([]domain.Application, error)
 	Create(ctx context.Context, req domain.CreateApplicationRequest) (*domain.ApplicationWithTokens, error)
+	Update(ctx context.Context, req domain.UpdateApplicationRequest) (*domain.ApplicationWithTokens, error)
 }
 
 type Application struct {
@@ -184,7 +185,7 @@ func (c Application) GetAll(ctx context.Context) ([]domain.Application, error) {
 // @Description Если приложение с такими идентификатором или связкой `applicationGroupId`-`name` существует, то возвращает ошибку
 // @Accept  json
 // @Produce  json
-// @Param body body domain.ApplicationCreateUpdateRequest true "Объект приложения"
+// @Param body body domain.CreateApplicationRequest true "Объект приложения"
 // @Success 200 {object} domain.ApplicationWithTokens
 // @Failure 400 {object} domain.GrpcError
 // @Failure 404 {object} domain.GrpcError
@@ -200,6 +201,31 @@ func (c Application) Create(ctx context.Context, req domain.CreateApplicationReq
 		return nil, status.Errorf(codes.AlreadyExists, "application with name %s already exists", req.Name)
 	case errors.Is(err, domain.ErrApplicationDuplicateId):
 		return nil, status.Errorf(codes.AlreadyExists, "application with id %d already exists", req.Id)
+	default:
+		return result, err
+	}
+}
+
+// Update godoc
+// @Tags application
+// @Summary Обновить приложение
+// @Description Если приложение с связкой `applicationGroupId`-`name` существует или приложение не найдено, то возвращает ошибку
+// @Accept  json
+// @Produce  json
+// @Param body body domain.UpdateApplicationRequest true "Объект приложения"
+// @Success 200 {object} domain.ApplicationWithTokens
+// @Failure 400 {object} domain.GrpcError
+// @Failure 404 {object} domain.GrpcError
+// @Failure 409 {object} domain.GrpcError
+// @Failure 500 {object} domain.GrpcError
+// @Router /application/update_application [POST]
+func (c Application) Update(ctx context.Context, req domain.UpdateApplicationRequest) (*domain.ApplicationWithTokens, error) {
+	result, err := c.service.Update(ctx, req)
+	switch {
+	case errors.Is(err, domain.ErrApplicationDuplicateName):
+		return nil, status.Errorf(codes.AlreadyExists, "application with name %s already exists", req.Name)
+	case errors.Is(err, domain.ErrApplicationNotFound):
+		return nil, status.Errorf(codes.NotFound, "application with id %d not found", req.Id)
 	default:
 		return result, err
 	}

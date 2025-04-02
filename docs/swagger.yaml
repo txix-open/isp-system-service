@@ -295,6 +295,18 @@ definitions:
     required:
     - appId
     type: object
+  domain.UpdateApplicationRequest:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    required:
+    - id
+    - name
+    type: object
   entity.Token:
     properties:
       appId:
@@ -668,6 +680,45 @@ paths:
           schema:
             $ref: '#/definitions/domain.GrpcError'
       summary: Получить следующий идентификатор приложения
+      tags:
+      - application
+  /application/update_application:
+    post:
+      consumes:
+      - application/json
+      description: Если приложение с связкой `applicationGroupId`-`name` существует
+        или приложение не найдено, то возвращает ошибку
+      parameters:
+      - description: Объект приложения
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateApplicationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.ApplicationWithTokens'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.GrpcError'
+      summary: Обновить приложение
       tags:
       - application
   /domain/create_update_domain:

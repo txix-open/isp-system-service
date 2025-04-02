@@ -297,6 +297,20 @@ func (s Application) Create(ctx context.Context, req domain.CreateApplicationReq
 	}, nil
 }
 
+func (s Application) Update(ctx context.Context, req domain.UpdateApplicationRequest) (*domain.ApplicationWithTokens, error) {
+	app, err := s.appRepo.UpdateApplication(ctx, req.Id, req.Name, req.Description)
+	if err != nil {
+		return nil, errors.WithMessage(err, "update application")
+	}
+
+	result, err := s.EnrichWithTokens(ctx, []entity.Application{*app})
+	if err != nil {
+		return nil, errors.WithMessage(err, "enrich application with tokens")
+	}
+
+	return result[0], nil
+}
+
 func (s Application) convertApplication(req entity.Application) domain.Application {
 	desc := ""
 	if req.Description != nil {

@@ -180,6 +180,90 @@ func (s *ApplicationSuite) TestCreate_ApplicationIdNotUnique() {
 	s.Require().Equal(codes.AlreadyExists, statusErr.Code())
 }
 
+func (s *ApplicationSuite) TestUpdate_HappyPath() {
+	inserted := s.insertApps(fake.It[[]domain.Application](fake.MinSliceSize(1), fake.MaxSliceSize(1)))
+	apiReq := domain.UpdateApplicationRequest{
+		Id:          inserted[0].Id,
+		Name:        fake.It[string](),
+		Description: fake.It[string](),
+	}
+
+	var result domain.ApplicationWithTokens
+	err := s.api.Invoke("system/application/update_application").
+		JsonRequestBody(apiReq).
+		JsonResponseBody(&result).
+		Do(s.T().Context())
+	s.Require().NoError(err)
+
+	s.Require().NotEmpty(result.App.CreatedAt)
+	result.App.CreatedAt = time.Time{}
+
+	s.Require().NotEmpty(result.App.UpdatedAt)
+	result.App.UpdatedAt = time.Time{}
+
+	expectedApp := domain.Application{
+		Id:          apiReq.Id,
+		Name:        apiReq.Name,
+		Description: apiReq.Description,
+		Type:        inserted[0].Type,
+		ServiceId:   inserted[0].ServiceId,
+	}
+	s.Require().Equal(expectedApp, result.App)
+	s.Require().Empty(result.Tokens)
+
+	app, err := s.appRepo.GetApplicationById(s.T().Context(), apiReq.Id)
+	s.Require().NoError(err)
+
+	expectedDbApp := entity.Application{
+		Id:                 apiReq.Id,
+		Name:               apiReq.Name,
+		Type:               inserted[0].Type,
+		ApplicationGroupId: inserted[0].ServiceId,
+	}
+	s.Require().Equal(apiReq.Description, *app.Description)
+	app.Description = nil
+
+	s.Require().NotEmpty(app.CreatedAt)
+	app.CreatedAt = time.Time{}
+
+	s.Require().NotEmpty(app.UpdatedAt)
+	app.UpdatedAt = time.Time{}
+	s.Require().Equal(expectedDbApp, *app)
+}
+
+func (s *ApplicationSuite) TestUpdate_ApplicationNameNotUniqueInAppGroup() {
+	inserted := s.insertApps(fake.It[[]domain.Application](fake.MinSliceSize(2), fake.MaxSliceSize(2)))
+	apiReq := domain.UpdateApplicationRequest{
+		Id:          inserted[0].Id,
+		Name:        inserted[1].Name,
+		Description: fake.It[string](),
+	}
+
+	err := s.api.Invoke("system/application/update_application").
+		JsonRequestBody(apiReq).
+		Do(s.T().Context())
+	statusErr, ok := status.FromError(err)
+	s.Require().True(ok)
+	s.Require().NotNil(statusErr)
+	s.Require().Equal(codes.AlreadyExists, statusErr.Code())
+}
+
+func (s *ApplicationSuite) TestUpdate_AppNotFound() {
+	apiReq := domain.UpdateApplicationRequest{
+		Id:          fake.It[int](),
+		Name:        fake.It[string](),
+		Description: fake.It[string](),
+	}
+
+	err := s.api.Invoke("system/application/update_application").
+		JsonRequestBody(apiReq).
+		Do(s.T().Context())
+	statusErr, ok := status.FromError(err)
+	s.Require().True(ok)
+	s.Require().NotNil(statusErr)
+	s.Require().Equal(codes.NotFound, statusErr.Code())
+}
+
 func (s *ApplicationSuite) createAppGroup() *entity.AppGroup {
 	createdDomain, err := s.domainRepo.CreateDomain(
 		s.T().Context(),

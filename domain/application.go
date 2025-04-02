@@ -47,3 +47,9 @@ type CreateApplicationRequest struct {
 	ApplicationGroupId int    `validate:"required"`
 	Type               string `validate:"required,oneof=SYSTEM MOBILE"`
 }
+
+type UpdateApplicationRequest struct {
+	Id          int    `validate:"required"`
+	Name        string `validate:"required"`
+	Description string
+}

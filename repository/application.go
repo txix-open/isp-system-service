@@ -126,7 +126,7 @@ func (r Application) CreateApplication(ctx context.Context, id int, name string,
 
 func (r Application) UpdateApplication(
 	ctx context.Context,
-	appGroupId int,
+	id int,
 	name string,
 	description string,
 ) (*entity.Application, error) {
@@ -138,12 +138,19 @@ func (r Application) UpdateApplication(
 	RETURNING id, name, description, application_group_id, type, created_at, updated_at
 `
 	result := entity.Application{}
-	err := r.db.SelectRow(ctx, &result, q, appGroupId, name, description)
-	if err != nil {
+	err := r.db.SelectRow(ctx, &result, q, id, name, description)
+	var pgErr *pgconn.PgError
+	switch {
+	case errors.As(err, &pgErr) && pgErr.Code == pgUniqueViolationErrorCode &&
+		pgErr.ConstraintName == applicationUniqueNameConstrainName:
+		return nil, domain.ErrApplicationDuplicateName
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, domain.ErrApplicationNotFound
+	case err != nil:
 		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-
-	return &result, nil
 }
 
 func (r Application) DeleteApplicationByIdList(ctx context.Context, idList []int) (int, error) {
