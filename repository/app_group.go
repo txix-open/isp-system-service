@@ -163,3 +163,22 @@ func (r AppGroup) DeleteAppGroup(ctx context.Context, idList []int) (int, error)
 
 	return int(rowsAffected), nil
 }
+
+func (r AppGroup) GetAllAppGroups(ctx context.Context) ([]entity.AppGroup, error) {
+	q, arg, err := query.New().
+		Select("id", "name", "description", "domain_id", "created_at", "updated_at").
+		From("application_group").
+		OrderBy("created_at DESC").
+		ToSql()
+	if err != nil {
+		return nil, errors.WithMessage(err, "build query")
+	}
+
+	result := make([]entity.AppGroup, 0)
+	err = r.db.Select(ctx, &result, q, arg...)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	}
+
+	return result, nil
+}

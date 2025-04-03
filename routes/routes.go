@@ -229,6 +229,10 @@ func applicationGroupCluster(c Controllers) []cluster.EndpointDescriptor {
 			Path:    "system/application_group/get_by_id_list",
 			Inner:   true,
 			Handler: c.AppGroup.GetByIdList,
+		}, {
+			Path:    "system/application_group/get_all",
+			Inner:   true,
+			Handler: c.AppGroup.GetAll,
 		},
 	}
 }

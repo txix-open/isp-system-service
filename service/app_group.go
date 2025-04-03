@@ -58,6 +58,18 @@ func (s AppGroup) GetByIdList(ctx context.Context, idList []int) ([]domain.AppGr
 	return result, nil
 }
 
+func (s AppGroup) GetAll(ctx context.Context) ([]domain.AppGroup, error) {
+	appGroups, err := s.repo.GetAllAppGroups(ctx)
+	if err != nil {
+		return nil, errors.WithMessage(err, "get all appGroups")
+	}
+	result := make([]domain.AppGroup, 0, len(appGroups))
+	for _, appGroup := range appGroups {
+		result = append(result, s.convertAppGroup(appGroup))
+	}
+	return result, nil
+}
+
 func (s AppGroup) convertAppGroup(appGroup entity.AppGroup) domain.AppGroup {
 	return domain.AppGroup{
 		Id:          appGroup.Id,

@@ -34,6 +34,7 @@ type AppGroupRepo interface {
 	GetAppGroupById(ctx context.Context, id int) (*entity.AppGroup, error)
 	GetAppGroupByIdList(ctx context.Context, idList []int) ([]entity.AppGroup, error)
 	GetAppGroupByDomainId(ctx context.Context, domainIdList []int) ([]entity.AppGroup, error)
+	GetAllAppGroups(ctx context.Context) ([]entity.AppGroup, error)
 	GetAppGroupByNameAndDomainId(ctx context.Context, name string, domainId int) (*entity.AppGroup, error)
 	CreateAppGroup(ctx context.Context, name string, desc string, domainId int) (*entity.AppGroup, error)
 	UpdateAppGroup(ctx context.Context, id int, name string, description string) (*entity.AppGroup, error)

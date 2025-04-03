@@ -15,6 +15,7 @@ type AppGroupService interface {
 	Update(ctx context.Context, req domain.UpdateAppGroupRequest) (*domain.AppGroup, error)
 	DeleteList(ctx context.Context, req domain.IdListRequest) (*domain.DeleteResponse, error)
 	GetByIdList(ctx context.Context, idList []int) ([]domain.AppGroup, error)
+	GetAll(ctx context.Context) ([]domain.AppGroup, error)
 }
 
 type AppGroup struct {
@@ -121,4 +122,18 @@ func (c AppGroup) DeleteList(ctx context.Context, req domain.IdListRequest) (*do
 //	@Router			/application_group/get_by_id_list [POST]
 func (c AppGroup) GetByIdList(ctx context.Context, req domain.IdListRequest) ([]domain.AppGroup, error) {
 	return c.service.GetByIdList(ctx, req.IdList)
+}
+
+// GetAll godoc
+//
+//	@Tags			application_group
+//	@Summary		Получить группы приложений
+//	@Description	Возвращает все группы приложений
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		domain.AppGroup
+//	@Failure		500	{object}	apierrors.Error
+//	@Router			/application_group/get_all [POST]
+func (c AppGroup) GetAll(ctx context.Context) ([]domain.AppGroup, error) {
+	return c.service.GetAll(ctx)
 }

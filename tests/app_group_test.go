@@ -247,6 +247,34 @@ func (s *AppGroupSuite) TestDeleteList() {
 	s.Require().NoError(err)
 }
 
+func (s *AppGroupSuite) TestGetAll() {
+	toGenerate := 10
+	appGroups := make([]domain.AppGroup, 0, toGenerate)
+	for range 10 {
+		appGroup := s.createAppGroup()
+		appGroups = append(appGroups, domain.AppGroup{
+			Id:          appGroup.Id,
+			Name:        appGroup.Name,
+			Description: appGroup.Description.String,
+			CreatedAt:   time.Time{},
+			UpdatedAt:   time.Time{},
+		})
+	}
+	result := []domain.AppGroup{}
+	err := s.api.Invoke("system/application_group/get_all").
+		JsonResponseBody(&result).
+		Do(s.T().Context())
+	s.Require().NoError(err)
+	for i := range result {
+		s.Require().NotEmpty(result[i].CreatedAt)
+		result[i].CreatedAt = time.Time{}
+
+		s.Require().NotEmpty(result[i].UpdatedAt)
+		result[i].UpdatedAt = time.Time{}
+	}
+	s.Require().ElementsMatch(appGroups, result)
+}
+
 func (s *AppGroupSuite) createAppGroup() *entity.AppGroup {
 	appGroup, err := s.appGroupRepo.CreateAppGroup(
 		s.T().Context(),

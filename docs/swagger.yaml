@@ -830,6 +830,27 @@ paths:
       summary: Удалить группы приложений
       tags:
       - application_group
+  /application_group/get_all:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает все группы приложений
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.AppGroup'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Получить группы приложений
+      tags:
+      - application_group
   /application_group/get_by_id_list:
     post:
       consumes:
