@@ -2,12 +2,13 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"isp-system-service/domain"
 
 	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/grpc/apierrors"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type ApplicationService interface {
@@ -42,15 +43,20 @@ func NewApplication(service ApplicationService) Application {
 //	@Produce		json
 //	@Param			body	body		domain.Identity	true	"Идентификатор приложения"
 //	@Success		200		{object}	domain.ApplicationWithTokens
-//	@Failure		400		{object}	domain.GrpcError
-//	@Failure		404		{object}	domain.GrpcError
-//	@Failure		500		{object}	domain.GrpcError
+//	@Failure		400		{object}	apierrors.Error
+//	@Failure		404		{object}	apierrors.Error
+//	@Failure		500		{object}	apierrors.Error
 //	@Router			/application/get_application_by_id [POST]
 func (c Application) GetById(ctx context.Context, req domain.Identity) (*domain.ApplicationWithTokens, error) {
 	result, err := c.service.GetById(ctx, req.Id)
 	switch {
 	case errors.Is(err, domain.ErrApplicationNotFound):
-		return nil, status.Errorf(codes.NotFound, "application with id %d not found", req.Id)
+		return nil, apierrors.New(
+			codes.NotFound,
+			domain.ErrCodeApplicationNotFound,
+			fmt.Sprintf("application with id %d not found", req.Id),
+			err,
+		)
 	case err != nil:
 		return nil, err
 	default:
@@ -67,7 +73,7 @@ func (c Application) GetById(ctx context.Context, req domain.Identity) (*domain.
 //	@Produce		json
 //	@Param			body	body		[]integer	false	"Массив идентификаторов приложений"
 //	@Success		200		{array}		domain.ApplicationWithTokens
-//	@Failure		500		{object}	domain.GrpcError
+//	@Failure		500		{object}	apierrors.Error
 //	@Router			/application/get_applications [POST]
 func (c Application) GetByIdList(ctx context.Context, req []int) ([]*domain.ApplicationWithTokens, error) {
 	return c.service.GetByIdList(ctx, req)
@@ -82,7 +88,7 @@ func (c Application) GetByIdList(ctx context.Context, req []int) ([]*domain.Appl
 //	@Produce		json
 //	@Param			body	body		domain.Identity	true	"Идентификатор сервиса"
 //	@Success		200		{array}		domain.ApplicationWithTokens
-//	@Failure		500		{object}	domain.GrpcError
+//	@Failure		500		{object}	apierrors.Error
 //	@Router			/application/get_applications_by_service_id [POST]
 func (c Application) GetByServiceId(ctx context.Context, req domain.Identity) ([]*domain.ApplicationWithTokens, error) {
 	return c.service.GetByServiceId(ctx, req.Id)
@@ -96,7 +102,7 @@ func (c Application) GetByServiceId(ctx context.Context, req domain.Identity) ([
 //	@Accept			json
 //	@Produce		json
 //	@Success		200	{array}		domain.DomainWithService
-//	@Failure		500	{object}	domain.GrpcError
+//	@Failure		500	{object}	apierrors.Error
 //	@Router			/application/get_system_tree [POST]
 func (c Application) GetSystemTree(ctx context.Context) ([]*domain.DomainWithService, error) {
 	return c.service.SystemTree(ctx, domain.DefaultSystemId)
@@ -111,20 +117,34 @@ func (c Application) GetSystemTree(ctx context.Context) ([]*domain.DomainWithSer
 //	@Produce		json
 //	@Param			body	body		domain.ApplicationCreateUpdateRequest	true	"Объект приложения"
 //	@Success		200		{object}	domain.ApplicationWithTokens
-//	@Failure		400		{object}	domain.GrpcError
-//	@Failure		404		{object}	domain.GrpcError
-//	@Failure		409		{object}	domain.GrpcError
-//	@Failure		500		{object}	domain.GrpcError
+//	@Failure		400		{object}	apierrors.Error
+//	@Failure		404		{object}	apierrors.Error
+//	@Failure		409		{object}	apierrors.Error
+//	@Failure		500		{object}	apierrors.Error
 //	@Router			/application/create_update_application [POST]
 func (c Application) CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.ApplicationWithTokens, error) {
 	result, err := c.service.CreateUpdate(ctx, req)
 	switch {
 	case errors.Is(err, domain.ErrAppGroupNotFound):
-		return nil, status.Errorf(codes.InvalidArgument, "service with id %d not found", req.ServiceId)
+		return nil, apierrors.NewBusinessError(
+			domain.ErrCodeAppGroupNotFound,
+			fmt.Sprintf("service with id %d not found", req.ServiceId),
+			err,
+		)
 	case errors.Is(err, domain.ErrApplicationDuplicateName):
-		return nil, status.Errorf(codes.AlreadyExists, "application with name %s already exists", req.Name)
+		return nil, apierrors.New(
+			codes.AlreadyExists,
+			domain.ErrCodeApplicationDuplicateName,
+			fmt.Sprintf("application with name %s already exists", req.Name),
+			err,
+		)
 	case errors.Is(err, domain.ErrApplicationNotFound):
-		return nil, status.Errorf(codes.NotFound, "application with id %d not found", req.Id)
+		return nil, apierrors.New(
+			codes.NotFound,
+			domain.ErrCodeApplicationNotFound,
+			fmt.Sprintf("application with id %d not found", req.Id),
+			err,
+		)
 	case err != nil:
 		return nil, err
 	default:
@@ -141,12 +161,13 @@ func (c Application) CreateUpdate(ctx context.Context, req domain.ApplicationCre
 //	@Produce		json
 //	@Param			body	body		[]integer	false	"Массив идентификаторов приложений"
 //	@Success		200		{object}	domain.DeleteResponse
-//	@Failure		400		{object}	domain.GrpcError
-//	@Failure		500		{object}	domain.GrpcError
+//	@Failure		400		{object}	apierrors.Error
+//	@Failure		500		{object}	apierrors.Error
 //	@Router			/application/delete_applications [POST]
 func (c Application) Delete(ctx context.Context, req []int) (*domain.DeleteResponse, error) {
 	if len(req) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "At least one id are required")
+		return nil, apierrors.NewBusinessError(domain.ErrCodeInvalidRequest,
+			"At least one id are required", errors.New("invalid id count"))
 	}
 
 	result, err := c.service.Delete(ctx, req)
@@ -167,7 +188,7 @@ func (c Application) Delete(ctx context.Context, req []int) (*domain.DeleteRespo
 //	@Accept			json
 //	@Produce		json
 //	@Success		200	{object}	integer
-//	@Failure		500	{object}	domain.GrpcError
+//	@Failure		500	{object}	apierrors.Error
 //	@Router			/application/next_id [POST]
 func (c Application) NextId(ctx context.Context) (int, error) {
 	return c.service.NextId(ctx)
@@ -181,7 +202,7 @@ func (c Application) NextId(ctx context.Context) (int, error) {
 //	@Accept			json
 //	@Produce		json
 //	@Success		200	{array}		domain.Application
-//	@Failure		500	{object}	domain.GrpcError
+//	@Failure		500	{object}	apierrors.Error
 //	@Router			/application/get_all [POST]
 func (c Application) GetAll(ctx context.Context) ([]domain.Application, error) {
 	return c.service.GetAll(ctx)
@@ -196,19 +217,33 @@ func (c Application) GetAll(ctx context.Context) ([]domain.Application, error) {
 //	@Produce		json
 //	@Param			body	body		domain.CreateApplicationRequest	true	"Объект приложения"
 //	@Success		200		{object}	domain.ApplicationWithTokens
-//	@Failure		400		{object}	domain.GrpcError
-//	@Failure		409		{object}	domain.GrpcError
-//	@Failure		500		{object}	domain.GrpcError
+//	@Failure		400		{object}	apierrors.Error
+//	@Failure		409		{object}	apierrors.Error
+//	@Failure		500		{object}	apierrors.Error
 //	@Router			/application/create_application [POST]
 func (c Application) Create(ctx context.Context, req domain.CreateApplicationRequest) (*domain.ApplicationWithTokens, error) {
 	result, err := c.service.Create(ctx, req)
 	switch {
 	case errors.Is(err, domain.ErrAppGroupNotFound):
-		return nil, status.Errorf(codes.InvalidArgument, "application group with id %d not found", req.ApplicationGroupId)
+		return nil, apierrors.NewBusinessError(
+			domain.ErrCodeAppGroupNotFound,
+			fmt.Sprintf("application group with id %d not found", req.ApplicationGroupId),
+			err,
+		)
 	case errors.Is(err, domain.ErrApplicationDuplicateName):
-		return nil, status.Errorf(codes.AlreadyExists, "application with name %s already exists", req.Name)
+		return nil, apierrors.New(
+			codes.AlreadyExists,
+			domain.ErrCodeApplicationDuplicateName,
+			fmt.Sprintf("application with name %s already exists", req.Name),
+			err,
+		)
 	case errors.Is(err, domain.ErrApplicationDuplicateId):
-		return nil, status.Errorf(codes.AlreadyExists, "application with id %d already exists", req.Id)
+		return nil, apierrors.New(
+			codes.AlreadyExists,
+			domain.ErrCodeApplicationDuplicateId,
+			fmt.Sprintf("application with id %d already exists", req.Id),
+			err,
+		)
 	default:
 		return result, err
 	}

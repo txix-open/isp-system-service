@@ -5,11 +5,18 @@ import (
 )
 
 const (
-	ErrCodeInvalidRequest           = 600
-	ErrCodeAppGroupNotFound         = 601
+	ErrCodeInvalidRequest = 600
+
 	ErrCodeApplicationNotFound      = 602
 	ErrCodeApplicationDuplicateName = 603
 	ErrCodeApplicationDuplicateId   = 604
+
+	ErrCodeAppGroupNotFound      = 605
+	ErrCodeAppGroupDuplicateName = 606
+
+	ErrCodeSystemNotFound      = 607
+	ErrCodeDomainNotFound      = 608
+	ErrCodeDomainDuplicateName = 609
 )
 
 var (

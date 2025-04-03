@@ -11,13 +11,12 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/txix-open/isp-kit/dbx"
+	"github.com/txix-open/isp-kit/grpc/apierrors"
 	"github.com/txix-open/isp-kit/grpc/client"
 	"github.com/txix-open/isp-kit/test"
 	"github.com/txix-open/isp-kit/test/dbt"
 	"github.com/txix-open/isp-kit/test/fake"
 	"github.com/txix-open/isp-kit/test/grpct"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func TestApplicationSuite(t *testing.T) {
@@ -104,10 +103,9 @@ func (s *ApplicationSuite) TestCreate_AppGroupNotFound() {
 	err := s.api.Invoke("system/application/create_application").
 		JsonRequestBody(apiReq).
 		Do(s.T().Context())
-	statusErr, ok := status.FromError(err)
-	s.Require().True(ok)
-	s.Require().NotNil(statusErr)
-	s.Require().Equal(codes.InvalidArgument, statusErr.Code())
+	apiError := apierrors.FromError(err)
+	s.Require().NotNil(apiError)
+	s.Require().Equal(domain.ErrCodeAppGroupNotFound, apiError.ErrorCode)
 }
 
 func (s *ApplicationSuite) TestCreate_ApplicationNameNotUniqueInAppGroup() {
@@ -122,10 +120,9 @@ func (s *ApplicationSuite) TestCreate_ApplicationNameNotUniqueInAppGroup() {
 	err := s.api.Invoke("system/application/create_application").
 		JsonRequestBody(apiReq).
 		Do(s.T().Context())
-	statusErr, ok := status.FromError(err)
-	s.Require().True(ok)
-	s.Require().NotNil(statusErr)
-	s.Require().Equal(codes.AlreadyExists, statusErr.Code())
+	apiError := apierrors.FromError(err)
+	s.Require().NotNil(apiError)
+	s.Require().Equal(domain.ErrCodeApplicationDuplicateName, apiError.ErrorCode)
 }
 
 func (s *ApplicationSuite) TestCreate_ApplicationIdNotUnique() {
@@ -140,10 +137,9 @@ func (s *ApplicationSuite) TestCreate_ApplicationIdNotUnique() {
 	err := s.api.Invoke("system/application/create_application").
 		JsonRequestBody(apiReq).
 		Do(s.T().Context())
-	statusErr, ok := status.FromError(err)
-	s.Require().True(ok)
-	s.Require().NotNil(statusErr)
-	s.Require().Equal(codes.AlreadyExists, statusErr.Code())
+	apiError := apierrors.FromError(err)
+	s.Require().NotNil(apiError)
+	s.Require().Equal(domain.ErrCodeApplicationDuplicateId, apiError.ErrorCode)
 }
 
 func (s *ApplicationSuite) TestUpdate_HappyPath() {
@@ -209,10 +205,9 @@ func (s *ApplicationSuite) TestUpdate_ApplicationNameNotUniqueInAppGroup() {
 	err := s.api.Invoke("system/application/update_application").
 		JsonRequestBody(apiReq).
 		Do(s.T().Context())
-	statusErr, ok := status.FromError(err)
-	s.Require().True(ok)
-	s.Require().NotNil(statusErr)
-	s.Require().Equal(codes.AlreadyExists, statusErr.Code())
+	apiError := apierrors.FromError(err)
+	s.Require().NotNil(apiError)
+	s.Require().Equal(domain.ErrCodeApplicationDuplicateName, apiError.ErrorCode)
 }
 
 func (s *ApplicationSuite) TestUpdate_AppIdNotUnique() {
@@ -227,10 +222,9 @@ func (s *ApplicationSuite) TestUpdate_AppIdNotUnique() {
 	err := s.api.Invoke("system/application/update_application").
 		JsonRequestBody(apiReq).
 		Do(s.T().Context())
-	statusErr, ok := status.FromError(err)
-	s.Require().True(ok)
-	s.Require().NotNil(statusErr)
-	s.Require().Equal(codes.AlreadyExists, statusErr.Code())
+	apiError := apierrors.FromError(err)
+	s.Require().NotNil(apiError)
+	s.Require().Equal(domain.ErrCodeApplicationDuplicateId, apiError.ErrorCode)
 }
 
 func (s *ApplicationSuite) TestUpdate_AppNotFound() {
@@ -244,10 +238,9 @@ func (s *ApplicationSuite) TestUpdate_AppNotFound() {
 	err := s.api.Invoke("system/application/update_application").
 		JsonRequestBody(apiReq).
 		Do(s.T().Context())
-	statusErr, ok := status.FromError(err)
-	s.Require().True(ok)
-	s.Require().NotNil(statusErr)
-	s.Require().Equal(codes.NotFound, statusErr.Code())
+	apiError := apierrors.FromError(err)
+	s.Require().NotNil(apiError)
+	s.Require().Equal(domain.ErrCodeApplicationNotFound, apiError.ErrorCode)
 }
 
 func (s *ApplicationSuite) createAppGroup() *entity.AppGroup {

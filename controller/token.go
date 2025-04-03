@@ -2,12 +2,13 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"isp-system-service/domain"
 
 	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/grpc/apierrors"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type TokenService interface {
@@ -36,7 +37,7 @@ func NewToken(service TokenService) Token {
 //	@Produce		json
 //	@Param			body	body		domain.Identity	true	"Идентификатор приложения"
 //	@Success		200		{array}		entity.Token
-//	@Failure		500		{object}	domain.GrpcError
+//	@Failure		500		{object}	apierrors.Error
 //	@Router			/token/get_tokens_by_app_id [POST]
 func (c Token) GetByAppId(ctx context.Context, req domain.Identity) ([]domain.Token, error) {
 	return c.service.GetByAppId(ctx, req.Id)
@@ -51,17 +52,32 @@ func (c Token) GetByAppId(ctx context.Context, req domain.Identity) ([]domain.To
 //	@Produce		json
 //	@Param			body	body		domain.TokenCreateRequest	true	"Объект создания токена"
 //	@Success		200		{object}	domain.ApplicationWithTokens
-//	@Failure		500		{object}	domain.GrpcError
+//	@Failure		500		{object}	apierrors.Error
 //	@Router			/token/create_token [POST]
 func (c Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*domain.ApplicationWithTokens, error) {
 	result, err := c.service.Create(ctx, req)
 	switch {
 	case errors.Is(err, domain.ErrApplicationNotFound):
-		return nil, status.Errorf(codes.NotFound, "application with id %d not found", req.AppId)
+		return nil, apierrors.New(
+			codes.NotFound,
+			domain.ErrCodeApplicationNotFound,
+			fmt.Sprintf("application with id %d not found", req.AppId),
+			err,
+		)
 	case errors.Is(err, domain.ErrAppGroupNotFound):
-		return nil, status.Errorf(codes.NotFound, "service for app_id id %d not found", req.AppId)
+		return nil, apierrors.New(
+			codes.NotFound,
+			domain.ErrCodeAppGroupNotFound,
+			fmt.Sprintf("service for app_id id %d not found", req.AppId),
+			err,
+		)
 	case errors.Is(err, domain.ErrDomainNotFound):
-		return nil, status.Errorf(codes.NotFound, "domain for app_id %d not found", req.AppId)
+		return nil, apierrors.New(
+			codes.NotFound,
+			domain.ErrCodeDomainNotFound,
+			fmt.Sprintf("domain for app_id id %d not found", req.AppId),
+			err,
+		)
 	case err != nil:
 		return nil, err
 	default:
@@ -78,7 +94,7 @@ func (c Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 //	@Produce		json
 //	@Param			body	body		domain.TokenRevokeRequest	true	"Объект отзыва токенов"
 //	@Success		200		{object}	domain.ApplicationWithTokens
-//	@Failure		500		{object}	domain.GrpcError
+//	@Failure		500		{object}	apierrors.Error
 //	@Router			/token/revoke_tokens [POST]
 func (c Token) Revoke(ctx context.Context, req domain.TokenRevokeRequest) (*domain.ApplicationWithTokens, error) {
 	return c.service.Revoke(ctx, req)
@@ -93,7 +109,7 @@ func (c Token) Revoke(ctx context.Context, req domain.TokenRevokeRequest) (*doma
 //	@Produce		json
 //	@Param			body	body		domain.Identity	true	"Идентификатор приложения"
 //	@Success		200		{object}	domain.DeleteResponse
-//	@Failure		500		{object}	domain.GrpcError
+//	@Failure		500		{object}	apierrors.Error
 //	@Router			/token/revoke_tokens_for_app [POST]
 func (c Token) RevokeForApp(ctx context.Context, req domain.Identity) (*domain.DeleteResponse, error) {
 	return c.service.RevokeByAppId(ctx, req.Id)

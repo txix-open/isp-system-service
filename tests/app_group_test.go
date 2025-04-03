@@ -11,13 +11,12 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/txix-open/isp-kit/dbx"
+	"github.com/txix-open/isp-kit/grpc/apierrors"
 	"github.com/txix-open/isp-kit/grpc/client"
 	"github.com/txix-open/isp-kit/test"
 	"github.com/txix-open/isp-kit/test/dbt"
 	"github.com/txix-open/isp-kit/test/fake"
 	"github.com/txix-open/isp-kit/test/grpct"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func TestApplicationGroupSuite(t *testing.T) {
@@ -171,10 +170,9 @@ func (s *AppGroupSuite) TestCreate_AppGroupNameNotUnique() {
 		JsonRequestBody(apiReq).
 		JsonResponseBody(&result).
 		Do(s.T().Context())
-	statusErr, ok := status.FromError(err)
-	s.Require().True(ok)
-	s.Require().NotNil(statusErr)
-	s.Require().Equal(codes.AlreadyExists, statusErr.Code())
+	apiError := apierrors.FromError(err)
+	s.Require().NotNil(apiError)
+	s.Require().Equal(domain.ErrCodeAppGroupDuplicateName, apiError.ErrorCode)
 }
 
 func (s *AppGroupSuite) TestUpdate_HappyPath() {
@@ -213,10 +211,9 @@ func (s *AppGroupSuite) TestUpdate_AppGroupNameNotUnique() {
 	err := s.api.Invoke("system/application_group/update").
 		JsonRequestBody(apiReq).
 		Do(s.T().Context())
-	statusErr, ok := status.FromError(err)
-	s.Require().True(ok)
-	s.Require().NotNil(statusErr)
-	s.Require().Equal(codes.AlreadyExists, statusErr.Code())
+	apiError := apierrors.FromError(err)
+	s.Require().NotNil(apiError)
+	s.Require().Equal(domain.ErrCodeAppGroupDuplicateName, apiError.ErrorCode)
 }
 
 func (s *AppGroupSuite) TestUpdate_AppGroupNotFound() {
@@ -228,10 +225,9 @@ func (s *AppGroupSuite) TestUpdate_AppGroupNotFound() {
 	err := s.api.Invoke("system/application_group/update").
 		JsonRequestBody(apiReq).
 		Do(s.T().Context())
-	statusErr, ok := status.FromError(err)
-	s.Require().True(ok)
-	s.Require().NotNil(statusErr)
-	s.Require().Equal(codes.NotFound, statusErr.Code())
+	apiError := apierrors.FromError(err)
+	s.Require().NotNil(apiError)
+	s.Require().Equal(domain.ErrCodeAppGroupNotFound, apiError.ErrorCode)
 }
 
 func (s *AppGroupSuite) TestDeleteList() {
