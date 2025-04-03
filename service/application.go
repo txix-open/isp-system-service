@@ -249,15 +249,7 @@ func (s Application) GetAll(ctx context.Context) ([]domain.Application, error) {
 }
 
 func (s Application) Create(ctx context.Context, req domain.CreateApplicationRequest) (*domain.ApplicationWithTokens, error) {
-	appId := req.Id
-	var err error
-	if appId == 0 {
-		appId, err = s.appRepo.NextApplicationId(ctx)
-		if err != nil {
-			return nil, errors.WithMessage(err, "next application id")
-		}
-	}
-	app, err := s.appRepo.CreateApplication(ctx, appId, req.Name, req.Description, req.ApplicationGroupId, req.Type)
+	app, err := s.appRepo.CreateApplication(ctx, req.Id, req.Name, req.Description, req.ApplicationGroupId, req.Type)
 	if err != nil {
 		return nil, errors.WithMessage(err, "create application")
 	}

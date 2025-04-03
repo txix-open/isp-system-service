@@ -97,40 +97,6 @@ func (s *ApplicationSuite) TestCreate_HappyPath() {
 	s.Require().Empty(result.Tokens)
 }
 
-func (s *ApplicationSuite) TestCreate_WithEmptyAppId_HappyPath() {
-	nextAppId, err := s.appRepo.NextApplicationId(s.T().Context())
-	s.Require().NoError(err)
-
-	result := domain.ApplicationWithTokens{}
-	apiReq := fake.It[domain.CreateApplicationRequest]()
-	apiReq.Type = domain.ApplicationMobileType
-	appGroup := s.createAppGroup()
-	apiReq.ApplicationGroupId = appGroup.Id
-	apiReq.Id = 0
-
-	err = s.api.Invoke("system/application/create_application").
-		JsonRequestBody(apiReq).
-		JsonResponseBody(&result).
-		Do(s.T().Context())
-	s.Require().NoError(err)
-
-	s.Require().NotEmpty(result.App.CreatedAt)
-	result.App.CreatedAt = time.Time{}
-
-	s.Require().NotEmpty(result.App.UpdatedAt)
-	result.App.UpdatedAt = time.Time{}
-
-	expectedApp := domain.Application{
-		Id:          nextAppId,
-		Name:        apiReq.Name,
-		Description: apiReq.Description,
-		Type:        apiReq.Type,
-		ServiceId:   apiReq.ApplicationGroupId,
-	}
-	s.Require().Equal(expectedApp, result.App)
-	s.Require().Empty(result.Tokens)
-}
-
 func (s *ApplicationSuite) TestCreate_AppGroupNotFound() {
 	apiReq := fake.It[domain.CreateApplicationRequest]()
 	apiReq.Type = domain.ApplicationSystemType

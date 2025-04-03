@@ -41,7 +41,7 @@ type ApplicationSimple struct {
 }
 
 type CreateApplicationRequest struct {
-	Id                 int
+	Id                 int    `validate:"required"`
 	Name               string `validate:"required"`
 	Description        string
 	ApplicationGroupId int    `validate:"required"`
