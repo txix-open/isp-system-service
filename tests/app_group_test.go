@@ -64,7 +64,45 @@ func (s *AppGroupSuite) TestGetByIdList() {
 		appGroups = append(appGroups, domain.AppGroup{
 			Id:          appGroup.Id,
 			Name:        appGroup.Name,
-			Description: *appGroup.Description,
+			Description: appGroup.Description.String,
+			CreatedAt:   time.Time{},
+			UpdatedAt:   time.Time{},
+		})
+		ids = append(ids, appGroup.Id)
+	}
+	result := []domain.AppGroup{}
+	apiReq := domain.IdListRequest{IdList: ids}
+	err := s.api.Invoke("system/application_group/get_by_id_list").
+		JsonRequestBody(apiReq).
+		JsonResponseBody(&result).
+		Do(s.T().Context())
+	s.Require().NoError(err)
+	for i := range result {
+		s.Require().NotEmpty(result[i].CreatedAt)
+		result[i].CreatedAt = time.Time{}
+
+		s.Require().NotEmpty(result[i].UpdatedAt)
+		result[i].UpdatedAt = time.Time{}
+	}
+	s.Require().ElementsMatch(appGroups, result)
+}
+
+func (s *AppGroupSuite) TestGetByIdList_EmptyDescription() {
+	toGenerate := 10
+	appGroups := make([]domain.AppGroup, 0, toGenerate)
+	ids := make([]int, 0, toGenerate)
+	for range 10 {
+		appGroup, err := s.appGroupRepo.CreateAppGroup(
+			s.T().Context(),
+			fake.It[string](),
+			"",
+			1,
+		)
+		s.Require().NoError(err)
+		appGroups = append(appGroups, domain.AppGroup{
+			Id:          appGroup.Id,
+			Name:        appGroup.Name,
+			Description: "",
 			CreatedAt:   time.Time{},
 			UpdatedAt:   time.Time{},
 		})
@@ -118,7 +156,7 @@ func (s *AppGroupSuite) TestCreate_HappyPath() {
 	appGroup, err := s.appGroupRepo.GetAppGroupById(s.T().Context(), result.Id)
 	s.Require().NoError(err)
 	s.Require().Equal(apiReq.Name, appGroup.Name)
-	s.Require().Equal(apiReq.Description, *appGroup.Description)
+	s.Require().Equal(apiReq.Description, appGroup.Description.String)
 }
 
 func (s *AppGroupSuite) TestCreate_AppGroupNameNotUnique() {
@@ -160,7 +198,7 @@ func (s *AppGroupSuite) TestUpdate_HappyPath() {
 	appGroup, err := s.appGroupRepo.GetAppGroupById(s.T().Context(), apiReq.Id)
 	s.Require().NoError(err)
 	s.Require().Equal(apiReq.Name, appGroup.Name)
-	s.Require().Equal(apiReq.Description, *appGroup.Description)
+	s.Require().Equal(apiReq.Description, appGroup.Description.String)
 }
 
 func (s *AppGroupSuite) TestUpdate_AppGroupNameNotUnique() {

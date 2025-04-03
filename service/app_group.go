@@ -62,7 +62,7 @@ func (s AppGroup) convertAppGroup(appGroup entity.AppGroup) domain.AppGroup {
 	return domain.AppGroup{
 		Id:          appGroup.Id,
 		Name:        appGroup.Name,
-		Description: *appGroup.Description,
+		Description: appGroup.Description.String,
 		CreatedAt:   appGroup.CreatedAt,
 		UpdatedAt:   appGroup.UpdatedAt,
 	}

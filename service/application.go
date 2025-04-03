@@ -110,14 +110,10 @@ func (s Application) SystemTree(ctx context.Context, systemId int) ([]*domain.Do
 	resultServiceByServiceId := make(map[int]*domain.ServiceWithApps, len(serviceEntityList))
 	for i, serviceEntity := range serviceEntityList {
 		serviceIdList[i] = serviceEntity.Id
-		description := ""
-		if serviceEntity.Description != nil {
-			description = *serviceEntity.Description
-		}
 		resultService := &domain.ServiceWithApps{
 			Id:          serviceEntity.Id,
 			Name:        serviceEntity.Name,
-			Description: description,
+			Description: serviceEntity.Description.String,
 			Apps:        make([]*domain.ApplicationSimple, 0),
 		}
 		r := resultByDomainId[serviceEntity.DomainId]
@@ -132,15 +128,11 @@ func (s Application) SystemTree(ctx context.Context, systemId int) ([]*domain.Do
 
 	for _, applicationEntity := range applicationEntityList {
 		resultService := resultServiceByServiceId[applicationEntity.ApplicationGroupId]
-		description := ""
-		if applicationEntity.Description != nil {
-			description = *applicationEntity.Description
-		}
 		resultService.Apps = append(resultService.Apps, &domain.ApplicationSimple{
 			Id:          applicationEntity.Id,
 			Name:        applicationEntity.Name,
 			Type:        applicationEntity.Type,
-			Description: description,
+			Description: applicationEntity.Description.String,
 			Tokens:      make([]domain.Token, 0),
 		})
 	}
@@ -291,15 +283,10 @@ func (s Application) Update(ctx context.Context, req domain.UpdateApplicationReq
 }
 
 func (s Application) convertApplication(req entity.Application) domain.Application {
-	desc := ""
-	if req.Description != nil {
-		desc = *req.Description
-	}
-
 	return domain.Application{
 		Id:          req.Id,
 		Name:        req.Name,
-		Description: desc,
+		Description: req.Description.String,
 		ServiceId:   req.ApplicationGroupId,
 		Type:        req.Type,
 		CreatedAt:   req.CreatedAt,

@@ -217,11 +217,10 @@ func (s *ApplicationSuite) TestUpdate_HappyPath() {
 	expectedDbApp := entity.Application{
 		Id:                 apiReq.Id,
 		Name:               apiReq.Name,
+		Description:        app.Description,
 		Type:               inserted[0].Type,
 		ApplicationGroupId: inserted[0].ServiceId,
 	}
-	s.Require().Equal(apiReq.Description, *app.Description)
-	app.Description = nil
 
 	s.Require().NotEmpty(app.CreatedAt)
 	app.CreatedAt = time.Time{}
@@ -302,7 +301,7 @@ func (s *ApplicationSuite) insertApps(toInsert []domain.Application) []domain.Ap
 		toExpect = append(toExpect, domain.Application{
 			Id:          createdApp.Id,
 			Name:        createdApp.Name,
-			Description: *createdApp.Description,
+			Description: createdApp.Description.String,
 			ServiceId:   createdApp.ApplicationGroupId,
 			Type:        createdApp.Type,
 			CreatedAt:   time.Time{},

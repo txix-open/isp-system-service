@@ -102,14 +102,10 @@ func (s Service) Delete(ctx context.Context, idList []int) (int, error) {
 }
 
 func (s Service) convertService(req entity.AppGroup) domain.Service {
-	desc := ""
-	if req.Description != nil {
-		desc = *req.Description
-	}
 	result := domain.Service{
 		Id:          req.Id,
 		Name:        req.Name,
-		Description: desc,
+		Description: req.Description.String,
 		DomainId:    req.DomainId,
 		CreatedAt:   req.CreatedAt,
 		UpdatedAt:   req.UpdatedAt,
