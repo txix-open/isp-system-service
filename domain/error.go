@@ -4,6 +4,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	ErrCodeInvalidRequest           = 600
+	ErrCodeAppGroupNotFound         = 601
+	ErrCodeApplicationNotFound      = 602
+	ErrCodeApplicationDuplicateName = 603
+	ErrCodeApplicationDuplicateId   = 604
+)
+
 var (
 	ErrDomainNotFound      = errors.New("domain not found")
 	ErrDomainDuplicateName = errors.New("domain name already exist")

@@ -1,7 +1,7 @@
 package repository
 
 const (
-	applicationPkConstrainName          = "application_pkey"
+	applicationPkConstraintName         = "application_pkey"
 	applicationUniqueNameConstraintName = "uq_name_application_group_id"
 	applicationFkAppGroupConstraintName = "fk_application_group_id"
 

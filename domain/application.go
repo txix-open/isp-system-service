@@ -49,7 +49,8 @@ type CreateApplicationRequest struct {
 }
 
 type UpdateApplicationRequest struct {
-	Id          int    `validate:"required"`
+	OldId       int    `validate:"required"`
+	NewId       int    `validate:"required"`
 	Name        string `validate:"required"`
 	Description string
 }

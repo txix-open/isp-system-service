@@ -149,7 +149,8 @@ func (s *ApplicationSuite) TestCreate_ApplicationIdNotUnique() {
 func (s *ApplicationSuite) TestUpdate_HappyPath() {
 	inserted := s.insertApps(fake.It[[]domain.Application](fake.MinSliceSize(1), fake.MaxSliceSize(1)))
 	apiReq := domain.UpdateApplicationRequest{
-		Id:          inserted[0].Id,
+		OldId:       inserted[0].Id,
+		NewId:       fake.It[int](),
 		Name:        fake.It[string](),
 		Description: fake.It[string](),
 	}
@@ -168,7 +169,7 @@ func (s *ApplicationSuite) TestUpdate_HappyPath() {
 	result.App.UpdatedAt = time.Time{}
 
 	expectedApp := domain.Application{
-		Id:          apiReq.Id,
+		Id:          apiReq.NewId,
 		Name:        apiReq.Name,
 		Description: apiReq.Description,
 		Type:        inserted[0].Type,
@@ -177,11 +178,11 @@ func (s *ApplicationSuite) TestUpdate_HappyPath() {
 	s.Require().Equal(expectedApp, result.App)
 	s.Require().Empty(result.Tokens)
 
-	app, err := s.appRepo.GetApplicationById(s.T().Context(), apiReq.Id)
+	app, err := s.appRepo.GetApplicationById(s.T().Context(), apiReq.NewId)
 	s.Require().NoError(err)
 
 	expectedDbApp := entity.Application{
-		Id:                 apiReq.Id,
+		Id:                 apiReq.NewId,
 		Name:               apiReq.Name,
 		Description:        app.Description,
 		Type:               inserted[0].Type,
@@ -199,8 +200,27 @@ func (s *ApplicationSuite) TestUpdate_HappyPath() {
 func (s *ApplicationSuite) TestUpdate_ApplicationNameNotUniqueInAppGroup() {
 	inserted := s.insertApps(fake.It[[]domain.Application](fake.MinSliceSize(2), fake.MaxSliceSize(2)))
 	apiReq := domain.UpdateApplicationRequest{
-		Id:          inserted[0].Id,
+		NewId:       inserted[0].Id,
+		OldId:       inserted[0].Id,
 		Name:        inserted[1].Name,
+		Description: fake.It[string](),
+	}
+
+	err := s.api.Invoke("system/application/update_application").
+		JsonRequestBody(apiReq).
+		Do(s.T().Context())
+	statusErr, ok := status.FromError(err)
+	s.Require().True(ok)
+	s.Require().NotNil(statusErr)
+	s.Require().Equal(codes.AlreadyExists, statusErr.Code())
+}
+
+func (s *ApplicationSuite) TestUpdate_AppIdNotUnique() {
+	inserted := s.insertApps(fake.It[[]domain.Application](fake.MinSliceSize(2), fake.MaxSliceSize(2)))
+	apiReq := domain.UpdateApplicationRequest{
+		OldId:       inserted[0].Id,
+		NewId:       inserted[1].Id,
+		Name:        fake.It[string](),
 		Description: fake.It[string](),
 	}
 
@@ -215,7 +235,8 @@ func (s *ApplicationSuite) TestUpdate_ApplicationNameNotUniqueInAppGroup() {
 
 func (s *ApplicationSuite) TestUpdate_AppNotFound() {
 	apiReq := domain.UpdateApplicationRequest{
-		Id:          fake.It[int](),
+		OldId:       fake.It[int](),
+		NewId:       fake.It[int](),
 		Name:        fake.It[string](),
 		Description: fake.It[string](),
 	}

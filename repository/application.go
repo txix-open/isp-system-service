@@ -131,17 +131,33 @@ func (r Application) UpdateApplication(
 `
 	result := entity.Application{}
 	err := r.db.SelectRow(ctx, &result, q, id, name, description)
-	var pgErr *pgconn.PgError
-	switch {
-	case errors.As(err, &pgErr) && pgErr.ConstraintName == applicationUniqueNameConstraintName:
-		return nil, domain.ErrApplicationDuplicateName
-	case errors.Is(err, sql.ErrNoRows):
-		return nil, domain.ErrApplicationNotFound
-	case err != nil:
-		return nil, errors.WithMessagef(err, "exec query %s", q)
-	default:
-		return &result, nil
+	if err != nil {
+		return nil, r.handleUpdateError(err, q)
 	}
+	return &result, nil
+}
+
+func (r Application) UpdateApplicationWithNewId(
+	ctx context.Context,
+	oldId int,
+	newId int,
+	name string,
+	description string,
+) (*entity.Application, error) {
+	q := `
+	UPDATE application 
+	SET id = $2,
+		name = $3,
+		description = $4
+	WHERE id = $1
+	RETURNING id, name, description, application_group_id, type, created_at, updated_at
+`
+	result := entity.Application{}
+	err := r.db.SelectRow(ctx, &result, q, oldId, newId, name, description)
+	if err != nil {
+		return nil, r.handleUpdateError(err, q)
+	}
+	return &result, nil
 }
 
 func (r Application) DeleteApplicationByIdList(ctx context.Context, idList []int) (int, error) {
@@ -201,7 +217,7 @@ func (r Application) handleCreateError(err error, q string) error {
 		return errors.WithMessagef(err, "exec query %s", q)
 	}
 	switch pgErr.ConstraintName {
-	case applicationPkConstrainName:
+	case applicationPkConstraintName:
 		return domain.ErrApplicationDuplicateId
 	case applicationUniqueNameConstraintName:
 		return domain.ErrApplicationDuplicateName
@@ -209,4 +225,24 @@ func (r Application) handleCreateError(err error, q string) error {
 		return domain.ErrAppGroupNotFound
 	}
 	return errors.WithMessagef(err, "exec query %s", q)
+}
+
+func (r Application) handleUpdateError(err error, q string) error {
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ErrApplicationNotFound
+	}
+
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return errors.WithMessagef(err, "exec query %s", q)
+	}
+
+	switch pgErr.ConstraintName {
+	case applicationPkConstraintName:
+		return domain.ErrApplicationDuplicateId
+	case applicationUniqueNameConstraintName:
+		return domain.ErrApplicationDuplicateName
+	default:
+		return errors.WithMessagef(err, "exec query %s", q)
+	}
 }

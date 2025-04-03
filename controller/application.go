@@ -223,18 +223,35 @@ func (c Application) Create(ctx context.Context, req domain.CreateApplicationReq
 //	@Produce		json
 //	@Param			body	body		domain.UpdateApplicationRequest	true	"Объект приложения"
 //	@Success		200		{object}	domain.ApplicationWithTokens
-//	@Failure		400		{object}	domain.GrpcError
-//	@Failure		404		{object}	domain.GrpcError
-//	@Failure		409		{object}	domain.GrpcError
-//	@Failure		500		{object}	domain.GrpcError
+//	@Failure		400		{object}	apierrors.Error
+//	@Failure		404		{object}	apierrors.Error
+//	@Failure		409		{object}	apierrors.Error
+//	@Failure		500		{object}	apierrors.Error
 //	@Router			/application/update_application [POST]
 func (c Application) Update(ctx context.Context, req domain.UpdateApplicationRequest) (*domain.ApplicationWithTokens, error) {
 	result, err := c.service.Update(ctx, req)
 	switch {
-	case errors.Is(err, domain.ErrApplicationDuplicateName):
-		return nil, status.Errorf(codes.AlreadyExists, "application with name %s already exists", req.Name)
 	case errors.Is(err, domain.ErrApplicationNotFound):
-		return nil, status.Errorf(codes.NotFound, "application with id %d not found", req.Id)
+		return nil, apierrors.New(
+			codes.NotFound,
+			domain.ErrCodeApplicationNotFound,
+			fmt.Sprintf("application with id %d not found", req.OldId),
+			err,
+		)
+	case errors.Is(err, domain.ErrApplicationDuplicateName):
+		return nil, apierrors.New(
+			codes.AlreadyExists,
+			domain.ErrCodeApplicationDuplicateName,
+			fmt.Sprintf("application with name %s already exists", req.Name),
+			err,
+		)
+	case errors.Is(err, domain.ErrApplicationDuplicateId):
+		return nil, apierrors.New(
+			codes.AlreadyExists,
+			domain.ErrCodeApplicationDuplicateId,
+			fmt.Sprintf("application with id %d already exists", req.NewId),
+			err,
+		)
 	default:
 		return result, err
 	}
