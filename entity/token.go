@@ -12,10 +12,10 @@ type Token struct {
 }
 
 type AuthData struct {
-	SystemId   int
-	DomainId   int
-	ServiceId  int
-	AppId      int
-	ExpireTime int
-	CreatedAt  time.Time
+	SystemId           int
+	DomainId           int
+	ApplicationGroupId int
+	AppId              int
+	ExpireTime         int
+	CreatedAt          time.Time
 }

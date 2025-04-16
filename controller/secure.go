@@ -23,15 +23,16 @@ func NewSecure(service SecureService) Secure {
 }
 
 // Authenticate godoc
-// @Tags secure
-// @Summary Метод аутентификации токена
-// @Description Проверяет наличие токена в системе,
-// @Accept  json
-// @Produce  json
-// @Param body body domain.AuthenticateRequest true "Тело запроса"
-// @Success 200 {array} domain.AuthenticateResponse
-// @Failure 500 {object} domain.GrpcError
-// @Router /secure/authenticate [POST]
+//
+//	@Tags			secure
+//	@Summary		Метод аутентификации токена
+//	@Description	Проверяет наличие токена в системе,
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		domain.AuthenticateRequest	true	"Тело запроса"
+//	@Success		200		{array}		domain.AuthenticateResponse
+//	@Failure		500		{object}	apierrors.Error
+//	@Router			/secure/authenticate [POST]
 func (c Secure) Authenticate(ctx context.Context, req domain.AuthenticateRequest) (*domain.AuthenticateResponse, error) {
 	result, err := c.service.Authenticate(ctx, req.Token)
 	switch {
@@ -56,15 +57,16 @@ func (c Secure) Authenticate(ctx context.Context, req domain.AuthenticateRequest
 }
 
 // Authorize godoc
-// @Tags secure
-// @Summary Метод авторизации приложения
-// @Description Проверяет доступ приложения к запрашиваемому ендпоинту
-// @Accept  json
-// @Produce  json
-// @Param body body domain.AuthorizeRequest true "Тело запрос"
-// @Success 200 {array} domain.AuthorizeResponse
-// @Failure 500 {object} domain.GrpcError
-// @Router /secure/authorize [POST]
+//
+//	@Tags			secure
+//	@Summary		Метод авторизации приложения
+//	@Description	Проверяет доступ приложения к запрашиваемому ендпоинту
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		domain.AuthorizeRequest	true	"Тело запрос"
+//	@Success		200		{array}		domain.AuthorizeResponse
+//	@Failure		500		{object}	apierrors.Error
+//	@Router			/secure/authorize [POST]
 func (c Secure) Authorize(ctx context.Context, req domain.AuthorizeRequest) (*domain.AuthorizeResponse, error) {
 	result, err := c.service.Authorize(ctx, req.ApplicationId, req.Endpoint)
 	switch {

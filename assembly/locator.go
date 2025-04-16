@@ -1,10 +1,6 @@
 package assembly
 
 import (
-	"github.com/txix-open/isp-kit/db"
-	"github.com/txix-open/isp-kit/grpc"
-	"github.com/txix-open/isp-kit/grpc/endpoint"
-	"github.com/txix-open/isp-kit/log"
 	"isp-system-service/conf"
 	"isp-system-service/controller"
 	"isp-system-service/repository"
@@ -13,6 +9,12 @@ import (
 	"isp-system-service/service/baseline"
 	"isp-system-service/service/secure"
 	"isp-system-service/transaction"
+
+	"github.com/txix-open/isp-kit/db"
+	"github.com/txix-open/isp-kit/grpc"
+	"github.com/txix-open/isp-kit/grpc/endpoint"
+	"github.com/txix-open/isp-kit/grpc/endpoint/grpclog"
+	"github.com/txix-open/isp-kit/log"
 )
 
 type DB interface {
@@ -42,18 +44,18 @@ func (l Locator) Config(cfg conf.Remote) Config {
 	accessListRep := repository.NewAccessList(l.db)
 	applicationRep := repository.NewApplication(l.db)
 	domainRep := repository.NewDomain(l.db)
-	serviceRep := repository.NewService(l.db)
+	appGroupRep := repository.NewAppGroup(l.db)
 	tokenRep := repository.NewToken(l.db)
 
 	secureService := secure.NewService(tokenRep, accessListRep)
 	accessListService := service.NewAccessList(txManager, accessListRep, applicationRep)
-	applicationService := service.NewApplication(txManager, applicationRep, domainRep, serviceRep, tokenRep)
+	applicationService := service.NewApplication(txManager, applicationRep, domainRep, appGroupRep, tokenRep)
 	domainService := service.NewDomain(domainRep)
-	serviceService := service.NewService(domainRep, serviceRep)
+	serviceService := service.NewService(domainRep, appGroupRep)
 
 	jwtService := service.NewTokenSource()
 	tokenService := service.NewToken(jwtService, applicationService, txManager,
-		applicationRep, domainRep, serviceRep, tokenRep,
+		applicationRep, domainRep, appGroupRep, tokenRep,
 	)
 
 	secureController := controller.NewSecure(secureService)
@@ -63,6 +65,8 @@ func (l Locator) Config(cfg conf.Remote) Config {
 	serviceController := controller.NewService(serviceService)
 	tokenController := controller.NewToken(tokenService)
 
+	appGroupService := service.NewAppGroup(appGroupRep)
+	appGroupController := controller.NewAppGroup(appGroupService)
 	c := routes.Controllers{
 		Secure:      secureController,
 		AccessList:  accessListController,
@@ -70,8 +74,9 @@ func (l Locator) Config(cfg conf.Remote) Config {
 		Service:     serviceController,
 		Application: applicationController,
 		Token:       tokenController,
+		AppGroup:    appGroupController,
 	}
-	mapper := endpoint.DefaultWrapper(l.logger, endpoint.Log(l.logger, true))
+	mapper := endpoint.DefaultWrapper(l.logger, grpclog.Log(l.logger, true))
 	server := routes.Handler(mapper, c)
 
 	baselineService := baseline.NewService(cfg.Baseline, txManager, l.logger)

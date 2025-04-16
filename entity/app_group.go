@@ -1,13 +1,14 @@
 package entity
 
 import (
+	"database/sql"
 	"time"
 )
 
-type Service struct {
+type AppGroup struct {
 	Id          int
 	Name        string
-	Description *string
+	Description sql.NullString
 	DomainId    int
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

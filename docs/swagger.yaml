@@ -1,5 +1,15 @@
 basePath: /api/system
 definitions:
+  apierrors.Error:
+    properties:
+      details:
+        additionalProperties: true
+        type: object
+      errorCode:
+        type: integer
+      errorMessage:
+        type: string
+    type: object
   domain.AccessListSetListRequest:
     properties:
       appId:
@@ -29,6 +39,19 @@ definitions:
     properties:
       count:
         type: integer
+    type: object
+  domain.AppGroup:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
     type: object
   domain.Application:
     properties:
@@ -133,6 +156,36 @@ definitions:
       authorized:
         type: boolean
     type: object
+  domain.CreateAppGroupRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  domain.CreateApplicationRequest:
+    properties:
+      applicationGroupId:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      type:
+        enum:
+        - SYSTEM
+        - MOBILE
+        type: string
+    required:
+    - applicationGroupId
+    - id
+    - name
+    - type
+    type: object
   domain.DeleteResponse:
     properties:
       deleted:
@@ -177,15 +230,15 @@ definitions:
           $ref: '#/definitions/domain.ServiceWithApps'
         type: array
     type: object
-  domain.GrpcError:
+  domain.IdListRequest:
     properties:
-      details:
-        items: {}
+      idList:
+        items:
+          type: integer
+        minItems: 1
         type: array
-      errorCode:
-        type: string
-      errorMessage:
-        type: string
+    required:
+    - idList
     type: object
   domain.Identity:
     properties:
@@ -275,6 +328,33 @@ definitions:
     required:
     - appId
     type: object
+  domain.UpdateAppGroupRequest:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    required:
+    - id
+    - name
+    type: object
+  domain.UpdateApplicationRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      newId:
+        type: integer
+      oldId:
+        type: integer
+    required:
+    - name
+    - newId
+    - oldId
+    type: object
   entity.Token:
     properties:
       appId:
@@ -319,11 +399,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Получить список доступности методов для приложения
       tags:
       - accessList
@@ -351,11 +431,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Настроить доступность списка методов для приложения
       tags:
       - accessList
@@ -380,14 +460,49 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Настроить доступность метода для приложения
       tags:
       - accessList
+  /application/create_application:
+    post:
+      consumes:
+      - application/json
+      description: Если приложение с такими идентификатором или связкой `applicationGroupId`-`name`
+        существует, то возвращает ошибку
+      parameters:
+      - description: Объект приложения
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateApplicationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.ApplicationWithTokens'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Создать приложение
+      tags:
+      - application
   /application/create_update_application:
     post:
       consumes:
@@ -411,19 +526,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Создать/обновить приложение
       tags:
       - application
@@ -451,12 +566,33 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Удалить приложения
+      tags:
+      - application
+  /application/get_all:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает список приложений
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Application'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Получить список приложений
       tags:
       - application
   /application/get_application_by_id:
@@ -481,15 +617,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Получить приложение по идентификатору
       tags:
       - application
@@ -518,7 +654,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Получить список приложений
       tags:
       - application
@@ -546,7 +682,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Получить список приложений по идентификатору сервиса
       tags:
       - application
@@ -567,10 +703,225 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Метод получения системного дерева
       tags:
       - application
+  /application/next_id:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает следующий идентификатор приложения
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Получить следующий идентификатор приложения
+      tags:
+      - application
+  /application/update_application:
+    post:
+      consumes:
+      - application/json
+      description: Если приложение с связкой `applicationGroupId`-`name` существует
+        или приложение не найдено, то возвращает ошибку
+      parameters:
+      - description: Объект приложения
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateApplicationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.ApplicationWithTokens'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Обновить приложение
+      tags:
+      - application
+  /application_group/create:
+    post:
+      consumes:
+      - application/json
+      description: Если группа приложений таким именем существует, возвращает ошибку
+      parameters:
+      - description: Объект группы приложений
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateAppGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.AppGroup'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Создать группу приложений
+      tags:
+      - application_group
+  /application_group/delete_list:
+    post:
+      consumes:
+      - application/json
+      description: Удаляет группы приложений по списку их идентификаторов, возвращает
+        количество удаленных групп приложений
+      parameters:
+      - description: список идентификаторов групп приложений
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.IdListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.DeleteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Удалить группы приложений
+      tags:
+      - application_group
+  /application_group/get_all:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает все группы приложений
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.AppGroup'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Получить группы приложений
+      tags:
+      - application_group
+  /application_group/get_by_id_list:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает группы приложений с указанными идентификаторами
+      parameters:
+      - description: список идентификаторов групп приложений
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.IdListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.AppGroup'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Получить группы приложений по списку идентификаторов
+      tags:
+      - application_group
+  /application_group/update:
+    post:
+      consumes:
+      - application/json
+      description: Если группа приложений таким именем существует или группы приложений
+        с указанным id не существует, возвращает ошибку
+      parameters:
+      - description: Объект группы приложений
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateAppGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.AppGroup'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Обновить группу приложений
+      tags:
+      - application_group
   /domain/create_update_domain:
     post:
       consumes:
@@ -594,7 +945,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Создать/обновить домен
       tags:
       - domain
@@ -622,11 +973,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Удаление доменов
       tags:
       - domain
@@ -652,11 +1003,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Получить домен по идентификатору
       tags:
       - domain
@@ -683,7 +1034,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Получить домены по идентификатору системы
       tags:
       - domain
@@ -711,7 +1062,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Метод аутентификации токена
       tags:
       - secure
@@ -739,7 +1090,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Метод авторизации приложения
       tags:
       - secure
@@ -766,19 +1117,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Создать/обновить сервис
       tags:
       - service
@@ -807,11 +1158,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Удалить сервисы
       tags:
       - service
@@ -840,7 +1191,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Получить список сервисов
       tags:
       - service
@@ -866,11 +1217,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Получить сервис по идентификатору
       tags:
       - service
@@ -898,7 +1249,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Получить список сервисов по идентификатору домена
       tags:
       - service
@@ -924,7 +1275,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Создать токен
       tags:
       - token
@@ -952,7 +1303,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Получить токены по идентификатору приложения
       tags:
       - token
@@ -978,7 +1329,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Отозвать токены
       tags:
       - token
@@ -1005,7 +1356,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/domain.GrpcError'
+            $ref: '#/definitions/apierrors.Error'
       summary: Отозвать токены для приложения
       tags:
       - token

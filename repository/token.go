@@ -46,14 +46,14 @@ func (r Token) GetTokenById(ctx context.Context, token string) (*entity.Token, e
 `
 	result := entity.Token{}
 	err := r.db.SelectRow(ctx, &result, q, token)
-	if errors.Is(err, sql.ErrNoRows) {
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
 		return nil, nil //nolint:nilnil
+	case err != nil:
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-	if err != nil {
-		return nil, errors.WithMessage(err, "select row db")
-	}
-
-	return &result, nil
 }
 
 func (r Token) GetTokenByAppIdList(ctx context.Context, appIdList []int) ([]entity.Token, error) {
@@ -70,7 +70,7 @@ func (r Token) GetTokenByAppIdList(ctx context.Context, appIdList []int) ([]enti
 	result := make([]entity.Token, 0)
 	err = r.db.Select(ctx, &result, q, args...)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "select db")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	return result, nil
@@ -87,7 +87,7 @@ func (r Token) DeleteToken(ctx context.Context, tokens []string) (int, error) {
 
 	result, err := r.db.Exec(ctx, q, args...)
 	if err != nil {
-		return 0, errors.WithMessagef(err, "exec db")
+		return 0, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -100,24 +100,24 @@ func (r Token) DeleteToken(ctx context.Context, tokens []string) (int, error) {
 
 func (r Token) AuthDataByToken(ctx context.Context, token string) (*entity.AuthData, error) {
 	q := `
-SELECT system_id, domain_id, service_id, app_id, token.expire_time, token.created_at
+SELECT system_id, domain_id, application_group_id, app_id, token.expire_time, token.created_at
 FROM token
          LEFT JOIN application
                    ON token.app_id = application.id
-         LEFT JOIN service
-                   ON application.service_id = service.id
+         LEFT JOIN application_group
+                   ON application.application_group_id = application_group.id
          LEFT JOIN domain
-                   ON service.domain_id = domain.id
+                   ON application_group.domain_id = domain.id
 WHERE token = $1
 `
 	result := entity.AuthData{}
 	err := r.db.SelectRow(ctx, &result, q, token)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrTokenNotFound
-		}
-		return nil, errors.WithMessage(err, "select row db")
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, domain.ErrTokenNotFound
+	case err != nil:
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-
-	return &result, nil
 }

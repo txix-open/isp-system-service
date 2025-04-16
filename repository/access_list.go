@@ -30,14 +30,14 @@ func (r AccessList) GetAccessListByAppIdAndMethod(ctx context.Context, appId int
 `
 	result := entity.AccessList{}
 	err := r.db.SelectRow(ctx, &result, q, appId, method)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrAccessListNotFound
-		}
-		return nil, errors.WithMessagef(err, "select db")
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, domain.ErrAccessListNotFound
+	case err != nil:
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-
-	return &result, nil
 }
 
 func (r AccessList) GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error) {
@@ -68,7 +68,7 @@ func (r AccessList) GetAccessListByAppIdList(ctx context.Context, appIdList []in
 	result := make([]entity.AccessList, 0)
 	err = r.db.Select(ctx, &result, q, args...)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "select db")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	return result, nil
@@ -88,7 +88,7 @@ func (r AccessList) InsertArrayAccessList(ctx context.Context, entity []entity.A
 
 	_, err = r.db.Exec(ctx, q, args...)
 	if err != nil {
-		return errors.WithMessage(err, "exec db")
+		return errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	return nil
@@ -105,7 +105,7 @@ func (r AccessList) UpsertAccessList(ctx context.Context, e entity.AccessList) (
 `
 	result, err := r.db.Exec(ctx, q, e.AppId, e.Method, e.Value)
 	if err != nil {
-		return 0, errors.WithMessage(err, "exec db")
+		return 0, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -146,7 +146,7 @@ func (r AccessList) DeleteAccessListByAppId(ctx context.Context, appId int) ([]e
 	result := make([]entity.AccessList, 0)
 	err := r.db.Select(ctx, &result, q, appId)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "select db")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	return result, nil

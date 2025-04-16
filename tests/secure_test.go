@@ -2,9 +2,15 @@ package tests_test
 
 import (
 	"context"
-	"github.com/txix-open/isp-kit/dbx"
 	"testing"
 	"time"
+
+	"github.com/txix-open/isp-kit/dbx"
+
+	"isp-system-service/assembly"
+	"isp-system-service/conf"
+	"isp-system-service/domain"
+	"isp-system-service/entity"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -12,10 +18,6 @@ import (
 	"github.com/txix-open/isp-kit/test"
 	"github.com/txix-open/isp-kit/test/dbt"
 	"github.com/txix-open/isp-kit/test/grpct"
-	"isp-system-service/assembly"
-	"isp-system-service/conf"
-	"isp-system-service/domain"
-	"isp-system-service/entity"
 )
 
 func TestSecureSuite(t *testing.T) {
@@ -44,11 +46,11 @@ func (s *SecureSuite) SetupSuite() {
 	InsertDomain(s.testDb, entity.Domain{
 		Id: 3, Name: "test_domain", SystemId: 1, CreatedAt: createdTime, UpdatedAt: createdTime,
 	})
-	InsertService(s.testDb, entity.Service{
-		Id: 5, Name: "test_service", DomainId: 3, CreatedAt: createdTime, UpdatedAt: createdTime,
+	InsertAppGroup(s.testDb, entity.AppGroup{
+		Id: 5, Name: "test_application_group", DomainId: 3, CreatedAt: createdTime, UpdatedAt: createdTime,
 	})
 	InsertApplication(s.testDb, entity.Application{
-		Id: 7, Name: "test_application", ServiceId: 5, CreatedAt: createdTime, UpdatedAt: createdTime,
+		Id: 7, Name: "test_application", ApplicationGroupId: 5, CreatedAt: createdTime, UpdatedAt: createdTime,
 	})
 }
 

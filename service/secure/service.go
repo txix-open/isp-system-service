@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/pkg/errors"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
+
+	"github.com/pkg/errors"
 )
 
 type TokenRep interface {
@@ -46,7 +47,7 @@ func (s Service) Authenticate(ctx context.Context, token string) (*domain.AuthDa
 	return &domain.AuthData{
 		SystemId:      authData.SystemId,
 		DomainId:      authData.DomainId,
-		ServiceId:     authData.ServiceId,
+		ServiceId:     authData.ApplicationGroupId,
 		ApplicationId: authData.AppId,
 	}, nil
 }
