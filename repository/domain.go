@@ -30,14 +30,14 @@ func (r Domain) GetDomainById(ctx context.Context, id int) (*entity.Domain, erro
 `
 	result := entity.Domain{}
 	err := r.db.SelectRow(ctx, &result, q, id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrDomainNotFound
-		}
-		return nil, errors.WithMessage(err, "select row db")
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, domain.ErrDomainNotFound
+	case err != nil:
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-
-	return &result, nil
 }
 
 func (r Domain) GetDomainByIdList(ctx context.Context, idList []int) ([]entity.Domain, error) {
@@ -69,7 +69,7 @@ func (r Domain) GetDomainBySystemId(ctx context.Context, systemId int) ([]entity
 	result := make([]entity.Domain, 0)
 	err := r.db.Select(ctx, &result, q, systemId)
 	if err != nil {
-		return nil, errors.WithMessage(err, "select db")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	return result, nil
@@ -83,14 +83,14 @@ func (r Domain) GetDomainByNameAndSystemId(ctx context.Context, name string, sys
 `
 	result := entity.Domain{}
 	err := r.db.SelectRow(ctx, &result, q, name, systemId)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrDomainNotFound
-		}
-		return nil, errors.WithMessage(err, "select row db")
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, domain.ErrDomainNotFound
+	case err != nil:
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-
-	return &result, nil
 }
 
 func (r Domain) CreateDomain(ctx context.Context, name string, desc string, systemId int) (*entity.Domain, error) {
@@ -103,12 +103,8 @@ func (r Domain) CreateDomain(ctx context.Context, name string, desc string, syst
 	result := entity.Domain{}
 	err := r.db.SelectRow(ctx, &result, q, name, desc, systemId)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrDomainNotFound
-		}
-		return nil, errors.WithMessage(err, "select row db")
+		return nil, errors.WithMessagef(err, "exec query %s", q)
 	}
-
 	return &result, nil
 }
 
@@ -121,13 +117,14 @@ func (r Domain) UpdateDomain(ctx context.Context, id int, name string, descripti
 `
 	result := entity.Domain{}
 	err := r.db.SelectRow(ctx, &result, q, name, description, id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrDomainNotFound
-		}
-		return nil, errors.WithMessage(err, "select row db")
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, domain.ErrDomainNotFound
+	case err != nil:
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	default:
+		return &result, nil
 	}
-	return &result, nil
 }
 
 func (r Domain) DeleteDomain(ctx context.Context, idList []int) (int, error) {
@@ -141,7 +138,7 @@ func (r Domain) DeleteDomain(ctx context.Context, idList []int) (int, error) {
 
 	result, err := r.db.Exec(ctx, q, args...)
 	if err != nil {
-		return 0, errors.WithMessagef(err, "exec db")
+		return 0, errors.WithMessagef(err, "exec query %s", q)
 	}
 
 	rowsAffected, err := result.RowsAffected()

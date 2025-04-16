@@ -12,6 +12,7 @@ type Controllers struct {
 	Domain      controller.Domain
 	Service     controller.Service
 	Application controller.Application
+	AppGroup    controller.AppGroup
 	Token       controller.Token
 	Secure      controller.Secure
 }
@@ -29,14 +30,15 @@ func Handler(wrapper endpoint.Wrapper, c Controllers) *grpc.Mux {
 }
 
 func endpointDescriptors(c Controllers) []cluster.EndpointDescriptor {
-	return concatCluster([][]cluster.EndpointDescriptor{
+	return concatCluster(
 		secureCluster(c),
 		accessListCluster(c),
 		domainCluster(c),
 		serviceCluster(c),
 		applicationCluster(c),
 		tokenCluster(c),
-	})
+		applicationGroupCluster(c),
+	)
 }
 
 func secureCluster(c Controllers) []cluster.EndpointDescriptor {
@@ -99,6 +101,7 @@ func domainCluster(c Controllers) []cluster.EndpointDescriptor {
 	}
 }
 
+// deprecated
 func serviceCluster(c Controllers) []cluster.EndpointDescriptor {
 	return []cluster.EndpointDescriptor{
 		{
@@ -161,6 +164,25 @@ func applicationCluster(c Controllers) []cluster.EndpointDescriptor {
 			Inner:   true,
 			Handler: c.Application.GetSystemTree,
 		},
+		{
+			Path:    "system/application/next_id",
+			Inner:   true,
+			Handler: c.Application.NextId,
+		},
+		{
+			Path:    "system/application/get_all",
+			Inner:   true,
+			Handler: c.Application.GetAll,
+		},
+		{
+			Path:    "system/application/create_application",
+			Inner:   true,
+			Handler: c.Application.Create,
+		}, {
+			Path:    "system/application/update_application",
+			Inner:   true,
+			Handler: c.Application.Update,
+		},
 	}
 }
 
@@ -189,7 +211,33 @@ func tokenCluster(c Controllers) []cluster.EndpointDescriptor {
 	}
 }
 
-func concatCluster(clusters [][]cluster.EndpointDescriptor) []cluster.EndpointDescriptor {
+func applicationGroupCluster(c Controllers) []cluster.EndpointDescriptor {
+	return []cluster.EndpointDescriptor{
+		{
+			Path:    "system/application_group/create",
+			Inner:   true,
+			Handler: c.AppGroup.Create,
+		}, {
+			Path:    "system/application_group/update",
+			Inner:   true,
+			Handler: c.AppGroup.Update,
+		}, {
+			Path:    "system/application_group/delete_list",
+			Inner:   true,
+			Handler: c.AppGroup.DeleteList,
+		}, {
+			Path:    "system/application_group/get_by_id_list",
+			Inner:   true,
+			Handler: c.AppGroup.GetByIdList,
+		}, {
+			Path:    "system/application_group/get_all",
+			Inner:   true,
+			Handler: c.AppGroup.GetAll,
+		},
+	}
+}
+
+func concatCluster(clusters ...[]cluster.EndpointDescriptor) []cluster.EndpointDescriptor {
 	var result []cluster.EndpointDescriptor
 	for _, c := range clusters {
 		result = append(result, c...)

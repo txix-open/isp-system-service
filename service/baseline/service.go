@@ -2,16 +2,19 @@ package baseline
 
 import (
 	"context"
-	"github.com/pkg/errors"
-	"github.com/txix-open/isp-kit/log"
 	"isp-system-service/conf"
 	"isp-system-service/entity"
+
+	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/log"
 )
+
+const adminAppId = 1
 
 type Transaction interface {
 	CreateDomain(ctx context.Context, name string, desc string, systemId int) (*entity.Domain, error)
-	CreateService(ctx context.Context, name string, desc string, domainId int) (*entity.Service, error)
-	CreateApplication(ctx context.Context, name string, desc string, serviceId int, appType string) (*entity.Application, error)
+	CreateAppGroup(ctx context.Context, name string, desc string, domainId int) (*entity.AppGroup, error)
+	CreateApplication(ctx context.Context, id int, name string, desc string, appGroupId int, appType string) (*entity.Application, error)
 	UpsertAccessList(ctx context.Context, e entity.AccessList) (int, error)
 	SaveToken(ctx context.Context, token string, appId int, expireTime int) (*entity.Token, error)
 	GetTokenById(ctx context.Context, token string) (*entity.Token, error)
@@ -77,12 +80,12 @@ func (s Service) transaction(ctx context.Context, tx Transaction) error {
 		return errors.WithMessage(err, "create domain")
 	}
 
-	service, err := tx.CreateService(ctx, "rootService", "", domain.Id)
+	service, err := tx.CreateAppGroup(ctx, "rootService", "", domain.Id)
 	if err != nil {
 		return errors.WithMessage(err, "create service")
 	}
 
-	app, err := tx.CreateApplication(ctx, "admin", "", service.Id, "SYSTEM")
+	app, err := tx.CreateApplication(ctx, adminAppId, "admin", "", service.Id, "SYSTEM")
 	if err != nil {
 		return errors.WithMessage(err, "create application")
 	}

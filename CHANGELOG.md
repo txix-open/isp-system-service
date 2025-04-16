@@ -1,3 +1,6 @@
+### v5.2.0
+* Обновлены зависимости
+* Добавлены новые endpoint'ы: `/application/update_application`, `/application/create_application`, `/application_group/create`, `/application_group/update`, `/application_group/delete_list`, `/application_group/get_by_id_list`, `/application_group/get_all`
 ### v5.1.1
 * обновлены зависимости
 ### v5.1.0

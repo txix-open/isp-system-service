@@ -7,8 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type TokenSource struct {
-}
+type TokenSource struct{}
 
 func NewTokenSource() TokenSource {
 	return TokenSource{}

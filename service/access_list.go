@@ -3,62 +3,59 @@ package service
 import (
 	"context"
 
-	"github.com/pkg/errors"
 	"isp-system-service/domain"
 	"isp-system-service/entity"
+
+	"github.com/pkg/errors"
 )
 
-type IAccessListAccessListRep interface {
+type AccessListRepo interface {
 	GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error)
 }
 
-type IAccessListApplicationRep interface {
-	GetApplicationById(ctx context.Context, id int) (*entity.Application, error)
-}
-
-type IAccessListSetOneTx interface {
+type AccessListSetOneTx interface {
 	UpsertAccessList(ctx context.Context, e entity.AccessList) (int, error)
 }
 
-type IAccessListSetListTx interface {
+type AccessListSetListTx interface {
 	GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error)
 	InsertArrayAccessList(ctx context.Context, entity []entity.AccessList) error
 	DeleteAccessList(ctx context.Context, appId int, methods []string) error
 	DeleteAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error)
 }
 
-type IAccessListTxRunner interface {
-	AccessListSetOneTx(ctx context.Context, tx func(ctx context.Context, tx IAccessListSetOneTx) error) error
-	AccessListSetListTx(ctx context.Context, tx func(ctx context.Context, tx IAccessListSetListTx) error) error
+type AccessListTxRunner interface {
+	AccessListSetOneTx(ctx context.Context, tx func(ctx context.Context, tx AccessListSetOneTx) error) error
+	AccessListSetListTx(ctx context.Context, tx func(ctx context.Context, tx AccessListSetListTx) error) error
 }
 
 type AccessList struct {
-	tx             IAccessListTxRunner
-	accessListRep  IAccessListAccessListRep
-	applicationRep IAccessListApplicationRep
+	tx             AccessListTxRunner
+	accessListRepo AccessListRepo
+	appRepo        ApplicationRepo
 }
 
 func NewAccessList(
-	tx IAccessListTxRunner,
-	accessListRep IAccessListAccessListRep,
-	applicationRep IAccessListApplicationRep,
+	tx AccessListTxRunner,
+	accessListRepo AccessListRepo,
+	appRepo ApplicationRepo,
 ) AccessList {
 	return AccessList{
 		tx:             tx,
-		accessListRep:  accessListRep,
-		applicationRep: applicationRep,
+		accessListRepo: accessListRepo,
+		appRepo:        appRepo,
 	}
 }
 
 func (s AccessList) GetById(ctx context.Context, appId int) ([]domain.MethodInfo, error) {
-	_, err := s.applicationRep.GetApplicationById(ctx, appId)
+	_, err := s.appRepo.GetApplicationById(ctx, appId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get application by id")
 	}
 
-	accessList, err := s.accessListRep.GetAccessListByAppId(ctx, appId)
+	accessList, err := s.accessListRepo.GetAccessListByAppId(ctx, appId)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get access list by app_id")
+		return nil, errors.WithMessage(err, "get access list by app_id")
 	}
 
 	methodInfos := make([]domain.MethodInfo, len(accessList))
@@ -73,20 +70,20 @@ func (s AccessList) GetById(ctx context.Context, appId int) ([]domain.MethodInfo
 }
 
 func (s AccessList) SetOne(ctx context.Context, request domain.AccessListSetOneRequest) (*domain.AccessListSetOneResponse, error) {
-	_, err := s.applicationRep.GetApplicationById(ctx, request.AppId)
+	_, err := s.appRepo.GetApplicationById(ctx, request.AppId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get application by id")
 	}
 
 	var resp int
-	err = s.tx.AccessListSetOneTx(ctx, func(ctx context.Context, tx IAccessListSetOneTx) error {
+	err = s.tx.AccessListSetOneTx(ctx, func(ctx context.Context, tx AccessListSetOneTx) error {
 		resp, err = tx.UpsertAccessList(ctx, entity.AccessList{
 			AppId:  request.AppId,
 			Method: request.Method,
 			Value:  request.Value,
 		})
 		if err != nil {
-			return errors.WithMessagef(err, "upsert access list")
+			return errors.WithMessage(err, "upsert access list")
 		}
 
 		return nil
@@ -101,12 +98,12 @@ func (s AccessList) SetOne(ctx context.Context, request domain.AccessListSetOneR
 }
 
 func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListRequest) ([]domain.MethodInfo, error) {
-	_, err := s.applicationRep.GetApplicationById(ctx, req.AppId)
+	_, err := s.appRepo.GetApplicationById(ctx, req.AppId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get application by id")
 	}
 
-	err = s.tx.AccessListSetListTx(ctx, func(ctx context.Context, tx IAccessListSetListTx) error {
+	err = s.tx.AccessListSetListTx(ctx, func(ctx context.Context, tx AccessListSetListTx) error {
 		if req.RemoveOld {
 			_, err = tx.DeleteAccessListByAppId(ctx, req.AppId)
 			if err != nil {
@@ -143,9 +140,9 @@ func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 		return nil, errors.WithMessage(err, "transaction access list set list")
 	}
 
-	accessList, err := s.accessListRep.GetAccessListByAppId(ctx, req.AppId)
+	accessList, err := s.accessListRepo.GetAccessListByAppId(ctx, req.AppId)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get access list by app_id")
+		return nil, errors.WithMessage(err, "get access list by app_id")
 	}
 
 	methodInfos := make([]domain.MethodInfo, len(accessList))
