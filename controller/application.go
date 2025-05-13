@@ -11,8 +11,10 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+// nolint:interfacebloat
 type ApplicationService interface {
 	GetById(ctx context.Context, appId int) (*domain.ApplicationWithTokens, error)
+	GetByToken(ctx context.Context, token string) (*domain.GetApplicationByTokenResponse, error)
 	GetByIdList(ctx context.Context, idList []int) ([]*domain.ApplicationWithTokens, error)
 	GetByServiceId(ctx context.Context, id int) ([]*domain.ApplicationWithTokens, error)
 	SystemTree(ctx context.Context, systemId int) ([]*domain.DomainWithService, error)
@@ -55,6 +57,36 @@ func (c Application) GetById(ctx context.Context, req domain.Identity) (*domain.
 			codes.NotFound,
 			domain.ErrCodeApplicationNotFound,
 			fmt.Sprintf("application with id %d not found", req.Id),
+			err,
+		)
+	case err != nil:
+		return nil, err
+	default:
+		return result, nil
+	}
+}
+
+// GetByToken godoc
+//
+//	@Tags			application
+//	@Summary		Получить приложение по токену
+//	@Description	Возвращает идентификатор приложения по токену
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		domain.GetApplicationByTokenRequest	true	"Идентификатор приложения"
+//	@Success		200		{object}	domain.GetApplicationByTokenResponse
+//	@Failure		400		{object}	apierrors.Error
+//	@Failure		404		{object}	apierrors.Error
+//	@Failure		500		{object}	apierrors.Error
+//	@Router			/application/get_application_by_token [POST]
+func (c Application) GetByToken(ctx context.Context, req domain.GetApplicationByTokenRequest) (*domain.GetApplicationByTokenResponse, error) {
+	result, err := c.service.GetByToken(ctx, req.Token)
+	switch {
+	case errors.Is(err, domain.ErrApplicationNotFound):
+		return nil, apierrors.New(
+			codes.NotFound,
+			domain.ErrCodeApplicationNotFound,
+			fmt.Sprintf("application with token '%s' not found", req.Token),
 			err,
 		)
 	case err != nil:

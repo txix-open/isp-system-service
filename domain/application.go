@@ -54,3 +54,12 @@ type UpdateApplicationRequest struct {
 	Name        string `validate:"required"`
 	Description string
 }
+
+type GetApplicationByTokenRequest struct {
+	Token string `validate:"required"`
+}
+
+type GetApplicationByTokenResponse struct {
+	ApplicationId      int
+	ApplicationGroupId int
+}

@@ -55,6 +55,25 @@ func (s Application) GetById(ctx context.Context, appId int) (*domain.Applicatio
 	return arr[0], nil
 }
 
+func (s Application) GetByToken(ctx context.Context, tokenStr string) (*domain.GetApplicationByTokenResponse, error) {
+	token, err := s.tokenRepo.GetTokenById(ctx, tokenStr)
+	if err != nil {
+		return nil, errors.WithMessage(err, "get token by id")
+	}
+	if token == nil {
+		return nil, domain.ErrApplicationNotFound
+	}
+
+	app, err := s.appRepo.GetApplicationById(ctx, token.AppId)
+	if err != nil {
+		return nil, errors.WithMessage(err, "get app by id")
+	}
+	return &domain.GetApplicationByTokenResponse{
+		ApplicationId:      app.Id,
+		ApplicationGroupId: app.ApplicationGroupId,
+	}, nil
+}
+
 func (s Application) GetByIdList(ctx context.Context, idList []int) ([]*domain.ApplicationWithTokens, error) {
 	res, err := s.appRepo.GetApplicationByIdList(ctx, idList)
 	if err != nil {
