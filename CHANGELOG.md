@@ -1,3 +1,5 @@
+### v5.3.0
+* Добавлен новый endpoint: `/application/get_application_by_token`
 ### v5.2.1
 * обновлены зависимости
 ### v5.2.0
