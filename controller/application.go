@@ -69,8 +69,8 @@ func (c Application) GetById(ctx context.Context, req domain.Identity) (*domain.
 // GetByToken godoc
 //
 //	@Tags			application
-//	@Summary		Получить приложение по токену
-//	@Description	Возвращает идентификатор приложения по токену
+//	@Summary		Получить идентификатор приложения и группы по токену
+//	@Description	Возвращает идентификатор приложения и группы по токену
 //	@Accept			json
 //	@Produce		json
 //	@Param			body	body		domain.GetApplicationByTokenRequest	true	"Идентификатор приложения"

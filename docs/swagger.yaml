@@ -3,7 +3,7 @@ definitions:
   apierrors.Error:
     properties:
       details:
-        additionalProperties: true
+        additionalProperties: {}
         type: object
       errorCode:
         type: integer
@@ -647,7 +647,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Возвращает идентификатор приложения по токену
+      description: Возвращает идентификатор приложения и группы по токену
       parameters:
       - description: Идентификатор приложения
         in: body
@@ -674,7 +674,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apierrors.Error'
-      summary: Получить приложение по токену
+      summary: Получить идентификатор приложения и группы по токену
       tags:
       - application
   /application/get_applications:
