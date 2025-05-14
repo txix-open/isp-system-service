@@ -7,6 +7,7 @@ import (
 
 type TokenRepo interface {
 	GetTokenByAppIdList(ctx context.Context, appIdList []int) ([]entity.Token, error)
+	GetTokenById(ctx context.Context, token string) (*entity.Token, error)
 }
 
 type DomainRepo interface {

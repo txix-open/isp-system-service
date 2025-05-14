@@ -22,7 +22,7 @@ var (
 //	@BasePath	/api/system
 
 //go:generate swag init --parseDependency
-//go:generate rm -f docs/swagger.json
+//go:generate rm -f docs/swagger.json docs/docs.go
 func main() {
 	boot := bootstrap.New(version, conf.Remote{}, routes.EndpointDescriptors())
 	app := boot.App
