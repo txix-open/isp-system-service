@@ -649,7 +649,7 @@ paths:
       - application/json
       description: Возвращает идентификатор приложения и группы по токену
       parameters:
-      - description: Идентификатор приложения
+      - description: Тело запроса
         in: body
         name: body
         required: true

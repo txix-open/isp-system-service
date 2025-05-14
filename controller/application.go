@@ -73,7 +73,7 @@ func (c Application) GetById(ctx context.Context, req domain.Identity) (*domain.
 //	@Description	Возвращает идентификатор приложения и группы по токену
 //	@Accept			json
 //	@Produce		json
-//	@Param			body	body		domain.GetApplicationByTokenRequest	true	"Идентификатор приложения"
+//	@Param			body	body		domain.GetApplicationByTokenRequest	true	"Тело запроса"
 //	@Success		200		{object}	domain.GetApplicationByTokenResponse
 //	@Failure		400		{object}	apierrors.Error
 //	@Failure		404		{object}	apierrors.Error
