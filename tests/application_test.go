@@ -31,6 +31,7 @@ type ApplicationSuite struct {
 	domainRepo   repository.Domain
 	appRepo      repository.Application
 	appGroupRepo repository.AppGroup
+	tokenRepo    repository.Token
 	api          *client.Client
 }
 
@@ -45,6 +46,7 @@ func (s *ApplicationSuite) SetupTest() {
 	s.domainRepo = repository.NewDomain(s.testDb)
 	s.appRepo = repository.NewApplication(s.testDb)
 	s.appGroupRepo = repository.NewAppGroup(s.testDb)
+	s.tokenRepo = repository.NewToken(s.testDb)
 }
 
 func (s *ApplicationSuite) TestGetAllApplications() {
@@ -237,6 +239,40 @@ func (s *ApplicationSuite) TestUpdate_AppNotFound() {
 
 	err := s.api.Invoke("system/application/update_application").
 		JsonRequestBody(apiReq).
+		Do(s.T().Context())
+	apiError := apierrors.FromError(err)
+	s.Require().NotNil(apiError)
+	s.Require().Equal(domain.ErrCodeApplicationNotFound, apiError.ErrorCode)
+}
+
+func (s *ApplicationSuite) TestGetByToken() {
+	toInsert := fake.It[[]domain.Application](fake.MaxSliceSize(2), fake.MinSliceSize(2))
+	insertedApps := s.insertApps(toInsert)
+	token := fake.It[string]()
+	expectedApp := domain.GetApplicationByTokenResponse{
+		ApplicationId:      insertedApps[0].Id,
+		ApplicationGroupId: insertedApps[0].ServiceId,
+	}
+	_, err := s.tokenRepo.SaveToken(s.T().Context(), token, expectedApp.ApplicationId, fake.It[int]())
+	s.Require().NoError(err)
+
+	result := domain.GetApplicationByTokenResponse{}
+	err = s.api.Invoke("system/application/get_application_by_token").
+		JsonRequestBody(domain.GetApplicationByTokenRequest{Token: token}).
+		JsonResponseBody(&result).
+		Do(s.T().Context())
+	s.Require().NoError(err)
+	s.Require().Equal(expectedApp, result)
+}
+
+func (s *ApplicationSuite) TestGetByToken_NotFound() {
+	toInsert := fake.It[[]domain.Application](fake.MaxSliceSize(2), fake.MinSliceSize(2))
+	s.insertApps(toInsert)
+
+	result := domain.GetApplicationByTokenResponse{}
+	err := s.api.Invoke("system/application/get_application_by_token").
+		JsonRequestBody(domain.GetApplicationByTokenRequest{Token: fake.It[string]()}).
+		JsonResponseBody(&result).
 		Do(s.T().Context())
 	apiError := apierrors.FromError(err)
 	s.Require().NotNil(apiError)

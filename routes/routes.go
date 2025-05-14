@@ -155,6 +155,11 @@ func applicationCluster(c Controllers) []cluster.EndpointDescriptor {
 			Handler: c.Application.GetById,
 		},
 		{
+			Path:    "system/application/get_application_by_token",
+			Inner:   true,
+			Handler: c.Application.GetByToken,
+		},
+		{
 			Path:    "system/application/delete_applications",
 			Inner:   true,
 			Handler: c.Application.Delete,

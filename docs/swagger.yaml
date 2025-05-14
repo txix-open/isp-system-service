@@ -3,7 +3,7 @@ definitions:
   apierrors.Error:
     properties:
       details:
-        additionalProperties: true
+        additionalProperties: {}
         type: object
       errorCode:
         type: integer
@@ -229,6 +229,20 @@ definitions:
         items:
           $ref: '#/definitions/domain.ServiceWithApps'
         type: array
+    type: object
+  domain.GetApplicationByTokenRequest:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  domain.GetApplicationByTokenResponse:
+    properties:
+      applicationGroupId:
+        type: integer
+      applicationId:
+        type: integer
     type: object
   domain.IdListRequest:
     properties:
@@ -627,6 +641,40 @@ paths:
           schema:
             $ref: '#/definitions/apierrors.Error'
       summary: Получить приложение по идентификатору
+      tags:
+      - application
+  /application/get_application_by_token:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает идентификатор приложения и группы по токену
+      parameters:
+      - description: Тело запроса
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.GetApplicationByTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.GetApplicationByTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Получить идентификатор приложения и группы по токену
       tags:
       - application
   /application/get_applications:
