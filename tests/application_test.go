@@ -50,8 +50,7 @@ func (s *ApplicationSuite) SetupTest() {
 }
 
 func (s *ApplicationSuite) TestGetAllApplications() {
-	toInsert := fake.It[[]domain.Application](fake.MaxSliceSize(2), fake.MinSliceSize(2))
-	expectedApps := s.insertApps(toInsert)
+	expectedApps := s.insertApps(2)
 
 	result := []domain.Application{}
 	err := s.api.Invoke("system/application/get_all").
@@ -114,7 +113,7 @@ func (s *ApplicationSuite) TestCreate_ApplicationNameNotUniqueInAppGroup() {
 	apiReq := fake.It[domain.CreateApplicationRequest]()
 	apiReq.Type = domain.ApplicationSystemType
 
-	inserted := s.insertApps(fake.It[[]domain.Application](fake.MinSliceSize(1), fake.MaxSliceSize(1)))
+	inserted := s.insertApps(1)
 
 	apiReq.ApplicationGroupId = inserted[0].ServiceId
 	apiReq.Name = inserted[0].Name
@@ -133,7 +132,7 @@ func (s *ApplicationSuite) TestCreate_ApplicationIdNotUnique() {
 	appGroup := s.createAppGroup()
 	apiReq.ApplicationGroupId = appGroup.Id
 
-	inserted := s.insertApps(fake.It[[]domain.Application](fake.MinSliceSize(1), fake.MaxSliceSize(1)))
+	inserted := s.insertApps(1)
 	apiReq.Id = inserted[0].Id
 
 	err := s.api.Invoke("system/application/create_application").
@@ -145,7 +144,7 @@ func (s *ApplicationSuite) TestCreate_ApplicationIdNotUnique() {
 }
 
 func (s *ApplicationSuite) TestUpdate_HappyPath() {
-	inserted := s.insertApps(fake.It[[]domain.Application](fake.MinSliceSize(1), fake.MaxSliceSize(1)))
+	inserted := s.insertApps(2)
 	apiReq := domain.UpdateApplicationRequest{
 		OldId:       inserted[0].Id,
 		NewId:       fake.It[int](),
@@ -196,7 +195,7 @@ func (s *ApplicationSuite) TestUpdate_HappyPath() {
 }
 
 func (s *ApplicationSuite) TestUpdate_ApplicationNameNotUniqueInAppGroup() {
-	inserted := s.insertApps(fake.It[[]domain.Application](fake.MinSliceSize(2), fake.MaxSliceSize(2)))
+	inserted := s.insertApps(2)
 	apiReq := domain.UpdateApplicationRequest{
 		NewId:       inserted[0].Id,
 		OldId:       inserted[0].Id,
@@ -213,7 +212,7 @@ func (s *ApplicationSuite) TestUpdate_ApplicationNameNotUniqueInAppGroup() {
 }
 
 func (s *ApplicationSuite) TestUpdate_AppIdNotUnique() {
-	inserted := s.insertApps(fake.It[[]domain.Application](fake.MinSliceSize(2), fake.MaxSliceSize(2)))
+	inserted := s.insertApps(2)
 	apiReq := domain.UpdateApplicationRequest{
 		OldId:       inserted[0].Id,
 		NewId:       inserted[1].Id,
@@ -246,8 +245,8 @@ func (s *ApplicationSuite) TestUpdate_AppNotFound() {
 }
 
 func (s *ApplicationSuite) TestGetByToken() {
-	toInsert := fake.It[[]domain.Application](fake.MaxSliceSize(2), fake.MinSliceSize(2))
-	insertedApps := s.insertApps(toInsert)
+	insertedApps := s.insertApps(2)
+
 	token := fake.It[string]()
 	expectedApp := domain.GetApplicationByTokenResponse{
 		ApplicationId:      insertedApps[0].Id,
@@ -266,8 +265,7 @@ func (s *ApplicationSuite) TestGetByToken() {
 }
 
 func (s *ApplicationSuite) TestGetByToken_NotFound() {
-	toInsert := fake.It[[]domain.Application](fake.MaxSliceSize(2), fake.MinSliceSize(2))
-	s.insertApps(toInsert)
+	s.insertApps(2)
 
 	result := domain.GetApplicationByTokenResponse{}
 	err := s.api.Invoke("system/application/get_application_by_token").
@@ -298,13 +296,18 @@ func (s *ApplicationSuite) createAppGroup() *entity.AppGroup {
 	return appGroup
 }
 
-func (s *ApplicationSuite) insertApps(toInsert []domain.Application) []domain.Application {
+func (s *ApplicationSuite) insertApps(appsCount uint) []domain.Application {
+	toInsert := fake.It[[]domain.Application](fake.MinSliceSize(appsCount), fake.MaxSliceSize(appsCount))
+
 	appGroup := s.createAppGroup()
 	toExpect := make([]domain.Application, 0, len(toInsert))
 	for _, app := range toInsert {
+		appId, err := s.appRepo.NextApplicationId(s.T().Context())
+		s.Require().NoError(err)
+
 		createdApp, err := s.appRepo.CreateApplication(
 			s.T().Context(),
-			app.Id,
+			appId,
 			app.Name,
 			app.Description,
 			appGroup.Id,
