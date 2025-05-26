@@ -12,7 +12,6 @@ import (
 	"isp-system-service/domain"
 	"isp-system-service/entity"
 
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/txix-open/isp-kit/grpc/client"
 	"github.com/txix-open/isp-kit/test"
@@ -27,14 +26,13 @@ func TestSecureSuite(t *testing.T) {
 
 type SecureSuite struct {
 	suite.Suite
-	test    *test.Test
-	require *require.Assertions
-	testDb  *dbt.TestDb
-	api     *client.Client
+	test   *test.Test
+	testDb *dbt.TestDb
+	api    *client.Client
 }
 
 func (s *SecureSuite) SetupSuite() {
-	s.test, s.require = test.New(s.T())
+	s.test, _ = test.New(s.T())
 
 	s.testDb = dbt.New(s.test, dbx.WithMigrationRunner("../migrations", s.test.Logger()))
 
@@ -66,8 +64,8 @@ func (s *SecureSuite) TestAuthenticate_Success() {
 		}).
 		JsonResponseBody(&result).
 		Do(context.Background())
-	s.require.NoError(err)
-	s.require.Equal(domain.AuthenticateResponse{
+	s.Require().NoError(err)
+	s.Require().Equal(domain.AuthenticateResponse{
 		Authenticated: true,
 		ErrorReason:   "",
 		AuthData: &domain.AuthData{
@@ -87,8 +85,8 @@ func (s *SecureSuite) TestAuthenticate_NotFound() {
 		}).
 		JsonResponseBody(&result).
 		Do(context.Background())
-	s.require.NoError(err)
-	s.require.Equal(domain.AuthenticateResponse{
+	s.Require().NoError(err)
+	s.Require().Equal(domain.AuthenticateResponse{
 		Authenticated: false,
 		ErrorReason:   domain.ErrTokenNotFound.Error(),
 		AuthData:      nil,
@@ -107,8 +105,8 @@ func (s *SecureSuite) TestAuthenticate_NotExpired() {
 		}).
 		JsonResponseBody(&result).
 		Do(context.Background())
-	s.require.NoError(err)
-	s.require.Equal(domain.AuthenticateResponse{
+	s.Require().NoError(err)
+	s.Require().Equal(domain.AuthenticateResponse{
 		Authenticated: true,
 		ErrorReason:   "",
 		AuthData: &domain.AuthData{
@@ -132,8 +130,8 @@ func (s *SecureSuite) TestAuthenticate_Expired() {
 		}).
 		JsonResponseBody(&result).
 		Do(context.Background())
-	s.require.NoError(err)
-	s.require.Equal(domain.AuthenticateResponse{
+	s.Require().NoError(err)
+	s.Require().Equal(domain.AuthenticateResponse{
 		Authenticated: false,
 		ErrorReason:   domain.ErrTokenExpired.Error(),
 		AuthData:      nil,
@@ -155,8 +153,8 @@ func (s *SecureSuite) TestAuthorize_Success_True() {
 		}).
 		JsonResponseBody(&result).
 		Do(context.Background())
-	s.require.NoError(err)
-	s.require.Equal(domain.AuthorizeResponse{
+	s.Require().NoError(err)
+	s.Require().Equal(domain.AuthorizeResponse{
 		Authorized: true,
 	}, result)
 }
@@ -176,8 +174,8 @@ func (s *SecureSuite) TestAuthorize_Success_False() {
 		}).
 		JsonResponseBody(&result).
 		Do(context.Background())
-	s.require.NoError(err)
-	s.require.Equal(domain.AuthorizeResponse{
+	s.Require().NoError(err)
+	s.Require().Equal(domain.AuthorizeResponse{
 		Authorized: false,
 	}, result)
 }
@@ -191,8 +189,8 @@ func (s *SecureSuite) TestAuthorize_NotFound() {
 		}).
 		JsonResponseBody(&result).
 		Do(context.Background())
-	s.require.NoError(err)
-	s.require.Equal(domain.AuthorizeResponse{
+	s.Require().NoError(err)
+	s.Require().Equal(domain.AuthorizeResponse{
 		Authorized: false,
 	}, result)
 }

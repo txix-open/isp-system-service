@@ -1,10 +1,11 @@
 package routes
 
 import (
+	"isp-system-service/controller"
+
 	"github.com/txix-open/isp-kit/cluster"
 	"github.com/txix-open/isp-kit/grpc"
 	"github.com/txix-open/isp-kit/grpc/endpoint"
-	"isp-system-service/controller"
 )
 
 type Controllers struct {
@@ -72,6 +73,11 @@ func accessListCluster(c Controllers) []cluster.EndpointDescriptor {
 			Path:    "system/access_list/set_list",
 			Inner:   true,
 			Handler: c.AccessList.SetList,
+		},
+		{
+			Path:    "system/access_list/delete_list",
+			Inner:   true,
+			Handler: c.AccessList.DeleteList,
 		},
 	}
 }

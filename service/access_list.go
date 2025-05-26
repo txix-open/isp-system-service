@@ -11,6 +11,7 @@ import (
 
 type AccessListRepo interface {
 	GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error)
+	DeleteAccessList(ctx context.Context, appId int, methods []string) error
 }
 
 type AccessListSetOneTx interface {
@@ -154,4 +155,16 @@ func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 	}
 
 	return methodInfos, nil
+}
+
+func (s AccessList) DeleteList(ctx context.Context, req domain.AccessListDeleteListRequest) error {
+	_, err := s.appRepo.GetApplicationById(ctx, req.AppId)
+	if err != nil {
+		return errors.WithMessage(err, "get application by id")
+	}
+	err = s.accessListRepo.DeleteAccessList(ctx, req.AppId, req.Methods)
+	if err != nil {
+		return errors.WithMessage(err, "delete access_list")
+	}
+	return nil
 }

@@ -2,7 +2,10 @@ package assembly
 
 import (
 	"context"
+
 	"github.com/txix-open/isp-kit/rc"
+
+	"isp-system-service/conf"
 
 	"github.com/pkg/errors"
 	"github.com/txix-open/isp-kit/app"
@@ -12,7 +15,6 @@ import (
 	"github.com/txix-open/isp-kit/dbx"
 	"github.com/txix-open/isp-kit/grpc"
 	"github.com/txix-open/isp-kit/log"
-	"isp-system-service/conf"
 )
 
 type Assembly struct {
