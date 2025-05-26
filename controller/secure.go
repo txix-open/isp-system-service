@@ -3,8 +3,9 @@ package controller
 import (
 	"context"
 
-	"github.com/pkg/errors"
 	"isp-system-service/domain"
+
+	"github.com/pkg/errors"
 )
 
 type SecureService interface {

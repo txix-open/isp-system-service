@@ -7,7 +7,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.10.0
-	github.com/txix-open/isp-kit v1.48.1
+	github.com/txix-open/isp-kit v1.51.0
 	github.com/txix-open/jsonschema v1.3.0
 	google.golang.org/grpc v1.72.0
 )

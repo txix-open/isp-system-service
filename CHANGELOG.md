@@ -1,3 +1,8 @@
+### v5.4.0
+* Добавлен новый endpoint: `/access_list/delete_list` для удаления методов из списка доступов у приложений
+### v5.3.1
+* добавлен `Dockerfile` и скрипт для сборки и публикации образа в `GitHub Contaier Registry`
+* обновлены зависимости
 ### v5.3.0
 * Добавлен новый endpoint: `/application/get_application_by_token`
 ### v5.2.1
