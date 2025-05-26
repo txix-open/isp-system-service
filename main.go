@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/txix-open/isp-kit/bootstrap"
-	"github.com/txix-open/isp-kit/shutdown"
 	"isp-system-service/assembly"
 	"isp-system-service/conf"
 	"isp-system-service/routes"
+
+	"github.com/txix-open/isp-kit/bootstrap"
+	"github.com/txix-open/isp-kit/shutdown"
 )
 
 var (

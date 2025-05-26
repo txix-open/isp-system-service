@@ -10,6 +10,19 @@ definitions:
       errorMessage:
         type: string
     type: object
+  domain.AccessListDeleteListRequest:
+    properties:
+      appId:
+        type: integer
+      methods:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - appId
+    - methods
+    type: object
   domain.AccessListSetListRequest:
     properties:
       appId:
@@ -389,6 +402,34 @@ info:
   title: isp-system-service
   version: 1.0.0
 paths:
+  /access_list/delete_list:
+    post:
+      consumes:
+      - application/json
+      description: Удаляет заданный список методов для приложения
+      parameters:
+      - description: тело запроса
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/domain.AccessListDeleteListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Удалить список доступных методов для приложения
+      tags:
+      - accessList
   /access_list/get_by_id:
     post:
       consumes:

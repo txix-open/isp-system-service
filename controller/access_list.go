@@ -15,6 +15,7 @@ type AccessListService interface {
 	GetById(ctx context.Context, appId int) ([]domain.MethodInfo, error)
 	SetOne(ctx context.Context, request domain.AccessListSetOneRequest) (*domain.AccessListSetOneResponse, error)
 	SetList(ctx context.Context, req domain.AccessListSetListRequest) ([]domain.MethodInfo, error)
+	DeleteList(ctx context.Context, req domain.AccessListDeleteListRequest) error
 }
 
 type AccessList struct {
@@ -111,5 +112,32 @@ func (c AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 		return nil, err
 	default:
 		return result, nil
+	}
+}
+
+// DeleteList godoc
+//
+//	@Tags			accessList
+//	@Summary		Удалить список доступных методов для приложения
+//	@Description	Удаляет заданный список методов для приложения
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		domain.AccessListDeleteListRequest	false	"тело запроса"
+//	@Success		200		{object}	any
+//	@Failure		404		{object}	apierrors.Error
+//	@Failure		500		{object}	apierrors.Error
+//	@Router			/access_list/delete_list [POST]
+func (c AccessList) DeleteList(ctx context.Context, req domain.AccessListDeleteListRequest) error {
+	err := c.service.DeleteList(ctx, req)
+	switch {
+	case errors.Is(err, domain.ErrApplicationNotFound):
+		return apierrors.New(
+			codes.NotFound,
+			domain.ErrCodeApplicationNotFound,
+			fmt.Sprintf("application with id %d not found", req.AppId),
+			err,
+		)
+	default:
+		return err
 	}
 }

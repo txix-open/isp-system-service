@@ -20,3 +20,8 @@ type MethodInfo struct {
 	Method string
 	Value  bool
 }
+
+type AccessListDeleteListRequest struct {
+	AppId   int      `validate:"required"`
+	Methods []string `validate:"required,min=1"`
+}
