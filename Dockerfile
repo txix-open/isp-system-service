@@ -1,28 +1,32 @@
-FROM golang:1.24-alpine3.20 AS builder
+FROM golang:1.24-alpine as builder
 WORKDIR /build
 ARG version
 ENV version_env=$version
 ARG app_name
 ENV app_name_env=$app_name
 COPY . .
-RUN go build -ldflags="-X 'main.version=$version_env'" -o /main .
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+    --mount=type=bind,source=go.sum,target=go.sum \
+    --mount=type=bind,source=go.mod,target=go.mod \
+    go mod download -x
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+    --mount=type=bind,target=. \
+    go build -ldflags="-X 'main.version=$version_env'" -o /main .
 
-FROM alpine:3.20 AS runner
+FROM alpine:3.21
 
-RUN apk add --no-cache tzdata && \
-    cp /usr/share/zoneinfo/Europe/Moscow /etc/localtime && \
-    echo "Europe/Moscow" > /etc/timezone
+RUN apk add --no-cache tzdata
+RUN cp /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+RUN echo "Europe/Moscow" > /etc/timezone
 
 ARG UID=10001
-ARG GID=10001
-
-RUN addgroup -g ${GID} appuser
 RUN adduser \
-    -D \
-    -h "/nonexistent" \
-    -s "/sbin/nologin" \
-    -u "${UID}" \
-    -G appuser \
+    --disabled-password \
+    --gecos "" \
+    --home "/nonexistent" \
+    --shell "/sbin/nologin" \
+    --no-create-home \
+    --uid "${UID}" \
     appuser
 
 RUN mkdir -p /app/data
