@@ -69,6 +69,7 @@ func (s *SecureSuite) TestAuthenticate_Success() {
 		Authenticated: true,
 		ErrorReason:   "",
 		AuthData: &domain.AuthData{
+			AppName:       "test_application",
 			SystemId:      1,
 			DomainId:      3,
 			ServiceId:     5,
@@ -110,6 +111,7 @@ func (s *SecureSuite) TestAuthenticate_NotExpired() {
 		Authenticated: true,
 		ErrorReason:   "",
 		AuthData: &domain.AuthData{
+			AppName:       "test_application",
 			SystemId:      1,
 			DomainId:      3,
 			ServiceId:     5,

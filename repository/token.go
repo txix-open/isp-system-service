@@ -101,7 +101,7 @@ func (r Token) DeleteToken(ctx context.Context, tokens []string) (int, error) {
 
 func (r Token) AuthDataByToken(ctx context.Context, token string) (*entity.AuthData, error) {
 	q := `
-SELECT system_id, domain_id, application_group_id, app_id, token.expire_time, token.created_at
+SELECT system_id, domain_id, application_group_id, app_id, application.name AS app_name , token.expire_time, token.created_at
 FROM token
          LEFT JOIN application
                    ON token.app_id = application.id
