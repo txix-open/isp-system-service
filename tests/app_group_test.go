@@ -26,6 +26,7 @@ func TestApplicationGroupSuite(t *testing.T) {
 
 type AppGroupSuite struct {
 	suite.Suite
+
 	test         *test.Test
 	testDb       *dbt.TestDb
 	domainRepo   repository.Domain

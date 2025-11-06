@@ -22,6 +22,7 @@ func TestBaselineSuite(t *testing.T) {
 
 type BaselineSuite struct {
 	suite.Suite
+
 	test     *test.Test
 	testDb   *dbt.TestDb
 	baseline baseline.Service

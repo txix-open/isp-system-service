@@ -26,6 +26,7 @@ func TestApplicationSuite(t *testing.T) {
 
 type ApplicationSuite struct {
 	suite.Suite
+
 	test         *test.Test
 	testDb       *dbt.TestDb
 	domainRepo   repository.Domain

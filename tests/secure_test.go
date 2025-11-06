@@ -26,6 +26,7 @@ func TestSecureSuite(t *testing.T) {
 
 type SecureSuite struct {
 	suite.Suite
+
 	test   *test.Test
 	testDb *dbt.TestDb
 	api    *client.Client
