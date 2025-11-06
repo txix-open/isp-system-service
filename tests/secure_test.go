@@ -1,7 +1,6 @@
 package tests_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -64,7 +63,7 @@ func (s *SecureSuite) TestAuthenticate_Success() {
 			Token: "test_token_success",
 		}).
 		JsonResponseBody(&result).
-		Do(context.Background())
+		Do(s.T().Context())
 	s.Require().NoError(err)
 	s.Require().Equal(domain.AuthenticateResponse{
 		Authenticated: true,
@@ -85,7 +84,7 @@ func (s *SecureSuite) TestAuthenticate_NotFound() {
 			Token: "test_token_not_found",
 		}).
 		JsonResponseBody(&result).
-		Do(context.Background())
+		Do(s.T().Context())
 	s.Require().NoError(err)
 	s.Require().Equal(domain.AuthenticateResponse{
 		Authenticated: false,
@@ -105,7 +104,7 @@ func (s *SecureSuite) TestAuthenticate_NotExpired() {
 			Token: "test_token_not_expired",
 		}).
 		JsonResponseBody(&result).
-		Do(context.Background())
+		Do(s.T().Context())
 	s.Require().NoError(err)
 	s.Require().Equal(domain.AuthenticateResponse{
 		Authenticated: true,
@@ -130,7 +129,7 @@ func (s *SecureSuite) TestAuthenticate_Expired() {
 			Token: "test_token_expired",
 		}).
 		JsonResponseBody(&result).
-		Do(context.Background())
+		Do(s.T().Context())
 	s.Require().NoError(err)
 	s.Require().Equal(domain.AuthenticateResponse{
 		Authenticated: false,
@@ -153,7 +152,7 @@ func (s *SecureSuite) TestAuthorize_Success_True() {
 			Endpoint:      "endpoint/available",
 		}).
 		JsonResponseBody(&result).
-		Do(context.Background())
+		Do(s.T().Context())
 	s.Require().NoError(err)
 	s.Require().Equal(domain.AuthorizeResponse{
 		Authorized: true,
@@ -174,7 +173,7 @@ func (s *SecureSuite) TestAuthorize_Success_False() {
 			Endpoint:      "endpoint/not_available",
 		}).
 		JsonResponseBody(&result).
-		Do(context.Background())
+		Do(s.T().Context())
 	s.Require().NoError(err)
 	s.Require().Equal(domain.AuthorizeResponse{
 		Authorized: false,
@@ -189,7 +188,7 @@ func (s *SecureSuite) TestAuthorize_NotFound() {
 			Endpoint:      "endpoint/not_found",
 		}).
 		JsonResponseBody(&result).
-		Do(context.Background())
+		Do(s.T().Context())
 	s.Require().NoError(err)
 	s.Require().Equal(domain.AuthorizeResponse{
 		Authorized: false,

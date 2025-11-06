@@ -1,7 +1,6 @@
 package tests_test
 
 import (
-	"context"
 	"github.com/stretchr/testify/suite"
 	"github.com/txix-open/isp-kit/dbx"
 	"github.com/txix-open/isp-kit/grpc/client"
@@ -45,9 +44,9 @@ func (s *BaselineSuite) SetupSuite() {
 }
 
 func (s *BaselineSuite) TestBaselineSuccess() {
-	err := s.baseline.Do(context.Background())
+	err := s.baseline.Do(s.T().Context())
 	s.Require().NoError(err)
 
-	err = s.baseline.Do(context.Background())
+	err = s.baseline.Do(s.T().Context())
 	s.Require().NoError(err)
 }
