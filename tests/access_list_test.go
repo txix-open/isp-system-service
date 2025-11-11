@@ -26,6 +26,7 @@ func TestAccessListSuite(t *testing.T) {
 
 type AccessListSuite struct {
 	suite.Suite
+
 	test           *test.Test
 	testDb         *dbt.TestDb
 	api            *client.Client
