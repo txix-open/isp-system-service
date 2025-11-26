@@ -129,6 +129,8 @@ definitions:
     type: object
   domain.AuthData:
     properties:
+      appName:
+        type: string
       applicationId:
         type: integer
       domainId:

@@ -26,6 +26,7 @@ func TestApplicationSuite(t *testing.T) {
 
 type ApplicationSuite struct {
 	suite.Suite
+
 	test         *test.Test
 	testDb       *dbt.TestDb
 	domainRepo   repository.Domain
@@ -69,10 +70,14 @@ func (s *ApplicationSuite) TestGetAllApplications() {
 
 func (s *ApplicationSuite) TestCreate_HappyPath() {
 	result := domain.ApplicationWithTokens{}
-	apiReq := fake.It[domain.CreateApplicationRequest]()
-	apiReq.Type = domain.ApplicationSystemType
 	appGroup := s.createAppGroup()
-	apiReq.ApplicationGroupId = appGroup.Id
+
+	apiReq := domain.CreateApplicationRequest{
+		Id:                 1,
+		Name:               fake.It[string](),
+		Type:               domain.ApplicationSystemType,
+		ApplicationGroupId: appGroup.Id,
+	}
 
 	err := s.api.Invoke("system/application/create_application").
 		JsonRequestBody(apiReq).
@@ -98,8 +103,12 @@ func (s *ApplicationSuite) TestCreate_HappyPath() {
 }
 
 func (s *ApplicationSuite) TestCreate_AppGroupNotFound() {
-	apiReq := fake.It[domain.CreateApplicationRequest]()
-	apiReq.Type = domain.ApplicationSystemType
+	apiReq := domain.CreateApplicationRequest{
+		Id:                 1,
+		Name:               fake.It[string](),
+		Type:               domain.ApplicationSystemType,
+		ApplicationGroupId: 1,
+	}
 
 	err := s.api.Invoke("system/application/create_application").
 		JsonRequestBody(apiReq).
@@ -110,13 +119,14 @@ func (s *ApplicationSuite) TestCreate_AppGroupNotFound() {
 }
 
 func (s *ApplicationSuite) TestCreate_ApplicationNameNotUniqueInAppGroup() {
-	apiReq := fake.It[domain.CreateApplicationRequest]()
-	apiReq.Type = domain.ApplicationSystemType
-
 	inserted := s.insertApps(1)
 
-	apiReq.ApplicationGroupId = inserted[0].ServiceId
-	apiReq.Name = inserted[0].Name
+	apiReq := domain.CreateApplicationRequest{
+		Id:                 inserted[0].Id + 1,
+		Name:               inserted[0].Name,
+		Type:               domain.ApplicationSystemType,
+		ApplicationGroupId: inserted[0].ServiceId,
+	}
 
 	err := s.api.Invoke("system/application/create_application").
 		JsonRequestBody(apiReq).
@@ -127,13 +137,14 @@ func (s *ApplicationSuite) TestCreate_ApplicationNameNotUniqueInAppGroup() {
 }
 
 func (s *ApplicationSuite) TestCreate_ApplicationIdNotUnique() {
-	apiReq := fake.It[domain.CreateApplicationRequest]()
-	apiReq.Type = "SYSTEM"
-	appGroup := s.createAppGroup()
-	apiReq.ApplicationGroupId = appGroup.Id
-
 	inserted := s.insertApps(1)
-	apiReq.Id = inserted[0].Id
+
+	apiReq := domain.CreateApplicationRequest{
+		Id:                 inserted[0].Id,
+		Name:               inserted[0].Name,
+		Type:               domain.ApplicationSystemType,
+		ApplicationGroupId: inserted[0].ServiceId,
+	}
 
 	err := s.api.Invoke("system/application/create_application").
 		JsonRequestBody(apiReq).
