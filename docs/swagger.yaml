@@ -156,6 +156,19 @@ definitions:
       errorReason:
         type: string
     type: object
+  domain.AuthorizeOneOfRequest:
+    properties:
+      applicationId:
+        type: integer
+      endpoints:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - applicationId
+    - endpoints
+    type: object
   domain.AuthorizeRequest:
     properties:
       applicationId:
@@ -1169,6 +1182,34 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/domain.AuthorizeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.AuthorizeResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Метод авторизации приложения
+      tags:
+      - secure
+  /secure/authorize_one_of:
+    post:
+      consumes:
+      - application/json
+      description: Проверяет доступ приложения к запрашиваемому ендпоинтам
+      parameters:
+      - description: Тело запрос
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.AuthorizeOneOfRequest'
       produces:
       - application/json
       responses:
