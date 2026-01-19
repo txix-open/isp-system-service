@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/txix-open/isp-kit/db"
 	"github.com/txix-open/isp-kit/db/query"
+	"github.com/txix-open/isp-kit/metrics/sql_metrics"
 )
 
 type AccessList struct {
@@ -24,11 +25,13 @@ func NewAccessList(db db.DB) AccessList {
 }
 
 func (r AccessList) GetAccessListByAppIdAndMethod(ctx context.Context, appId int, method string) (*entity.AccessList, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.GetAccessListByAppIdAndMethod")
+
 	q := `
 	SELECT app_id, method, value
 	FROM access_list
 	WHERE app_id = $1 AND method = $2
-`
+	`
 	result := entity.AccessList{}
 	err := r.db.SelectRow(ctx, &result, q, appId, method)
 	switch {
@@ -42,11 +45,13 @@ func (r AccessList) GetAccessListByAppIdAndMethod(ctx context.Context, appId int
 }
 
 func (r AccessList) GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.GetAccessListByAppId")
+
 	q := `
 	SELECT app_id, method, value
 	FROM access_list
 	WHERE app_id = $1
-`
+	`
 	result := make([]entity.AccessList, 0)
 	err := r.db.Select(ctx, &result, q, appId)
 	if err != nil {
@@ -57,6 +62,8 @@ func (r AccessList) GetAccessListByAppId(ctx context.Context, appId int) ([]enti
 }
 
 func (r AccessList) GetAccessListByAppIdList(ctx context.Context, appIdList []int) ([]entity.AccessList, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.GetAccessListByAppIdList")
+
 	q, args, err := query.New().
 		Select("app_id", "method", "value").
 		From("access_list").
@@ -76,6 +83,8 @@ func (r AccessList) GetAccessListByAppIdList(ctx context.Context, appIdList []in
 }
 
 func (r AccessList) InsertArrayAccessList(ctx context.Context, entity []entity.AccessList) error {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.InsertArrayAccessList")
+
 	qBuilder := query.New().
 		Insert("access_list").
 		Columns("app_id", "method", "value")
@@ -96,6 +105,8 @@ func (r AccessList) InsertArrayAccessList(ctx context.Context, entity []entity.A
 }
 
 func (r AccessList) UpsertAccessList(ctx context.Context, e entity.AccessList) (int, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.UpsertAccessList")
+
 	q := `
 	INSERT INTO access_list 
 	(app_id, method, value)
@@ -103,7 +114,7 @@ func (r AccessList) UpsertAccessList(ctx context.Context, e entity.AccessList) (
 	ON CONFLICT (app_id, method) 
 		DO UPDATE
 			SET (value) = (SELECT EXCLUDED.value)
-`
+	`
 	result, err := r.db.Exec(ctx, q, e.AppId, e.Method, e.Value)
 	if err != nil {
 		return 0, errors.WithMessagef(err, "exec query %s", q)
@@ -118,6 +129,8 @@ func (r AccessList) UpsertAccessList(ctx context.Context, e entity.AccessList) (
 }
 
 func (r AccessList) DeleteAccessList(ctx context.Context, appId int, methods []string) error {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.DeleteAccessList")
+
 	q, args, err := query.New().
 		Delete("access_list").
 		Where(squirrel.Eq{
@@ -139,11 +152,13 @@ func (r AccessList) DeleteAccessList(ctx context.Context, appId int, methods []s
 }
 
 func (r AccessList) DeleteAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.DeleteAccessListByAppId")
+
 	q := `
 	DELETE FROM access_list
 	WHERE app_id = $1
 	RETURNING app_id, method, value
-`
+	`
 	result := make([]entity.AccessList, 0)
 	err := r.db.Select(ctx, &result, q, appId)
 	if err != nil {
