@@ -16,6 +16,7 @@ type AccessListService interface {
 	SetOne(ctx context.Context, request domain.AccessListSetOneRequest) (*domain.AccessListSetOneResponse, error)
 	SetList(ctx context.Context, req domain.AccessListSetListRequest) ([]domain.MethodInfo, error)
 	DeleteList(ctx context.Context, req domain.AccessListDeleteListRequest) error
+	DeleteListWithMethods(ctx context.Context, req domain.AccessListDeleteV2ListRequest) error
 }
 
 type AccessList struct {
@@ -129,6 +130,33 @@ func (c AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 //	@Router			/access_list/delete_list [POST]
 func (c AccessList) DeleteList(ctx context.Context, req domain.AccessListDeleteListRequest) error {
 	err := c.service.DeleteList(ctx, req)
+	switch {
+	case errors.Is(err, domain.ErrApplicationNotFound):
+		return apierrors.New(
+			codes.NotFound,
+			domain.ErrCodeApplicationNotFound,
+			fmt.Sprintf("application with id %d not found", req.AppId),
+			err,
+		)
+	default:
+		return err
+	}
+}
+
+// DeleteListWithMethods godoc
+//
+//	@Tags			accessList
+//	@Summary		Удалить список доступных методов для приложения
+//	@Description	Удаляет заданный список методов для приложения
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		domain.AccessListDeleteV2ListRequest	false	"тело запроса"
+//	@Success		200		{object}	any
+//	@Failure		404		{object}	apierrors.Error
+//	@Failure		500		{object}	apierrors.Error
+//	@Router			/access_list/delete_list_with_methods [POST]
+func (c AccessList) DeleteListWithMethods(ctx context.Context, req domain.AccessListDeleteV2ListRequest) error {
+	err := c.service.DeleteListWithMethods(ctx, req)
 	switch {
 	case errors.Is(err, domain.ErrApplicationNotFound):
 		return apierrors.New(

@@ -19,7 +19,8 @@ type AuthData struct {
 }
 
 type AuthorizeRequest struct {
-	ApplicationId int    `validate:"required"`
+	ApplicationId int `validate:"required"`
+	HttpMethod    string
 	Endpoint      string `validate:"required"`
 }
 

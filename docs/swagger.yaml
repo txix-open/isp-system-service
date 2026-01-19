@@ -23,6 +23,19 @@ definitions:
     - appId
     - methods
     type: object
+  domain.AccessListDeleteV2ListRequest:
+    properties:
+      appId:
+        type: integer
+      methods:
+        items:
+          $ref: '#/definitions/domain.Method'
+        minItems: 1
+        type: array
+    required:
+    - appId
+    - methods
+    type: object
   domain.AccessListSetListRequest:
     properties:
       appId:
@@ -40,6 +53,8 @@ definitions:
     properties:
       appId:
         type: integer
+      httpMethod:
+        type: string
       method:
         type: string
       value:
@@ -162,6 +177,8 @@ definitions:
         type: integer
       endpoint:
         type: string
+      httpMethod:
+        type: string
     required:
     - applicationId
     - endpoint
@@ -276,8 +293,19 @@ definitions:
     required:
     - id
     type: object
+  domain.Method:
+    properties:
+      httpMethod:
+        type: string
+      method:
+        type: string
+    required:
+    - method
+    type: object
   domain.MethodInfo:
     properties:
+      httpMethod:
+        type: string
       method:
         type: string
       value:
@@ -415,6 +443,34 @@ paths:
         name: body
         schema:
           $ref: '#/definitions/domain.AccessListDeleteListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apierrors.Error'
+      summary: Удалить список доступных методов для приложения
+      tags:
+      - accessList
+  /access_list/delete_list_with_methods:
+    post:
+      consumes:
+      - application/json
+      description: Удаляет заданный список методов для приложения
+      parameters:
+      - description: тело запроса
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/domain.AccessListDeleteV2ListRequest'
       produces:
       - application/json
       responses:

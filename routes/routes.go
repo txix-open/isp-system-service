@@ -79,6 +79,11 @@ func accessListCluster(c Controllers) []cluster.EndpointDescriptor {
 			Inner:   true,
 			Handler: c.AccessList.DeleteList,
 		},
+		{
+			Path:    "system/access_list/delete_list_with_methods",
+			Inner:   true,
+			Handler: c.AccessList.DeleteListWithMethods,
+		},
 	}
 }
 
