@@ -54,6 +54,11 @@ func secureCluster(c Controllers) []cluster.EndpointDescriptor {
 			Inner:   true,
 			Handler: c.Secure.Authorize,
 		},
+		{
+			Path:    "system/secure/authorize_one_of",
+			Inner:   true,
+			Handler: c.Secure.AuthorizeOneOf,
+		},
 	}
 }
 

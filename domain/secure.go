@@ -26,3 +26,8 @@ type AuthorizeRequest struct {
 type AuthorizeResponse struct {
 	Authorized bool
 }
+
+type AuthorizeOneOfRequest struct {
+	ApplicationId int      `validate:"required"`
+	Endpoints     []string `validate:"required,min=1"`
+}

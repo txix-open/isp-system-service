@@ -196,3 +196,65 @@ func (s *SecureSuite) TestAuthorize_NotFound() {
 		Authorized: false,
 	}, result)
 }
+
+func (s *SecureSuite) TestAuthorizeOneOf_Success_True() {
+	InsertAccessList(s.testDb, entity.AccessList{
+		AppId:  7,
+		Method: "endpoint/one-of/available",
+		Value:  true,
+	})
+
+	InsertAccessList(s.testDb, entity.AccessList{
+		AppId:  7,
+		Method: "endpoint/one-of/not_available",
+		Value:  true,
+	})
+	result := domain.AuthorizeResponse{}
+	err := s.api.Invoke("system/secure/authorize_one_of").
+		JsonRequestBody(domain.AuthorizeOneOfRequest{
+			ApplicationId: 7,
+			Endpoints:     []string{"endpoint/one-of/available", "endpoint/one-of/not_available", "unknown"},
+		}).
+		JsonResponseBody(&result).
+		Do(s.T().Context())
+	s.Require().NoError(err)
+	s.Require().Equal(domain.AuthorizeResponse{
+		Authorized: true,
+	}, result)
+}
+
+func (s *SecureSuite) TestAuthorizeOneOf_Success_False() {
+	InsertAccessList(s.testDb, entity.AccessList{
+		AppId:  7,
+		Method: "endpoint/one-of/not_available_v2",
+		Value:  false,
+	})
+
+	result := domain.AuthorizeResponse{}
+	err := s.api.Invoke("system/secure/authorize_one_of").
+		JsonRequestBody(domain.AuthorizeOneOfRequest{
+			ApplicationId: 7,
+			Endpoints:     []string{"endpoint/one-of/not_available_v2", "unknown"},
+		}).
+		JsonResponseBody(&result).
+		Do(s.T().Context())
+	s.Require().NoError(err)
+	s.Require().Equal(domain.AuthorizeResponse{
+		Authorized: false,
+	}, result)
+}
+
+func (s *SecureSuite) TestAuthorizeOneOf_NotFound() {
+	result := domain.AuthorizeResponse{}
+	err := s.api.Invoke("system/secure/authorize_one_of").
+		JsonRequestBody(domain.AuthorizeOneOfRequest{
+			ApplicationId: 7,
+			Endpoints:     []string{"endpoint/not_found"},
+		}).
+		JsonResponseBody(&result).
+		Do(s.T().Context())
+	s.Require().NoError(err)
+	s.Require().Equal(domain.AuthorizeResponse{
+		Authorized: false,
+	}, result)
+}

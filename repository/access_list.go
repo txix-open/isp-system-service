@@ -44,6 +44,22 @@ func (r AccessList) GetAccessListByAppIdAndMethod(ctx context.Context, appId int
 	}
 }
 
+func (r AccessList) GetAccessListsByAppIdAndMethods(ctx context.Context, appId int, methods []string) ([]entity.AccessList, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.GetAccessListsByAppIdAndMethods")
+
+	q := `
+	SELECT app_id, method, value
+	FROM access_list
+	WHERE app_id = $1 AND method = ANY($2)
+	`
+	result := make([]entity.AccessList, 0)
+	err := r.db.Select(ctx, &result, q, appId, methods)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "exec query %s", q)
+	}
+	return result, nil
+}
+
 func (r AccessList) GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error) {
 	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.GetAccessListByAppId")
 

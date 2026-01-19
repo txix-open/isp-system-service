@@ -11,6 +11,7 @@ import (
 type SecureService interface {
 	Authenticate(ctx context.Context, token string) (*domain.AuthData, error)
 	Authorize(ctx context.Context, appId int, endpoint string) (bool, error)
+	AuthorizeOneOf(ctx context.Context, appId int, endpoints []string) (bool, error)
 }
 
 type Secure struct {
@@ -82,4 +83,23 @@ func (c Secure) Authorize(ctx context.Context, req domain.AuthorizeRequest) (*do
 			Authorized: result,
 		}, nil
 	}
+}
+
+// AuthorizeOneOf godoc
+//
+//	@Tags			secure
+//	@Summary		Метод авторизации приложения
+//	@Description	Проверяет доступ приложения к запрашиваемому ендпоинтам
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		domain.AuthorizeOneOfRequest	true	"Тело запрос"
+//	@Success		200		{array}		domain.AuthorizeResponse
+//	@Failure		500		{object}	apierrors.Error
+//	@Router			/secure/authorize_one_of [POST]
+func (c Secure) AuthorizeOneOf(ctx context.Context, req domain.AuthorizeOneOfRequest) (*domain.AuthorizeResponse, error) {
+	result, err := c.service.AuthorizeOneOf(ctx, req.ApplicationId, req.Endpoints)
+	if err != nil {
+		return nil, errors.WithMessage(err, "authorize one of")
+	}
+	return &domain.AuthorizeResponse{Authorized: result}, nil
 }

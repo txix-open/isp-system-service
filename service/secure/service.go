@@ -16,6 +16,7 @@ type TokenRep interface {
 
 type AccessListRep interface {
 	GetAccessListByAppIdAndMethod(ctx context.Context, appId int, method string) (*entity.AccessList, error)
+	GetAccessListsByAppIdAndMethods(ctx context.Context, appId int, methods []string) ([]entity.AccessList, error)
 }
 
 type Service struct {
@@ -60,4 +61,19 @@ func (s Service) Authorize(ctx context.Context, appId int, endpoint string) (boo
 	}
 
 	return accessList.Value, nil
+}
+
+func (s Service) AuthorizeOneOf(ctx context.Context, appId int, endpoints []string) (bool, error) {
+	accessLists, err := s.accessListRep.GetAccessListsByAppIdAndMethods(ctx, appId, endpoints)
+	if err != nil {
+		return false, errors.WithMessage(err, "get access list by app_id and methods")
+	}
+
+	for _, item := range accessLists {
+		if item.Value == true {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
