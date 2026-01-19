@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/txix-open/isp-kit/db"
 	"github.com/txix-open/isp-kit/db/query"
+	"github.com/txix-open/isp-kit/metrics/sql_metrics"
 )
 
 type AppGroup struct {
@@ -25,11 +26,13 @@ func NewAppGroup(db db.DB) AppGroup {
 }
 
 func (r AppGroup) GetAppGroupById(ctx context.Context, id int) (*entity.AppGroup, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AppGroup.GetAppGroupById")
+
 	q := `
 	SELECT id, name, description, domain_id, created_at, updated_at
 	FROM application_group
 	WHERE id = $1
-`
+	`
 	result := entity.AppGroup{}
 	err := r.db.SelectRow(ctx, &result, q, id)
 	switch {
@@ -43,6 +46,8 @@ func (r AppGroup) GetAppGroupById(ctx context.Context, id int) (*entity.AppGroup
 }
 
 func (r AppGroup) GetAppGroupByIdList(ctx context.Context, idList []int) ([]entity.AppGroup, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AppGroup.GetAppGroupByIdList")
+
 	q, arg, err := query.New().
 		Select("id", "name", "description", "domain_id", "created_at", "updated_at").
 		From("application_group").
@@ -63,6 +68,8 @@ func (r AppGroup) GetAppGroupByIdList(ctx context.Context, idList []int) ([]enti
 }
 
 func (r AppGroup) GetAppGroupByDomainId(ctx context.Context, domainIdList []int) ([]entity.AppGroup, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AppGroup.GetAppGroupByDomainId")
+
 	q, arg, err := query.New().
 		Select("id", "name", "description", "domain_id", "created_at", "updated_at").
 		From("application_group").
@@ -83,11 +90,13 @@ func (r AppGroup) GetAppGroupByDomainId(ctx context.Context, domainIdList []int)
 }
 
 func (r AppGroup) GetAppGroupByNameAndDomainId(ctx context.Context, name string, domainId int) (*entity.AppGroup, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AppGroup.GetAppGroupByNameAndDomainId")
+
 	q := `
 	SELECT id, name, description, domain_id, created_at, updated_at
 	FROM application_group
 	WHERE name = $1 AND domain_id = $2
-`
+	`
 	result := entity.AppGroup{}
 	err := r.db.SelectRow(ctx, &result, q, name, domainId)
 	switch {
@@ -101,13 +110,15 @@ func (r AppGroup) GetAppGroupByNameAndDomainId(ctx context.Context, name string,
 }
 
 func (r AppGroup) CreateAppGroup(ctx context.Context, name string, desc string, domainId int) (*entity.AppGroup, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AppGroup.CreateAppGroup")
+
 	q := `
 	INSERT INTO application_group
 	(name, description, domain_id)
 	VALUES ($1, $2, $3)
 	ON CONFLICT (name, domain_id) DO NOTHING
 	RETURNING id, name, description, domain_id, created_at, updated_at
-`
+	`
 	result := entity.AppGroup{}
 	err := r.db.SelectRow(ctx, &result, q, name, desc, domainId)
 	switch {
@@ -121,12 +132,14 @@ func (r AppGroup) CreateAppGroup(ctx context.Context, name string, desc string, 
 }
 
 func (r AppGroup) UpdateAppGroup(ctx context.Context, id int, name string, description string) (*entity.AppGroup, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AppGroup.UpdateAppGroup")
+
 	q := `
 	UPDATE application_group 
 	SET name = $1, description = $2
 	WHERE id = $3
 	RETURNING id, name, description, domain_id, created_at, updated_at
-`
+	`
 	result := entity.AppGroup{}
 	err := r.db.SelectRow(ctx, &result, q, name, description, id)
 	var pgErr *pgconn.PgError
@@ -143,6 +156,8 @@ func (r AppGroup) UpdateAppGroup(ctx context.Context, id int, name string, descr
 }
 
 func (r AppGroup) DeleteAppGroup(ctx context.Context, idList []int) (int, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AppGroup.DeleteAppGroup")
+
 	q, args, err := query.New().
 		Delete("application_group").
 		Where(squirrel.Eq{"id": idList}).
@@ -165,6 +180,8 @@ func (r AppGroup) DeleteAppGroup(ctx context.Context, idList []int) (int, error)
 }
 
 func (r AppGroup) GetAllAppGroups(ctx context.Context) ([]entity.AppGroup, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AppGroup.GetAllAppGroups")
+
 	q, arg, err := query.New().
 		Select("id", "name", "description", "domain_id", "created_at", "updated_at").
 		From("application_group").

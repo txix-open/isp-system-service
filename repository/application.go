@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/txix-open/isp-kit/db"
 	"github.com/txix-open/isp-kit/db/query"
+	"github.com/txix-open/isp-kit/metrics/sql_metrics"
 )
 
 type Application struct {
@@ -25,11 +26,13 @@ func NewApplication(db db.DB) Application {
 }
 
 func (r Application) GetApplicationById(ctx context.Context, id int) (*entity.Application, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Application.GetApplicationById")
+
 	q := `
 	SELECT id, name, description, application_group_id, type, created_at, updated_at
 	FROM application
 	WHERE id = $1
-`
+	`
 	result := entity.Application{}
 	err := r.db.SelectRow(ctx, &result, q, id)
 	switch {
@@ -43,6 +46,8 @@ func (r Application) GetApplicationById(ctx context.Context, id int) (*entity.Ap
 }
 
 func (r Application) GetApplicationByIdList(ctx context.Context, idList []int) ([]entity.Application, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Application.GetApplicationByIdList")
+
 	q, args, err := query.New().
 		Select("id", "name", "description", "application_group_id", "type", "created_at", "updated_at").
 		From("application").
@@ -63,6 +68,8 @@ func (r Application) GetApplicationByIdList(ctx context.Context, idList []int) (
 }
 
 func (r Application) GetApplicationByAppGroupIdList(ctx context.Context, appGroupIdList []int) ([]entity.Application, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Application.GetApplicationByAppGroupIdList")
+
 	q, args, err := query.New().
 		Select("id", "name", "description", "application_group_id", "type", "created_at", "updated_at").
 		From("application").
@@ -83,11 +90,13 @@ func (r Application) GetApplicationByAppGroupIdList(ctx context.Context, appGrou
 }
 
 func (r Application) GetApplicationByNameAndAppGroupId(ctx context.Context, name string, serviceId int) (*entity.Application, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Application.GetApplicationByNameAndAppGroupId")
+
 	q := `
 	SELECT id, name, description, application_group_id, type, created_at, updated_at
 	FROM application 
 	WHERE name = $1 AND application_group_id = $2
-`
+	`
 	result := entity.Application{}
 	err := r.db.SelectRow(ctx, &result, q, name, serviceId)
 	switch {
@@ -100,14 +109,22 @@ func (r Application) GetApplicationByNameAndAppGroupId(ctx context.Context, name
 	}
 }
 
-func (r Application) CreateApplication(ctx context.Context, id int, name string, desc string, appGroupId int, appType string) (
-	*entity.Application, error) {
+func (r Application) CreateApplication(
+	ctx context.Context,
+	id int,
+	name string,
+	desc string,
+	appGroupId int,
+	appType string,
+) (*entity.Application, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Application.CreateApplication")
+
 	q := `
 	INSERT INTO application 
 	(id, name, description, application_group_id, type)
 	VALUES ($1, $2, $3, $4, $5)
 	RETURNING id, name, description, application_group_id, type, created_at, updated_at
-`
+	`
 	result := entity.Application{}
 	err := r.db.SelectRow(ctx, &result, q, id, name, desc, appGroupId, appType)
 	if err != nil {
@@ -122,13 +139,15 @@ func (r Application) UpdateApplication(
 	name string,
 	description string,
 ) (*entity.Application, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Application.UpdateApplication")
+
 	q := `
 	UPDATE application 
 	SET name = $2,
 		description = $3
 	WHERE id = $1
 	RETURNING id, name, description, application_group_id, type, created_at, updated_at
-`
+	`
 	result := entity.Application{}
 	err := r.db.SelectRow(ctx, &result, q, id, name, description)
 	if err != nil {
@@ -144,6 +163,8 @@ func (r Application) UpdateApplicationWithNewId(
 	name string,
 	description string,
 ) (*entity.Application, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Application.UpdateApplicationWithNewId")
+
 	q := `
 	UPDATE application 
 	SET id = $2,
@@ -151,7 +172,7 @@ func (r Application) UpdateApplicationWithNewId(
 		description = $4
 	WHERE id = $1
 	RETURNING id, name, description, application_group_id, type, created_at, updated_at
-`
+	`
 	result := entity.Application{}
 	err := r.db.SelectRow(ctx, &result, q, oldId, newId, name, description)
 	if err != nil {
@@ -161,6 +182,8 @@ func (r Application) UpdateApplicationWithNewId(
 }
 
 func (r Application) DeleteApplicationByIdList(ctx context.Context, idList []int) (int, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Application.DeleteApplicationByIdList")
+
 	q, args, err := query.New().
 		Delete("application").
 		Where(squirrel.Eq{"id": idList}).
@@ -183,6 +206,8 @@ func (r Application) DeleteApplicationByIdList(ctx context.Context, idList []int
 }
 
 func (r Application) NextApplicationId(ctx context.Context) (int, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Application.NextApplicationId")
+
 	q := `SELECT COALESCE(MAX(id)+1, 1) FROM application;`
 	nextAppId := 0
 	err := r.db.SelectRow(ctx, &nextAppId, q)
@@ -193,6 +218,8 @@ func (r Application) NextApplicationId(ctx context.Context) (int, error) {
 }
 
 func (r Application) GetAllApplications(ctx context.Context) ([]entity.Application, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Application.GetAllApplications")
+
 	q, args, err := query.New().
 		Select("id", "name", "description", "application_group_id", "type", "created_at", "updated_at").
 		From("application").
