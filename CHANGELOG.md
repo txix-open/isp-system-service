@@ -1,3 +1,6 @@
+### v5.7.0
+* Обновлены зависимости
+* Добавлен новый endpoint: `system/secure/authorize_one_of`
 ### v5.6.0
 * Для endpoint'а `system/secure/authenticate` в ответ добавлено поле `appName` (название приложения)
 * Обновлена версия `go` до `1.25`
