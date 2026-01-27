@@ -158,7 +158,7 @@ func (s *ApplicationSuite) TestUpdate_HappyPath() {
 	inserted := s.insertApps(2)
 	apiReq := domain.UpdateApplicationRequest{
 		OldId:       inserted[0].Id,
-		NewId:       fake.It[int](),
+		NewId:       inserted[0].Id + inserted[1].Id,
 		Name:        fake.It[string](),
 		Description: fake.It[string](),
 	}
