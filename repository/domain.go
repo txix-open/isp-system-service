@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/txix-open/isp-kit/db"
 	"github.com/txix-open/isp-kit/db/query"
+	"github.com/txix-open/isp-kit/metrics/sql_metrics"
 )
 
 type Domain struct {
@@ -24,11 +25,13 @@ func NewDomain(db db.DB) Domain {
 }
 
 func (r Domain) GetDomainById(ctx context.Context, id int) (*entity.Domain, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Domain.GetDomainById")
+
 	q := `
 	SELECT id, name, description, system_id, created_at, updated_at
 	FROM domain
 	WHERE id = $1
-`
+	`
 	result := entity.Domain{}
 	err := r.db.SelectRow(ctx, &result, q, id)
 	switch {
@@ -42,6 +45,8 @@ func (r Domain) GetDomainById(ctx context.Context, id int) (*entity.Domain, erro
 }
 
 func (r Domain) GetDomainByIdList(ctx context.Context, idList []int) ([]entity.Domain, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Domain.GetDomainByIdList")
+
 	q, args, err := query.New().
 		Select("id", "name", "description", "system_id", "created_at", "updated_at").
 		From("domain").
@@ -61,12 +66,14 @@ func (r Domain) GetDomainByIdList(ctx context.Context, idList []int) ([]entity.D
 }
 
 func (r Domain) GetDomainBySystemId(ctx context.Context, systemId int) ([]entity.Domain, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Domain.GetDomainBySystemId")
+
 	q := `
 	SELECT id, name, description, system_id, created_at, updated_at
 	FROM domain
 	WHERE system_id = $1
 	ORDER BY created_at DESC
-`
+	`
 	result := make([]entity.Domain, 0)
 	err := r.db.Select(ctx, &result, q, systemId)
 	if err != nil {
@@ -77,11 +84,13 @@ func (r Domain) GetDomainBySystemId(ctx context.Context, systemId int) ([]entity
 }
 
 func (r Domain) GetDomainByNameAndSystemId(ctx context.Context, name string, systemId int) (*entity.Domain, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Domain.GetDomainByNameAndSystemId")
+
 	q := `
 	SELECT id, name, description, system_id, created_at, updated_at
 	FROM domain
 	WHERE name = $1 AND system_id = $2 
-`
+	`
 	result := entity.Domain{}
 	err := r.db.SelectRow(ctx, &result, q, name, systemId)
 	switch {
@@ -95,12 +104,14 @@ func (r Domain) GetDomainByNameAndSystemId(ctx context.Context, name string, sys
 }
 
 func (r Domain) CreateDomain(ctx context.Context, name string, desc string, systemId int) (*entity.Domain, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Domain.CreateDomain")
+
 	q := `
 	INSERT INTO domain
 	(name, description, system_id)
 	VALUES ($1, $2, $3)
 	RETURNING id, name, description, system_id, created_at, updated_at
-`
+	`
 	result := entity.Domain{}
 	err := r.db.SelectRow(ctx, &result, q, name, desc, systemId)
 	if err != nil {
@@ -110,6 +121,8 @@ func (r Domain) CreateDomain(ctx context.Context, name string, desc string, syst
 }
 
 func (r Domain) UpdateDomain(ctx context.Context, id int, name string, description string) (*entity.Domain, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Domain.UpdateDomain")
+
 	q := `
 	UPDATE domain 
 	SET name = $1, description = $2
@@ -129,6 +142,8 @@ func (r Domain) UpdateDomain(ctx context.Context, id int, name string, descripti
 }
 
 func (r Domain) DeleteDomain(ctx context.Context, idList []int) (int, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Domain.DeleteDomain")
+
 	q, args, err := query.New().
 		Delete("domain").
 		Where(squirrel.Eq{"id": idList}).

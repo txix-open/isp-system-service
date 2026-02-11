@@ -10,7 +10,7 @@ import (
 
 type SecureService interface {
 	Authenticate(ctx context.Context, token string) (*domain.AuthData, error)
-	Authorize(ctx context.Context, appId int, endpoint string) (bool, error)
+	Authorize(ctx context.Context, req domain.AuthorizeRequest) (bool, error)
 }
 
 type Secure struct {
@@ -69,7 +69,7 @@ func (c Secure) Authenticate(ctx context.Context, req domain.AuthenticateRequest
 //	@Failure		500		{object}	apierrors.Error
 //	@Router			/secure/authorize [POST]
 func (c Secure) Authorize(ctx context.Context, req domain.AuthorizeRequest) (*domain.AuthorizeResponse, error) {
-	result, err := c.service.Authorize(ctx, req.ApplicationId, req.Endpoint)
+	result, err := c.service.Authorize(ctx, req)
 	switch {
 	case errors.Is(err, domain.ErrAccessListNotFound):
 		return &domain.AuthorizeResponse{

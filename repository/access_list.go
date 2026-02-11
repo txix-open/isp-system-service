@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/txix-open/isp-kit/db"
 	"github.com/txix-open/isp-kit/db/query"
+	"github.com/txix-open/isp-kit/metrics/sql_metrics"
 )
 
 type AccessList struct {
@@ -23,14 +24,20 @@ func NewAccessList(db db.DB) AccessList {
 	}
 }
 
-func (r AccessList) GetAccessListByAppIdAndMethod(ctx context.Context, appId int, method string) (*entity.AccessList, error) {
+func (r AccessList) GetAccessListByAppIdAndMethod(ctx context.Context, appId int, httpMethod string, method string) (*entity.AccessList, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.GetAccessListByAppIdAndMethod")
+
 	q := `
-	SELECT app_id, method, value
-	FROM access_list
-	WHERE app_id = $1 AND method = $2
-`
+		SELECT app_id, http_method, method, value
+		FROM access_list
+		WHERE app_id = $1
+		AND method = $2
+		AND http_method IN ($3, '')
+		ORDER BY (http_method = $3) DESC
+		LIMIT 1;
+	`
 	result := entity.AccessList{}
-	err := r.db.SelectRow(ctx, &result, q, appId, method)
+	err := r.db.SelectRow(ctx, &result, q, appId, method, httpMethod)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, domain.ErrAccessListNotFound
@@ -42,11 +49,13 @@ func (r AccessList) GetAccessListByAppIdAndMethod(ctx context.Context, appId int
 }
 
 func (r AccessList) GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.GetAccessListByAppId")
+
 	q := `
-	SELECT app_id, method, value
+	SELECT app_id, http_method, method, value
 	FROM access_list
 	WHERE app_id = $1
-`
+	`
 	result := make([]entity.AccessList, 0)
 	err := r.db.Select(ctx, &result, q, appId)
 	if err != nil {
@@ -57,8 +66,10 @@ func (r AccessList) GetAccessListByAppId(ctx context.Context, appId int) ([]enti
 }
 
 func (r AccessList) GetAccessListByAppIdList(ctx context.Context, appIdList []int) ([]entity.AccessList, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.GetAccessListByAppIdList")
+
 	q, args, err := query.New().
-		Select("app_id", "method", "value").
+		Select("app_id", "http_method", "method", "value").
 		From("access_list").
 		Where(squirrel.Eq{"app_id": appIdList}).
 		ToSql()
@@ -76,11 +87,13 @@ func (r AccessList) GetAccessListByAppIdList(ctx context.Context, appIdList []in
 }
 
 func (r AccessList) InsertArrayAccessList(ctx context.Context, entity []entity.AccessList) error {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.InsertArrayAccessList")
+
 	qBuilder := query.New().
 		Insert("access_list").
-		Columns("app_id", "method", "value")
+		Columns("app_id", "http_method", "method", "value")
 	for _, e := range entity {
-		qBuilder = qBuilder.Values(e.AppId, e.Method, e.Value)
+		qBuilder = qBuilder.Values(e.AppId, e.HttpMethod, e.Method, e.Value)
 	}
 	q, args, err := qBuilder.ToSql()
 	if err != nil {
@@ -96,15 +109,17 @@ func (r AccessList) InsertArrayAccessList(ctx context.Context, entity []entity.A
 }
 
 func (r AccessList) UpsertAccessList(ctx context.Context, e entity.AccessList) (int, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.UpsertAccessList")
+
 	q := `
 	INSERT INTO access_list 
-	(app_id, method, value)
-	VALUES ($1, $2, $3)
-	ON CONFLICT (app_id, method) 
+	(app_id, http_method, method, value)
+	VALUES ($1, $2, $3, $4)
+	ON CONFLICT (app_id, http_method, method) 
 		DO UPDATE
 			SET (value) = (SELECT EXCLUDED.value)
-`
-	result, err := r.db.Exec(ctx, q, e.AppId, e.Method, e.Value)
+	`
+	result, err := r.db.Exec(ctx, q, e.AppId, e.HttpMethod, e.Method, e.Value)
 	if err != nil {
 		return 0, errors.WithMessagef(err, "exec query %s", q)
 	}
@@ -117,14 +132,25 @@ func (r AccessList) UpsertAccessList(ctx context.Context, e entity.AccessList) (
 	return int(rowsAffected), nil
 }
 
-func (r AccessList) DeleteAccessList(ctx context.Context, appId int, methods []string) error {
+func (r AccessList) DeleteAccessList(ctx context.Context, appId int, methods []entity.Method) error {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.DeleteAccessList")
+
+	methodsClause := squirrel.Or{}
+	for _, method := range methods {
+		methodsClause = append(methodsClause, squirrel.And{
+			squirrel.Eq{"method": method.Method},
+			squirrel.Eq{"http_method": method.HttpMethod},
+		})
+	}
+
 	q, args, err := query.New().
 		Delete("access_list").
-		Where(squirrel.Eq{
-			"app_id": appId,
-			"method": methods,
+		Where(squirrel.And{
+			squirrel.Eq{
+				"app_id": appId,
+			},
+			methodsClause,
 		}).
-		Suffix("RETURNING app_id, method, value").
 		ToSql()
 	if err != nil {
 		return errors.WithMessage(err, "build query")
@@ -139,11 +165,13 @@ func (r AccessList) DeleteAccessList(ctx context.Context, appId int, methods []s
 }
 
 func (r AccessList) DeleteAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.DeleteAccessListByAppId")
+
 	q := `
 	DELETE FROM access_list
 	WHERE app_id = $1
-	RETURNING app_id, method, value
-`
+	RETURNING app_id, http_method, method, value
+	`
 	result := make([]entity.AccessList, 0)
 	err := r.db.Select(ctx, &result, q, appId)
 	if err != nil {

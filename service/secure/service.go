@@ -15,7 +15,7 @@ type TokenRep interface {
 }
 
 type AccessListRep interface {
-	GetAccessListByAppIdAndMethod(ctx context.Context, appId int, method string) (*entity.AccessList, error)
+	GetAccessListByAppIdAndMethod(ctx context.Context, appId int, httpMethod string, method string) (*entity.AccessList, error)
 }
 
 type Service struct {
@@ -53,8 +53,13 @@ func (s Service) Authenticate(ctx context.Context, token string) (*domain.AuthDa
 	}, nil
 }
 
-func (s Service) Authorize(ctx context.Context, appId int, endpoint string) (bool, error) {
-	accessList, err := s.accessListRep.GetAccessListByAppIdAndMethod(ctx, appId, endpoint)
+func (s Service) Authorize(ctx context.Context, req domain.AuthorizeRequest) (bool, error) {
+	accessList, err := s.accessListRep.GetAccessListByAppIdAndMethod(
+		ctx,
+		req.ApplicationId,
+		req.HttpMethod,
+		req.Endpoint,
+	)
 	if err != nil {
 		return false, errors.WithMessage(err, "get access list by app_id and method")
 	}

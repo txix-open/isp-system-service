@@ -2,8 +2,10 @@ package routes
 
 import (
 	"isp-system-service/controller"
+	"isp-system-service/docs"
 
 	"github.com/txix-open/isp-kit/cluster"
+	"github.com/txix-open/isp-kit/common_endpoints"
 	"github.com/txix-open/isp-kit/grpc"
 	"github.com/txix-open/isp-kit/grpc/endpoint"
 )
@@ -39,6 +41,7 @@ func endpointDescriptors(c Controllers) []cluster.EndpointDescriptor {
 		applicationCluster(c),
 		tokenCluster(c),
 		applicationGroupCluster(c),
+		commonEndpoints(),
 	)
 }
 
@@ -78,6 +81,11 @@ func accessListCluster(c Controllers) []cluster.EndpointDescriptor {
 			Path:    "system/access_list/delete_list",
 			Inner:   true,
 			Handler: c.AccessList.DeleteList,
+		},
+		{
+			Path:    "system/access_list/delete_list_with_methods",
+			Inner:   true,
+			Handler: c.AccessList.DeleteListWithMethods,
 		},
 	}
 }
@@ -246,6 +254,13 @@ func applicationGroupCluster(c Controllers) []cluster.EndpointDescriptor {
 			Handler: c.AppGroup.GetAll,
 		},
 	}
+}
+
+func commonEndpoints() []cluster.EndpointDescriptor {
+	return common_endpoints.CommonEndpoints(
+		"system",
+		common_endpoints.WithSwaggerEndpoint(docs.SwaggerJson),
+	)
 }
 
 func concatCluster(clusters ...[]cluster.EndpointDescriptor) []cluster.EndpointDescriptor {

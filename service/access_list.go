@@ -11,7 +11,7 @@ import (
 
 type AccessListRepo interface {
 	GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error)
-	DeleteAccessList(ctx context.Context, appId int, methods []string) error
+	DeleteAccessList(ctx context.Context, appId int, methods []entity.Method) error
 }
 
 type AccessListSetOneTx interface {
@@ -21,7 +21,7 @@ type AccessListSetOneTx interface {
 type AccessListSetListTx interface {
 	GetAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error)
 	InsertArrayAccessList(ctx context.Context, entity []entity.AccessList) error
-	DeleteAccessList(ctx context.Context, appId int, methods []string) error
+	DeleteAccessList(ctx context.Context, appId int, methods []entity.Method) error
 	DeleteAccessListByAppId(ctx context.Context, appId int) ([]entity.AccessList, error)
 }
 
@@ -79,9 +79,10 @@ func (s AccessList) SetOne(ctx context.Context, request domain.AccessListSetOneR
 	var resp int
 	err = s.tx.AccessListSetOneTx(ctx, func(ctx context.Context, tx AccessListSetOneTx) error {
 		resp, err = tx.UpsertAccessList(ctx, entity.AccessList{
-			AppId:  request.AppId,
-			Method: request.Method,
-			Value:  request.Value,
+			AppId:      request.AppId,
+			HttpMethod: request.HttpMethod,
+			Method:     request.Method,
+			Value:      request.Value,
 		})
 		if err != nil {
 			return errors.WithMessage(err, "upsert access list")
@@ -113,13 +114,17 @@ func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 		}
 
 		newAccessList := make([]entity.AccessList, len(req.Methods))
-		updateMethods := make([]string, len(req.Methods))
+		updateMethods := make([]entity.Method, len(req.Methods))
 		for i, m := range req.Methods {
-			updateMethods[i] = m.Method
+			updateMethods[i] = entity.Method{
+				HttpMethod: m.HttpMethod,
+				Method:     m.Method,
+			}
 			newAccessList[i] = entity.AccessList{
-				AppId:  req.AppId,
-				Method: m.Method,
-				Value:  m.Value,
+				AppId:      req.AppId,
+				HttpMethod: m.HttpMethod,
+				Method:     m.Method,
+				Value:      m.Value,
 			}
 		}
 
@@ -158,11 +163,27 @@ func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 }
 
 func (s AccessList) DeleteList(ctx context.Context, req domain.AccessListDeleteListRequest) error {
+	methods := make([]domain.Method, 0, len(req.Methods))
+	for _, method := range req.Methods {
+		methods = append(methods, domain.Method{Method: method})
+	}
+	return s.DeleteListWithMethods(ctx, domain.AccessListDeleteV2ListRequest{
+		AppId:   req.AppId,
+		Methods: methods,
+	})
+}
+
+func (s AccessList) DeleteListWithMethods(ctx context.Context, req domain.AccessListDeleteV2ListRequest) error {
 	_, err := s.appRepo.GetApplicationById(ctx, req.AppId)
 	if err != nil {
 		return errors.WithMessage(err, "get application by id")
 	}
-	err = s.accessListRepo.DeleteAccessList(ctx, req.AppId, req.Methods)
+
+	methods := make([]entity.Method, 0, len(req.Methods))
+	for _, method := range req.Methods {
+		methods = append(methods, entity.Method{Method: method.Method, HttpMethod: method.HttpMethod})
+	}
+	err = s.accessListRepo.DeleteAccessList(ctx, req.AppId, methods)
 	if err != nil {
 		return errors.WithMessage(err, "delete access_list")
 	}

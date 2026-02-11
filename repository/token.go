@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/txix-open/isp-kit/db"
 	"github.com/txix-open/isp-kit/db/query"
+	"github.com/txix-open/isp-kit/metrics/sql_metrics"
 )
 
 type Token struct {
@@ -24,12 +25,14 @@ func NewToken(db db.DB) Token {
 }
 
 func (r Token) SaveToken(ctx context.Context, token string, appId int, expireTime int) (*entity.Token, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Token.SaveToken")
+
 	q := `
 	INSERT INTO token
 	(token, app_id, expire_time)
 	VALUES ($1, $2, $3)
 	RETURNING token, app_id, expire_time, created_at
-`
+	`
 	result := entity.Token{}
 	err := r.db.SelectRow(ctx, &result, q, token, appId, expireTime)
 	if err != nil {
@@ -40,11 +43,13 @@ func (r Token) SaveToken(ctx context.Context, token string, appId int, expireTim
 }
 
 func (r Token) GetTokenById(ctx context.Context, token string) (*entity.Token, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Token.GetTokenById")
+
 	q := `
 	SELECT token, app_id, expire_time, created_at
 	FROM token
 	WHERE token = $1
-`
+	`
 	result := entity.Token{}
 	err := r.db.SelectRow(ctx, &result, q, token)
 	switch {
@@ -58,6 +63,8 @@ func (r Token) GetTokenById(ctx context.Context, token string) (*entity.Token, e
 }
 
 func (r Token) GetTokenByAppIdList(ctx context.Context, appIdList []int) ([]entity.Token, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Token.GetTokenByAppIdList")
+
 	q, args, err := query.New().
 		Select("token", "app_id", "expire_time", "created_at").
 		From("token").
@@ -78,6 +85,8 @@ func (r Token) GetTokenByAppIdList(ctx context.Context, appIdList []int) ([]enti
 }
 
 func (r Token) DeleteToken(ctx context.Context, tokens []string) (int, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Token.DeleteToken")
+
 	q, args, err := query.New().
 		Delete("token").
 		Where(squirrel.Eq{"token": tokens}).
@@ -100,6 +109,8 @@ func (r Token) DeleteToken(ctx context.Context, tokens []string) (int, error) {
 }
 
 func (r Token) AuthDataByToken(ctx context.Context, token string) (*entity.AuthData, error) {
+	ctx = sql_metrics.OperationLabelToContext(ctx, "Token.AuthDataByToken")
+
 	q := `
 SELECT system_id, domain_id, application_group_id, app_id, application.name AS app_name , token.expire_time, token.created_at
 FROM token
