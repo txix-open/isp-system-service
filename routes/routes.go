@@ -259,7 +259,7 @@ func applicationGroupCluster(c Controllers) []cluster.EndpointDescriptor {
 func commonEndpoints() []cluster.EndpointDescriptor {
 	return common_endpoints.CommonEndpoints(
 		"system",
-		common_endpoints.WithSwaggerEndpoint(docs.SwaggerYaml),
+		common_endpoints.WithSwaggerEndpoint(docs.SwaggerJson),
 	)
 }
 
