@@ -1,9 +1,10 @@
 package domain
 
 type AccessListSetOneRequest struct {
-	AppId  int    `validate:"required"`
-	Method string `validate:"required"`
-	Value  bool
+	AppId      int `validate:"required"`
+	HttpMethod string
+	Method     string `validate:"required"`
+	Value      bool
 }
 
 type AccessListSetOneResponse struct {
@@ -17,11 +18,22 @@ type AccessListSetListRequest struct {
 }
 
 type MethodInfo struct {
-	Method string
-	Value  bool
+	HttpMethod string
+	Method     string
+	Value      bool
 }
 
 type AccessListDeleteListRequest struct {
 	AppId   int      `validate:"required"`
 	Methods []string `validate:"required,min=1"`
+}
+
+type AccessListDeleteV2ListRequest struct {
+	AppId   int      `validate:"required"`
+	Methods []Method `validate:"required,min=1"`
+}
+
+type Method struct {
+	HttpMethod string
+	Method     string `validate:"required"`
 }

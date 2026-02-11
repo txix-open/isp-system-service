@@ -1,6 +1,7 @@
 package tests_test
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -194,5 +195,28 @@ func (s *SecureSuite) TestAuthorize_NotFound() {
 	s.Require().NoError(err)
 	s.Require().Equal(domain.AuthorizeResponse{
 		Authorized: false,
+	}, result)
+}
+
+func (s *SecureSuite) TestAuthorize_WithHttpMethod_Success_True() {
+	InsertAccessList(s.testDb, entity.AccessList{
+		AppId:      7,
+		HttpMethod: http.MethodGet,
+		Method:     "endpoint/available_http",
+		Value:      true,
+	})
+
+	result := domain.AuthorizeResponse{}
+	err := s.api.Invoke("system/secure/authorize").
+		JsonRequestBody(domain.AuthorizeRequest{
+			ApplicationId: 7,
+			HttpMethod:    http.MethodGet,
+			Endpoint:      "endpoint/available_http",
+		}).
+		JsonResponseBody(&result).
+		Do(s.T().Context())
+	s.Require().NoError(err)
+	s.Require().Equal(domain.AuthorizeResponse{
+		Authorized: true,
 	}, result)
 }
