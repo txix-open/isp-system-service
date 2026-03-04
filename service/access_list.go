@@ -62,8 +62,9 @@ func (s AccessList) GetById(ctx context.Context, appId int) ([]domain.MethodInfo
 	methodInfos := make([]domain.MethodInfo, len(accessList))
 	for i, access := range accessList {
 		methodInfos[i] = domain.MethodInfo{
-			Method: access.Method,
-			Value:  access.Value,
+			HttpMethod: access.HttpMethod,
+			Method:     access.Method,
+			Value:      access.Value,
 		}
 	}
 
@@ -154,8 +155,9 @@ func (s AccessList) SetList(ctx context.Context, req domain.AccessListSetListReq
 	methodInfos := make([]domain.MethodInfo, len(accessList))
 	for i, access := range accessList {
 		methodInfos[i] = domain.MethodInfo{
-			Method: access.Method,
-			Value:  access.Value,
+			HttpMethod: access.HttpMethod,
+			Method:     access.Method,
+			Value:      access.Value,
 		}
 	}
 

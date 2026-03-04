@@ -1,3 +1,5 @@
+### v5.7.1
+* Методы `/access_list/get_by_id`, `/access_list/set_list` теперь возвращают `httpMethod`
 ### v5.7.0
 * Обновлены зависимости
 * Добавлено поле `http_method` в `access_list`
