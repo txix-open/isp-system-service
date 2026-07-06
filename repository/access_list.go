@@ -135,7 +135,7 @@ func (r AccessList) UpsertAccessList(ctx context.Context, e entity.AccessList) (
 func (r AccessList) DeleteAccessList(ctx context.Context, appId int, methods []entity.Method) error {
 	ctx = sql_metrics.OperationLabelToContext(ctx, "AccessList.DeleteAccessList")
 
-	methodsClause := squirrel.Or{}
+	methodsClause := make(squirrel.Or, 0, len(methods))
 	for _, method := range methods {
 		methodsClause = append(methodsClause, squirrel.And{
 			squirrel.Eq{"method": method.Method},
