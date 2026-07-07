@@ -53,6 +53,7 @@ func (s *SecureSuite) SetupSuite() {
 	})
 }
 
+// nolint: gosec
 func (s *SecureSuite) TestAuthenticate_Success() {
 	InsertToken(s.testDb, entity.Token{
 		Token: "test_token_success", AppId: 7, ExpireTime: -1, CreatedAt: time.Now().UTC(),
@@ -121,6 +122,7 @@ func (s *SecureSuite) TestAuthenticate_NotExpired() {
 	}, result)
 }
 
+// nolint: gosec
 func (s *SecureSuite) TestAuthenticate_Expired() {
 	InsertToken(s.testDb, entity.Token{
 		Token: "test_token_expired", AppId: 7, ExpireTime: 0, CreatedAt: time.Now().UTC(),
