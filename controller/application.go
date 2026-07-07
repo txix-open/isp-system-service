@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-// nolint:interfacebloat
+//nolint:interfacebloat
 type ApplicationService interface {
 	GetById(ctx context.Context, appId int) (*domain.ApplicationWithTokens, error)
 	GetByToken(ctx context.Context, token string) (*domain.GetApplicationByTokenResponse, error)
