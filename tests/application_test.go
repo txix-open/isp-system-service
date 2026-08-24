@@ -29,7 +29,6 @@ type ApplicationSuite struct {
 
 	test         *test.Test
 	testDb       *dbt.TestDb
-	domainRepo   repository.Domain
 	appRepo      repository.Application
 	appGroupRepo repository.AppGroup
 	tokenRepo    repository.Token
@@ -44,7 +43,6 @@ func (s *ApplicationSuite) SetupTest() {
 	locator := assembly.NewLocator(s.testDb, s.test.Logger())
 	config := locator.Config(conf.Remote{})
 	_, s.api = grpct.TestServer(s.test, config.Handler)
-	s.domainRepo = repository.NewDomain(s.testDb)
 	s.appRepo = repository.NewApplication(s.testDb)
 	s.appGroupRepo = repository.NewAppGroup(s.testDb)
 	s.tokenRepo = repository.NewToken(s.testDb)
@@ -68,8 +66,44 @@ func (s *ApplicationSuite) TestGetAllApplications() {
 	s.Require().ElementsMatch(expectedApps, result)
 }
 
+func (s *ApplicationSuite) Test_GetByAppId() {
+	expectedApps := s.insertApps(2)
+
+	result := []domain.Application{}
+	err := s.api.Invoke("system/application/get_by_app_group").
+		JsonRequestBody(domain.Identity{
+			Id: expectedApps[0].ApplicationGroupId,
+		}).
+		JsonResponseBody(&result).
+		Do(s.T().Context())
+	s.Require().NoError(err)
+
+	for i := range result {
+		s.Require().NotEmpty(result[i].CreatedAt)
+		result[i].CreatedAt = time.Time{}
+
+		s.Require().NotEmpty(result[i].UpdatedAt)
+		result[i].UpdatedAt = time.Time{}
+	}
+	s.Require().ElementsMatch(expectedApps, result)
+}
+
+func (s *ApplicationSuite) Test_GetByAppId_NotFoundAny() {
+	insertedApps := s.insertApps(2)
+
+	result := []domain.Application{}
+	err := s.api.Invoke("system/application/get_by_app_group").
+		JsonRequestBody(domain.Identity{
+			Id: fake.It[int]() + insertedApps[0].ApplicationGroupId,
+		}).
+		JsonResponseBody(&result).
+		Do(s.T().Context())
+	s.Require().NoError(err)
+	s.Require().Empty(result)
+}
+
 func (s *ApplicationSuite) TestCreate_HappyPath() {
-	result := domain.ApplicationWithTokens{}
+	result := domain.Application{}
 	appGroup := s.createAppGroup()
 
 	apiReq := domain.CreateApplicationRequest{
@@ -85,21 +119,20 @@ func (s *ApplicationSuite) TestCreate_HappyPath() {
 		Do(s.T().Context())
 	s.Require().NoError(err)
 
-	s.Require().NotEmpty(result.App.CreatedAt)
-	result.App.CreatedAt = time.Time{}
+	s.Require().NotEmpty(result.CreatedAt)
+	result.CreatedAt = time.Time{}
 
-	s.Require().NotEmpty(result.App.UpdatedAt)
-	result.App.UpdatedAt = time.Time{}
+	s.Require().NotEmpty(result.UpdatedAt)
+	result.UpdatedAt = time.Time{}
 
 	expectedApp := domain.Application{
-		Id:          apiReq.Id,
-		Name:        apiReq.Name,
-		Description: apiReq.Description,
-		Type:        apiReq.Type,
-		ServiceId:   apiReq.ApplicationGroupId,
+		Id:                 apiReq.Id,
+		Name:               apiReq.Name,
+		Description:        apiReq.Description,
+		Type:               apiReq.Type,
+		ApplicationGroupId: apiReq.ApplicationGroupId,
 	}
-	s.Require().Equal(expectedApp, result.App)
-	s.Require().Empty(result.Tokens)
+	s.Require().Equal(expectedApp, result)
 }
 
 func (s *ApplicationSuite) TestCreate_AppGroupNotFound() {
@@ -125,7 +158,7 @@ func (s *ApplicationSuite) TestCreate_ApplicationNameNotUniqueInAppGroup() {
 		Id:                 inserted[0].Id + 1,
 		Name:               inserted[0].Name,
 		Type:               domain.ApplicationSystemType,
-		ApplicationGroupId: inserted[0].ServiceId,
+		ApplicationGroupId: inserted[0].ApplicationGroupId,
 	}
 
 	err := s.api.Invoke("system/application/create_application").
@@ -143,7 +176,7 @@ func (s *ApplicationSuite) TestCreate_ApplicationIdNotUnique() {
 		Id:                 inserted[0].Id,
 		Name:               inserted[0].Name,
 		Type:               domain.ApplicationSystemType,
-		ApplicationGroupId: inserted[0].ServiceId,
+		ApplicationGroupId: inserted[0].ApplicationGroupId,
 	}
 
 	err := s.api.Invoke("system/application/create_application").
@@ -163,28 +196,27 @@ func (s *ApplicationSuite) TestUpdate_HappyPath() {
 		Description: fake.It[string](),
 	}
 
-	var result domain.ApplicationWithTokens
+	var result domain.Application
 	err := s.api.Invoke("system/application/update_application").
 		JsonRequestBody(apiReq).
 		JsonResponseBody(&result).
 		Do(s.T().Context())
 	s.Require().NoError(err)
 
-	s.Require().NotEmpty(result.App.CreatedAt)
-	result.App.CreatedAt = time.Time{}
+	s.Require().NotEmpty(result.CreatedAt)
+	result.CreatedAt = time.Time{}
 
-	s.Require().NotEmpty(result.App.UpdatedAt)
-	result.App.UpdatedAt = time.Time{}
+	s.Require().NotEmpty(result.UpdatedAt)
+	result.UpdatedAt = time.Time{}
 
 	expectedApp := domain.Application{
-		Id:          apiReq.NewId,
-		Name:        apiReq.Name,
-		Description: apiReq.Description,
-		Type:        inserted[0].Type,
-		ServiceId:   inserted[0].ServiceId,
+		Id:                 apiReq.NewId,
+		Name:               apiReq.Name,
+		Description:        apiReq.Description,
+		Type:               inserted[0].Type,
+		ApplicationGroupId: inserted[0].ApplicationGroupId,
 	}
-	s.Require().Equal(expectedApp, result.App)
-	s.Require().Empty(result.Tokens)
+	s.Require().Equal(expectedApp, result)
 
 	app, err := s.appRepo.GetApplicationById(s.T().Context(), apiReq.NewId)
 	s.Require().NoError(err)
@@ -194,7 +226,7 @@ func (s *ApplicationSuite) TestUpdate_HappyPath() {
 		Name:               apiReq.Name,
 		Description:        app.Description,
 		Type:               inserted[0].Type,
-		ApplicationGroupId: inserted[0].ServiceId,
+		ApplicationGroupId: inserted[0].ApplicationGroupId,
 	}
 
 	s.Require().NotEmpty(app.CreatedAt)
@@ -261,7 +293,7 @@ func (s *ApplicationSuite) TestGetByToken() {
 	token := fake.It[string]()
 	expectedApp := domain.GetApplicationByTokenResponse{
 		ApplicationId:      insertedApps[0].Id,
-		ApplicationGroupId: insertedApps[0].ServiceId,
+		ApplicationGroupId: insertedApps[0].ApplicationGroupId,
 	}
 	_, err := s.tokenRepo.SaveToken(s.T().Context(), token, expectedApp.ApplicationId, fake.It[int]())
 	s.Require().NoError(err)
@@ -289,19 +321,10 @@ func (s *ApplicationSuite) TestGetByToken_NotFound() {
 }
 
 func (s *ApplicationSuite) createAppGroup() *entity.AppGroup {
-	createdDomain, err := s.domainRepo.CreateDomain(
-		s.T().Context(),
-		fake.It[string](),
-		fake.It[string](),
-		1,
-	)
-	s.Require().NoError(err)
-
 	appGroup, err := s.appGroupRepo.CreateAppGroup(
 		s.T().Context(),
 		fake.It[string](),
 		fake.It[string](),
-		createdDomain.Id,
 	)
 	s.Require().NoError(err)
 	return appGroup
@@ -329,13 +352,13 @@ func (s *ApplicationSuite) insertApps(appsCount uint) []domain.Application {
 		s.Require().NotEmpty(createdApp.UpdatedAt)
 
 		toExpect = append(toExpect, domain.Application{
-			Id:          createdApp.Id,
-			Name:        createdApp.Name,
-			Description: createdApp.Description.String,
-			ServiceId:   createdApp.ApplicationGroupId,
-			Type:        createdApp.Type,
-			CreatedAt:   time.Time{},
-			UpdatedAt:   time.Time{},
+			Id:                 createdApp.Id,
+			Name:               createdApp.Name,
+			Description:        createdApp.Description.String,
+			ApplicationGroupId: createdApp.ApplicationGroupId,
+			Type:               createdApp.Type,
+			CreatedAt:          time.Time{},
+			UpdatedAt:          time.Time{},
 		})
 	}
 	return toExpect

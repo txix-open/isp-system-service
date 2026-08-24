@@ -12,8 +12,6 @@ import (
 
 type Controllers struct {
 	AccessList  controller.AccessList
-	Domain      controller.Domain
-	Service     controller.Service
 	Application controller.Application
 	AppGroup    controller.AppGroup
 	Token       controller.Token
@@ -33,11 +31,9 @@ func Handler(wrapper endpoint.Wrapper, c Controllers) *grpc.Mux {
 }
 
 func endpointDescriptors(c Controllers) []cluster.EndpointDescriptor {
-	return concatCluster(
+	return concatEndpoints(
 		secureCluster(c),
 		accessListCluster(c),
-		domainCluster(c),
-		serviceCluster(c),
 		applicationCluster(c),
 		tokenCluster(c),
 		applicationGroupCluster(c),
@@ -95,62 +91,6 @@ func accessListCluster(c Controllers) []cluster.EndpointDescriptor {
 	}
 }
 
-func domainCluster(c Controllers) []cluster.EndpointDescriptor {
-	return []cluster.EndpointDescriptor{
-		{
-			Path:    "system/domain/get_domains_by_system_id",
-			Inner:   true,
-			Handler: c.Domain.GetBySystemId,
-		},
-		{
-			Path:    "system/domain/create_update_domain",
-			Inner:   true,
-			Handler: c.Domain.CreateUpdate,
-		},
-		{
-			Path:    "system/domain/get_domain_by_id",
-			Inner:   true,
-			Handler: c.Domain.GetById,
-		},
-		{
-			Path:    "system/domain/delete_domains",
-			Inner:   true,
-			Handler: c.Domain.Delete,
-		},
-	}
-}
-
-// deprecated
-func serviceCluster(c Controllers) []cluster.EndpointDescriptor {
-	return []cluster.EndpointDescriptor{
-		{
-			Path:    "system/service/get_service",
-			Inner:   true,
-			Handler: c.Service.Get,
-		},
-		{
-			Path:    "system/service/get_services_by_domain_id",
-			Inner:   true,
-			Handler: c.Service.GetByDomainId,
-		},
-		{
-			Path:    "system/service/create_update_service",
-			Inner:   true,
-			Handler: c.Service.CreateUpdate,
-		},
-		{
-			Path:    "system/service/get_service_by_id",
-			Inner:   true,
-			Handler: c.Service.GetById,
-		},
-		{
-			Path:    "system/service/delete_service",
-			Inner:   true,
-			Handler: c.Service.Delete,
-		},
-	}
-}
-
 func applicationCluster(c Controllers) []cluster.EndpointDescriptor {
 	return []cluster.EndpointDescriptor{
 		{
@@ -160,10 +100,10 @@ func applicationCluster(c Controllers) []cluster.EndpointDescriptor {
 			Handler: c.Application.GetByIdList,
 		},
 		{
-			Path:    "system/application/get_applications_by_service_id",
-			Inner:   true,
+			Path:    "system/application/get_by_app_group",
 			Extra:   cluster.RequireAdminPermission("application_group_view"),
-			Handler: c.Application.GetByServiceId, //?
+			Inner:   true,
+			Handler: c.Application.GetByAppGroup,
 		},
 		{
 			Path:    "system/application/create_update_application",
@@ -188,11 +128,6 @@ func applicationCluster(c Controllers) []cluster.EndpointDescriptor {
 			Inner:   true,
 			Extra:   cluster.RequireAdminPermission("application_group_app_delete"),
 			Handler: c.Application.Delete,
-		},
-		{
-			Path:    "system/application/get_system_tree",
-			Inner:   true,
-			Handler: c.Application.GetSystemTree,
 		},
 		{
 			Path:    "system/application/next_id",
@@ -286,9 +221,9 @@ func commonEndpoints() []cluster.EndpointDescriptor {
 	)
 }
 
-func concatCluster(clusters ...[]cluster.EndpointDescriptor) []cluster.EndpointDescriptor {
+func concatEndpoints(endpoints ...[]cluster.EndpointDescriptor) []cluster.EndpointDescriptor {
 	var result []cluster.EndpointDescriptor
-	for _, c := range clusters {
+	for _, c := range endpoints {
 		result = append(result, c...)
 	}
 	return result

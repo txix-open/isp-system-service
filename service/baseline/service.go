@@ -12,8 +12,7 @@ import (
 const adminAppId = 1
 
 type Transaction interface {
-	CreateDomain(ctx context.Context, name string, desc string, systemId int) (*entity.Domain, error)
-	CreateAppGroup(ctx context.Context, name string, desc string, domainId int) (*entity.AppGroup, error)
+	CreateAppGroup(ctx context.Context, name string, desc string) (*entity.AppGroup, error)
 	CreateApplication(ctx context.Context, id int, name string, desc string, appGroupId int, appType string) (*entity.Application, error)
 	UpsertAccessList(ctx context.Context, e entity.AccessList) (int, error)
 	SaveToken(ctx context.Context, token string, appId int, expireTime int) (*entity.Token, error)
@@ -75,12 +74,7 @@ func (s Service) transaction(ctx context.Context, tx Transaction) error {
 
 	s.logger.Info(ctx, "initial admin ui token is empty, run baseline")
 
-	domain, err := tx.CreateDomain(ctx, "root", "", 1)
-	if err != nil {
-		return errors.WithMessage(err, "create domain")
-	}
-
-	service, err := tx.CreateAppGroup(ctx, "rootService", "", domain.Id)
+	service, err := tx.CreateAppGroup(ctx, "rootService", "")
 	if err != nil {
 		return errors.WithMessage(err, "create service")
 	}

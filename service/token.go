@@ -35,7 +35,6 @@ type Token struct {
 	appEnricher AppEnricher
 	tx          TokenTxRunner
 	appRepo     ApplicationRepo
-	domainRepo  DomainRepo
 	serviceRepo AppGroupRepo
 	tokenRepo   TokenRepo
 }
@@ -45,7 +44,6 @@ func NewToken(
 	appEnricher AppEnricher,
 	tx TokenTxRunner,
 	appRepo ApplicationRepo,
-	domainRepo DomainRepo,
 	appGroupRepo AppGroupRepo,
 	tokenRepo TokenRepo,
 ) Token {
@@ -54,7 +52,6 @@ func NewToken(
 		jwt:         jwtGenerate,
 		tx:          tx,
 		appRepo:     appRepo,
-		domainRepo:  domainRepo,
 		serviceRepo: appGroupRepo,
 		tokenRepo:   tokenRepo,
 	}
@@ -78,16 +75,6 @@ func (s Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 	applicationEntity, err := s.appRepo.GetApplicationById(ctx, req.AppId)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get application by id")
-	}
-
-	serviceEntity, err := s.serviceRepo.GetAppGroupById(ctx, applicationEntity.ApplicationGroupId)
-	if err != nil {
-		return nil, errors.WithMessage(err, "get service by id")
-	}
-
-	_, err = s.domainRepo.GetDomainById(ctx, serviceEntity.DomainId)
-	if err != nil {
-		return nil, errors.WithMessage(err, "get domain by id")
 	}
 
 	token, err := s.jwt.CreateApplicationToken()

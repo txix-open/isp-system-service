@@ -44,19 +44,10 @@ func (s *AccessListSuite) SetupTest() {
 	_, s.api = grpct.TestServer(s.test, config.Handler)
 	s.accessListRepo = repository.NewAccessList(s.testDb)
 
-	createdDomain, err := repository.NewDomain(s.testDb).CreateDomain(
-		s.T().Context(),
-		fake.It[string](),
-		fake.It[string](),
-		1,
-	)
-	s.Require().NoError(err)
-
 	appGroup, err := repository.NewAppGroup(s.testDb).CreateAppGroup(
 		s.T().Context(),
 		fake.It[string](),
 		fake.It[string](),
-		createdDomain.Id,
 	)
 	s.Require().NoError(err)
 

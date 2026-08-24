@@ -46,9 +46,6 @@ func (s Service) Authenticate(ctx context.Context, token string) (*domain.AuthDa
 
 	return &domain.AuthData{
 		AppName:       authData.AppName,
-		SystemId:      authData.SystemId,
-		DomainId:      authData.DomainId,
-		ServiceId:     authData.ApplicationGroupId,
 		ApplicationId: authData.AppId,
 	}, nil
 }

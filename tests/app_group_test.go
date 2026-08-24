@@ -29,7 +29,6 @@ type AppGroupSuite struct {
 
 	test         *test.Test
 	testDb       *dbt.TestDb
-	domainRepo   repository.Domain
 	appGroupRepo repository.AppGroup
 	api          *client.Client
 }
@@ -42,17 +41,7 @@ func (s *AppGroupSuite) SetupTest() {
 	locator := assembly.NewLocator(s.testDb, s.test.Logger())
 	config := locator.Config(conf.Remote{})
 	_, s.api = grpct.TestServer(s.test, config.Handler)
-	s.domainRepo = repository.NewDomain(s.testDb)
 	s.appGroupRepo = repository.NewAppGroup(s.testDb)
-
-	q := `
-	INSERT INTO domain
-	(id, name, description, system_id)
-	VALUES ($1, $2, $3, $4)
-	RETURNING id, name, description, system_id, created_at, updated_at
-	`
-	_, err := s.testDb.Exec(s.T().Context(), q, 1, fake.It[string](), fake.It[string](), 1)
-	s.Require().NoError(err)
 }
 
 func (s *AppGroupSuite) TestGetByIdList() {
@@ -96,7 +85,6 @@ func (s *AppGroupSuite) TestGetByIdList_EmptyDescription() {
 			s.T().Context(),
 			fake.It[string](),
 			"",
-			1,
 		)
 		s.Require().NoError(err)
 		appGroups = append(appGroups, domain.AppGroup{
@@ -281,7 +269,6 @@ func (s *AppGroupSuite) createAppGroup() *entity.AppGroup {
 		s.T().Context(),
 		fake.It[string](),
 		fake.It[string](),
-		1,
 	)
 	s.Require().NoError(err)
 	return appGroup

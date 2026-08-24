@@ -13,8 +13,6 @@ type Token struct {
 
 type AuthData struct {
 	AppName            string
-	SystemId           int
-	DomainId           int
 	ApplicationGroupId int
 	AppId              int
 	ExpireTime         int

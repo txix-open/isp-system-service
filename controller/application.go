@@ -13,17 +13,16 @@ import (
 
 //nolint:interfacebloat
 type ApplicationService interface {
-	GetById(ctx context.Context, appId int) (*domain.ApplicationWithTokens, error)
+	GetById(ctx context.Context, appId int) (*domain.Application, error)
 	GetByToken(ctx context.Context, token string) (*domain.GetApplicationByTokenResponse, error)
-	GetByIdList(ctx context.Context, idList []int) ([]*domain.ApplicationWithTokens, error)
-	GetByServiceId(ctx context.Context, id int) ([]*domain.ApplicationWithTokens, error)
-	SystemTree(ctx context.Context, systemId int) ([]*domain.DomainWithService, error)
-	CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.ApplicationWithTokens, error)
+	GetByIdList(ctx context.Context, idList []int) ([]domain.Application, error)
+	GetByAppGroup(ctx context.Context, appGroupId int) ([]domain.Application, error)
+	CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.Application, error)
 	Delete(ctx context.Context, idList []int) (int, error)
 	NextId(ctx context.Context) (int, error)
 	GetAll(ctx context.Context) ([]domain.Application, error)
-	Create(ctx context.Context, req domain.CreateApplicationRequest) (*domain.ApplicationWithTokens, error)
-	Update(ctx context.Context, req domain.UpdateApplicationRequest) (*domain.ApplicationWithTokens, error)
+	Create(ctx context.Context, req domain.CreateApplicationRequest) (*domain.Application, error)
+	Update(ctx context.Context, req domain.UpdateApplicationRequest) (*domain.Application, error)
 }
 
 type Application struct {
@@ -44,12 +43,12 @@ func NewApplication(service ApplicationService) Application {
 //	@Accept			json
 //	@Produce		json
 //	@Param			body	body		domain.Identity	true	"Идентификатор приложения"
-//	@Success		200		{object}	domain.ApplicationWithTokens
+//	@Success		200		{object}	domain.Application
 //	@Failure		400		{object}	apierrors.Error
 //	@Failure		404		{object}	apierrors.Error
 //	@Failure		500		{object}	apierrors.Error
 //	@Router			/application/get_application_by_id [POST]
-func (c Application) GetById(ctx context.Context, req domain.Identity) (*domain.ApplicationWithTokens, error) {
+func (c Application) GetById(ctx context.Context, req domain.Identity) (*domain.Application, error) {
 	result, err := c.service.GetById(ctx, req.Id)
 	switch {
 	case errors.Is(err, domain.ErrApplicationNotFound):
@@ -100,44 +99,31 @@ func (c Application) GetByToken(ctx context.Context, req domain.GetApplicationBy
 //
 //	@Tags			application
 //	@Summary		Получить список приложений
-//	@Description	Возвращает массив приложений с токенами по их идентификаторам
+//	@Description	Возвращает массив приложений их идентификаторам
 //	@Accept			json
 //	@Produce		json
 //	@Param			body	body		[]integer	false	"Массив идентификаторов приложений"
-//	@Success		200		{array}		domain.ApplicationWithTokens
+//	@Success		200		{array}		domain.Application
 //	@Failure		500		{object}	apierrors.Error
 //	@Router			/application/get_applications [POST]
-func (c Application) GetByIdList(ctx context.Context, req []int) ([]*domain.ApplicationWithTokens, error) {
+func (c Application) GetByIdList(ctx context.Context, req []int) ([]domain.Application, error) {
 	return c.service.GetByIdList(ctx, req)
 }
 
-// GetByServiceId godoc
+// GetByAppGroup godoc
 //
 //	@Tags			application
-//	@Summary		Получить список приложений по идентификатору сервиса
-//	@Description	Возвращает список приложений по запрошенному идентификатору сервиса
+//	@Summary		Получить список приложений по идентификатору группы
+//	@Description	Возвращает список приложений по идентификатору группы
 //	@Accept			json
 //	@Produce		json
-//	@Param			body	body		domain.Identity	true	"Идентификатор сервиса"
-//	@Success		200		{array}		domain.ApplicationWithTokens
+//	@Param			body	body		domain.Identity	true	"Тело запроса"
+//	@Success		200		{array}		domain.Application
+//	@Failure		400		{object}	apierrors.Error
 //	@Failure		500		{object}	apierrors.Error
-//	@Router			/application/get_applications_by_service_id [POST]
-func (c Application) GetByServiceId(ctx context.Context, req domain.Identity) ([]*domain.ApplicationWithTokens, error) {
-	return c.service.GetByServiceId(ctx, req.Id)
-}
-
-// GetSystemTree godoc
-//
-//	@Tags			application
-//	@Summary		Метод получения системного дерева
-//	@Description	Возвращает описание взаимосвязей сервисов и приложений
-//	@Accept			json
-//	@Produce		json
-//	@Success		200	{array}		domain.DomainWithService
-//	@Failure		500	{object}	apierrors.Error
-//	@Router			/application/get_system_tree [POST]
-func (c Application) GetSystemTree(ctx context.Context) ([]*domain.DomainWithService, error) {
-	return c.service.SystemTree(ctx, domain.DefaultSystemId)
+//	@Router			/application/get_by_app_group [POST]
+func (c Application) GetByAppGroup(ctx context.Context, req domain.Identity) ([]domain.Application, error) {
+	return c.service.GetByAppGroup(ctx, req.Id)
 }
 
 // CreateUpdate godoc
@@ -148,19 +134,19 @@ func (c Application) GetSystemTree(ctx context.Context) ([]*domain.DomainWithSer
 //	@Accept			json
 //	@Produce		json
 //	@Param			body	body		domain.ApplicationCreateUpdateRequest	true	"Объект приложения"
-//	@Success		200		{object}	domain.ApplicationWithTokens
+//	@Success		200		{object}	domain.Application
 //	@Failure		400		{object}	apierrors.Error
 //	@Failure		404		{object}	apierrors.Error
 //	@Failure		409		{object}	apierrors.Error
 //	@Failure		500		{object}	apierrors.Error
 //	@Router			/application/create_update_application [POST]
-func (c Application) CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.ApplicationWithTokens, error) {
+func (c Application) CreateUpdate(ctx context.Context, req domain.ApplicationCreateUpdateRequest) (*domain.Application, error) {
 	result, err := c.service.CreateUpdate(ctx, req)
 	switch {
 	case errors.Is(err, domain.ErrAppGroupNotFound):
 		return nil, apierrors.NewBusinessError(
 			domain.ErrCodeAppGroupNotFound,
-			fmt.Sprintf("service with id %d not found", req.ServiceId),
+			fmt.Sprintf("service with id %d not found", req.ApplicationGroupId),
 			err,
 		)
 	case errors.Is(err, domain.ErrApplicationDuplicateName):
@@ -248,12 +234,12 @@ func (c Application) GetAll(ctx context.Context) ([]domain.Application, error) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			body	body		domain.CreateApplicationRequest	true	"Объект приложения"
-//	@Success		200		{object}	domain.ApplicationWithTokens
+//	@Success		200		{object}	domain.Application
 //	@Failure		400		{object}	apierrors.Error
 //	@Failure		409		{object}	apierrors.Error
 //	@Failure		500		{object}	apierrors.Error
 //	@Router			/application/create_application [POST]
-func (c Application) Create(ctx context.Context, req domain.CreateApplicationRequest) (*domain.ApplicationWithTokens, error) {
+func (c Application) Create(ctx context.Context, req domain.CreateApplicationRequest) (*domain.Application, error) {
 	result, err := c.service.Create(ctx, req)
 	switch {
 	case errors.Is(err, domain.ErrAppGroupNotFound):
@@ -289,13 +275,13 @@ func (c Application) Create(ctx context.Context, req domain.CreateApplicationReq
 //	@Accept			json
 //	@Produce		json
 //	@Param			body	body		domain.UpdateApplicationRequest	true	"Объект приложения"
-//	@Success		200		{object}	domain.ApplicationWithTokens
+//	@Success		200		{object}	domain.Application
 //	@Failure		400		{object}	apierrors.Error
 //	@Failure		404		{object}	apierrors.Error
 //	@Failure		409		{object}	apierrors.Error
 //	@Failure		500		{object}	apierrors.Error
 //	@Router			/application/update_application [POST]
-func (c Application) Update(ctx context.Context, req domain.UpdateApplicationRequest) (*domain.ApplicationWithTokens, error) {
+func (c Application) Update(ctx context.Context, req domain.UpdateApplicationRequest) (*domain.Application, error) {
 	result, err := c.service.Update(ctx, req)
 	switch {
 	case errors.Is(err, domain.ErrApplicationNotFound):

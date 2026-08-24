@@ -43,26 +43,21 @@ func (l Locator) Config(cfg conf.Remote) Config {
 	txManager := transaction.NewManager(l.db)
 	accessListRep := repository.NewAccessList(l.db)
 	applicationRep := repository.NewApplication(l.db)
-	domainRep := repository.NewDomain(l.db)
 	appGroupRep := repository.NewAppGroup(l.db)
 	tokenRep := repository.NewToken(l.db)
 
 	secureService := secure.NewService(tokenRep, accessListRep)
 	accessListService := service.NewAccessList(txManager, accessListRep, applicationRep)
-	applicationService := service.NewApplication(txManager, applicationRep, domainRep, appGroupRep, tokenRep)
-	domainService := service.NewDomain(domainRep)
-	serviceService := service.NewService(domainRep, appGroupRep)
+	applicationService := service.NewApplication(txManager, applicationRep, appGroupRep, tokenRep)
 
 	jwtService := service.NewTokenSource()
 	tokenService := service.NewToken(jwtService, applicationService, txManager,
-		applicationRep, domainRep, appGroupRep, tokenRep,
+		applicationRep, appGroupRep, tokenRep,
 	)
 
 	secureController := controller.NewSecure(secureService)
 	accessListController := controller.NewAccessList(accessListService)
 	applicationController := controller.NewApplication(applicationService)
-	domainController := controller.NewDomain(domainService)
-	serviceController := controller.NewService(serviceService)
 	tokenController := controller.NewToken(tokenService)
 
 	appGroupService := service.NewAppGroup(appGroupRep)
@@ -70,8 +65,6 @@ func (l Locator) Config(cfg conf.Remote) Config {
 	c := routes.Controllers{
 		Secure:      secureController,
 		AccessList:  accessListController,
-		Domain:      domainController,
-		Service:     serviceController,
 		Application: applicationController,
 		Token:       tokenController,
 		AppGroup:    appGroupController,

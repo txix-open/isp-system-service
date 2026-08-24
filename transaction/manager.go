@@ -87,7 +87,6 @@ func (m Manager) TokenRevokeTx(ctx context.Context, msgTx func(ctx context.Conte
 
 type baselineTx struct {
 	repository.Locker
-	repository.Domain
 	repository.AppGroup
 	repository.Application
 	repository.AccessList
@@ -98,7 +97,6 @@ func (m Manager) BaselineTx(ctx context.Context, txTx func(ctx context.Context, 
 	return m.db.RunInTransaction(ctx, func(ctx context.Context, tx *db.Tx) error {
 		return txTx(ctx, baselineTx{
 			Locker:      repository.NewLocker(tx),
-			Domain:      repository.NewDomain(tx),
 			AppGroup:    repository.NewAppGroup(tx),
 			Application: repository.NewApplication(tx),
 			AccessList:  repository.NewAccessList(tx),

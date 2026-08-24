@@ -6,22 +6,12 @@ import (
 	"github.com/txix-open/isp-kit/test/dbt"
 )
 
-func InsertDomain(db *dbt.TestDb, value entity.Domain) {
-	q := `
-	INSERT INTO domain 
-		(id, name, description, system_id, created_at, updated_at)
-	VALUES 
-		(:id, :name, :description, 1, :created_at, :updated_at)
-`
-	db.Must().ExecNamed(q, value)
-}
-
 func InsertAppGroup(db *dbt.TestDb, value entity.AppGroup) {
 	q := `
 	INSERT INTO application_group 
-		(id, name, description, domain_id, created_at, updated_at)
+		(id, name, description, created_at, updated_at)
 	VALUES 
-		(:id, :name, :description, :domain_id, :created_at, :updated_at)
+		(:id, :name, :description, :created_at, :updated_at)
 `
 	db.Must().ExecNamed(q, value)
 }
