@@ -1,3 +1,8 @@
+### v6.0.0
+* Удалены таблицы `domain` и `system`
+* Удалены `deprecated` endpoint'ы
+* Изменены контракты для `application` endpoint'ов
+* Добавлены `admin` permission к endpoint'ам
 ### v5.7.3
 * обновлены зависимости
 ### v5.7.2
