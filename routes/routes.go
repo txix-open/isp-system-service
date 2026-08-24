@@ -65,26 +65,31 @@ func accessListCluster(c Controllers) []cluster.EndpointDescriptor {
 		{
 			Path:    "system/access_list/get_by_id",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("app_access_view"),
 			Handler: c.AccessList.GetById,
 		},
 		{
 			Path:    "system/access_list/set_one",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("app_access_edit"),
 			Handler: c.AccessList.SetOne,
 		},
 		{
 			Path:    "system/access_list/set_list",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("app_access_edit"),
 			Handler: c.AccessList.SetList,
 		},
 		{
 			Path:    "system/access_list/delete_list",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("app_access_edit"),
 			Handler: c.AccessList.DeleteList,
 		},
 		{
 			Path:    "system/access_list/delete_list_with_methods",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("app_access_edit"),
 			Handler: c.AccessList.DeleteListWithMethods,
 		},
 	}
@@ -151,31 +156,37 @@ func applicationCluster(c Controllers) []cluster.EndpointDescriptor {
 		{
 			Path:    "system/application/get_applications",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_view"),
 			Handler: c.Application.GetByIdList,
 		},
 		{
 			Path:    "system/application/get_applications_by_service_id",
 			Inner:   true,
-			Handler: c.Application.GetByServiceId,
+			Extra:   cluster.RequireAdminPermission("application_group_view"),
+			Handler: c.Application.GetByServiceId, //?
 		},
 		{
 			Path:    "system/application/create_update_application",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_app_edit"),
 			Handler: c.Application.CreateUpdate,
 		},
 		{
 			Path:    "system/application/get_application_by_id",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_view"),
 			Handler: c.Application.GetById,
 		},
 		{
 			Path:    "system/application/get_application_by_token",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_view"),
 			Handler: c.Application.GetByToken,
 		},
 		{
 			Path:    "system/application/delete_applications",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_app_delete"),
 			Handler: c.Application.Delete,
 		},
 		{
@@ -191,15 +202,18 @@ func applicationCluster(c Controllers) []cluster.EndpointDescriptor {
 		{
 			Path:    "system/application/get_all",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_view"),
 			Handler: c.Application.GetAll,
 		},
 		{
 			Path:    "system/application/create_application",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_app_add"),
 			Handler: c.Application.Create,
 		}, {
 			Path:    "system/application/update_application",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_app_edit"),
 			Handler: c.Application.Update,
 		},
 	}
@@ -210,21 +224,25 @@ func tokenCluster(c Controllers) []cluster.EndpointDescriptor {
 		{
 			Path:    "system/token/create_token",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_token_add"),
 			Handler: c.Token.Create,
 		},
 		{
 			Path:    "system/token/revoke_tokens",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_token_delete"),
 			Handler: c.Token.Revoke,
 		},
 		{
 			Path:    "system/token/revoke_tokens_for_app",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_token_delete"),
 			Handler: c.Token.RevokeForApp,
 		},
 		{
 			Path:    "system/token/get_tokens_by_app_id",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_token_view"),
 			Handler: c.Token.GetByAppId,
 		},
 	}
@@ -235,22 +253,27 @@ func applicationGroupCluster(c Controllers) []cluster.EndpointDescriptor {
 		{
 			Path:    "system/application_group/create",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_add"),
 			Handler: c.AppGroup.Create,
 		}, {
 			Path:    "system/application_group/update",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_edit"),
 			Handler: c.AppGroup.Update,
 		}, {
 			Path:    "system/application_group/delete_list",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_delete"),
 			Handler: c.AppGroup.DeleteList,
 		}, {
 			Path:    "system/application_group/get_by_id_list",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_view"),
 			Handler: c.AppGroup.GetByIdList,
 		}, {
 			Path:    "system/application_group/get_all",
 			Inner:   true,
+			Extra:   cluster.RequireAdminPermission("application_group_view"),
 			Handler: c.AppGroup.GetAll,
 		},
 	}
