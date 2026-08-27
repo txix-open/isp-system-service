@@ -5,7 +5,7 @@ import (
 
 	"isp-system-service/domain"
 
-	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/errors"
 )
 
 type SecureService interface {

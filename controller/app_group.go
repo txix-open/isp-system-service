@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"isp-system-service/domain"
 
-	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/errors"
 	"github.com/txix-open/isp-kit/grpc/apierrors"
 	"google.golang.org/grpc/codes"
 )

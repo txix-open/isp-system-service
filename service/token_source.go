@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 
-	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/errors"
 )
 
 type TokenSource struct{}
