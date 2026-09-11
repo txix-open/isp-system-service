@@ -112,12 +112,10 @@ func (r Token) AuthDataByToken(ctx context.Context, token string) (*entity.AuthD
 	ctx = sql_metrics.OperationLabelToContext(ctx, "Token.AuthDataByToken")
 
 	q := `
-SELECT application_group_id, app_id, application.name AS app_name , token.expire_time, token.created_at
+SELECT app_id, application.name AS app_name , token.expire_time, token.created_at
 FROM token
 LEFT JOIN application
 		ON token.app_id = application.id
-LEFT JOIN application_group
-		ON application.application_group_id = application_group.id
 WHERE token = $1
 `
 	result := entity.AuthData{}
