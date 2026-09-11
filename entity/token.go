@@ -12,9 +12,8 @@ type Token struct {
 }
 
 type AuthData struct {
-	AppName            string
-	ApplicationGroupId int
-	AppId              int
-	ExpireTime         int
-	CreatedAt          time.Time
+	AppName    string
+	AppId      int
+	ExpireTime int
+	CreatedAt  time.Time
 }
