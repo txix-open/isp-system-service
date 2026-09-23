@@ -51,8 +51,12 @@ func (l Locator) Config(cfg conf.Remote) Config {
 	applicationService := service.NewApplication(txManager, applicationRep, appGroupRep, tokenRep)
 
 	jwtService := service.NewTokenSource()
-	tokenService := service.NewToken(jwtService, applicationService, txManager,
-		applicationRep, appGroupRep, tokenRep,
+	tokenService := service.NewToken(
+		jwtService,
+		applicationService,
+		txManager,
+		applicationRep,
+		tokenRep,
 	)
 
 	secureController := controller.NewSecure(secureService)

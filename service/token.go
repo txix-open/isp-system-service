@@ -35,7 +35,6 @@ type Token struct {
 	appEnricher AppEnricher
 	tx          TokenTxRunner
 	appRepo     ApplicationRepo
-	serviceRepo AppGroupRepo
 	tokenRepo   TokenRepo
 }
 
@@ -44,7 +43,6 @@ func NewToken(
 	appEnricher AppEnricher,
 	tx TokenTxRunner,
 	appRepo ApplicationRepo,
-	appGroupRepo AppGroupRepo,
 	tokenRepo TokenRepo,
 ) Token {
 	return Token{
@@ -52,7 +50,6 @@ func NewToken(
 		jwt:         jwtGenerate,
 		tx:          tx,
 		appRepo:     appRepo,
-		serviceRepo: appGroupRepo,
 		tokenRepo:   tokenRepo,
 	}
 }

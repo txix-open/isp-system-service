@@ -64,13 +64,6 @@ func (c Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 			fmt.Sprintf("application with id %d not found", req.AppId),
 			err,
 		)
-	case errors.Is(err, domain.ErrAppGroupNotFound):
-		return nil, apierrors.New(
-			codes.NotFound,
-			domain.ErrCodeAppGroupNotFound,
-			fmt.Sprintf("service for app_id id %d not found", req.AppId),
-			err,
-		)
 	case err != nil:
 		return nil, err
 	default:
