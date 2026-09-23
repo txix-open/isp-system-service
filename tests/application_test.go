@@ -6,6 +6,7 @@ import (
 	"isp-system-service/domain"
 	"isp-system-service/entity"
 	"isp-system-service/repository"
+	"math"
 	"testing"
 	"time"
 
@@ -89,12 +90,12 @@ func (s *ApplicationSuite) Test_GetByAppId() {
 }
 
 func (s *ApplicationSuite) Test_GetByAppId_NotFoundAny() {
-	insertedApps := s.insertApps(2)
+	_ = s.insertApps(2)
 
 	result := []domain.Application{}
 	err := s.api.Invoke("system/application/get_by_app_group").
 		JsonRequestBody(domain.Identity{
-			Id: fake.It[int]() + insertedApps[0].ApplicationGroupId,
+			Id: math.MaxInt32,
 		}).
 		JsonResponseBody(&result).
 		Do(s.T().Context())
