@@ -38,9 +38,7 @@
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {
-                            "type": "object"
-                        }
+                        "schema": {}
                     },
                     "404": {
                         "description": "Not Found",
@@ -83,9 +81,7 @@
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {
-                            "type": "object"
-                        }
+                        "schema": {}
                     },
                     "404": {
                         "description": "Not Found",
@@ -271,7 +267,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.ApplicationWithTokens"
+                            "$ref": "#/definitions/domain.Application"
                         }
                     },
                     "400": {
@@ -323,7 +319,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.ApplicationWithTokens"
+                            "$ref": "#/definitions/domain.Application"
                         }
                     },
                     "400": {
@@ -461,7 +457,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.ApplicationWithTokens"
+                            "$ref": "#/definitions/domain.Application"
                         }
                     },
                     "400": {
@@ -539,7 +535,7 @@
         },
         "/application/get_applications": {
             "post": {
-                "description": "Возвращает массив приложений с токенами по их идентификаторам",
+                "description": "Возвращает массив приложений их идентификаторам",
                 "consumes": [
                     "application/json"
                 ],
@@ -569,7 +565,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/domain.ApplicationWithTokens"
+                                "$ref": "#/definitions/domain.Application"
                             }
                         }
                     },
@@ -582,9 +578,9 @@
                 }
             }
         },
-        "/application/get_applications_by_service_id": {
+        "/application/get_by_app_group": {
             "post": {
-                "description": "Возвращает список приложений по запрошенному идентификатору сервиса",
+                "description": "Возвращает список приложений по идентификатору группы",
                 "consumes": [
                     "application/json"
                 ],
@@ -594,10 +590,10 @@
                 "tags": [
                     "application"
                 ],
-                "summary": "Получить список приложений по идентификатору сервиса",
+                "summary": "Получить список приложений по идентификатору группы",
                 "parameters": [
                     {
-                        "description": "Идентификатор сервиса",
+                        "description": "Тело запроса",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -612,40 +608,14 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/domain.ApplicationWithTokens"
+                                "$ref": "#/definitions/domain.Application"
                             }
                         }
                     },
-                    "500": {
-                        "description": "Internal Server Error",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/apierrors.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/application/get_system_tree": {
-            "post": {
-                "description": "Возвращает описание взаимосвязей сервисов и приложений",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "application"
-                ],
-                "summary": "Метод получения системного дерева",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/domain.DomainWithService"
-                            }
                         }
                     },
                     "500": {
@@ -714,7 +684,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.ApplicationWithTokens"
+                            "$ref": "#/definitions/domain.Application"
                         }
                     },
                     "400": {
@@ -981,182 +951,6 @@
                 }
             }
         },
-        "/domain/create_update_domain": {
-            "post": {
-                "description": "Если домен с такими идентификатором существует, то обновляет данные, если нет, то добавляет данные в базу",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "domain"
-                ],
-                "summary": "Создать/обновить домен",
-                "parameters": [
-                    {
-                        "description": "Объект домена",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.DomainCreateUpdateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/domain.Domain"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/domain/delete_domains": {
-            "post": {
-                "description": "Удаляет домены по списку их идентификаторов, возвращает количество удаленных доменов",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "domain"
-                ],
-                "summary": "Удаление доменов",
-                "parameters": [
-                    {
-                        "description": "Массив идентификаторов доменов",
-                        "name": "body",
-                        "in": "body",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "integer"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/domain.DeleteResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/domain/get_domain_by_id": {
-            "post": {
-                "description": "Возвращает описание домена по его идентификатору",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "domain"
-                ],
-                "summary": "Получить домен по идентификатору",
-                "parameters": [
-                    {
-                        "description": "Идентификатор домена",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.Identity"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/domain.Domain"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/domain/get_domains_by_system_id": {
-            "post": {
-                "description": "Возвращает список доменов по системному идентификатору",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "domain"
-                ],
-                "summary": "Получить домены по идентификатору системы",
-                "parameters": [
-                    {
-                        "description": "Идентификатор системы",
-                        "name": "body",
-                        "in": "body",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/domain.Domain"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    }
-                }
-            }
-        },
         "/secure/authenticate": {
             "post": {
                 "description": "Проверяет наличие токена в системе,",
@@ -1231,247 +1025,6 @@
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/domain.AuthorizeResponse"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/service/create_update_service": {
-            "post": {
-                "description": "Если сервис с такими идентификатором существует, то обновляет данные, если нет, то добавляет данные в базу",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "service"
-                ],
-                "summary": "Создать/обновить сервис",
-                "parameters": [
-                    {
-                        "description": "Объект сервиса",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.ServiceCreateUpdateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/domain.Service"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/service/delete_service": {
-            "post": {
-                "description": "Удаляет сервисов по списку их идентификаторов, возвращает количество удаленных сервисов",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "service"
-                ],
-                "summary": "Удалить сервисы",
-                "parameters": [
-                    {
-                        "description": "Массив идентификаторов сервисов",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "integer"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/domain.DeleteResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/service/get_service": {
-            "post": {
-                "description": "Возвращает список сервисов по их идентификаторам",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "service"
-                ],
-                "summary": "Получить список сервисов",
-                "parameters": [
-                    {
-                        "description": "Массив идентификаторов сервисов",
-                        "name": "body",
-                        "in": "body",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "integer"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/domain.Service"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/service/get_service_by_id": {
-            "post": {
-                "description": "Возвращает описание сервиса по его идентификатору",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "service"
-                ],
-                "summary": "Получить сервис по идентификатору",
-                "parameters": [
-                    {
-                        "description": "Идентификатор сервиса",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.Identity"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/domain.Service"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/apierrors.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/service/get_services_by_domain_id": {
-            "post": {
-                "description": "Возвращает список сервисов по идентификатору домена",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "service"
-                ],
-                "summary": "Получить список сервисов по идентификатору домена",
-                "parameters": [
-                    {
-                        "description": "Идентификатор домена",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.Identity"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/domain.Service"
                             }
                         }
                     },
@@ -1774,6 +1327,9 @@
         "domain.Application": {
             "type": "object",
             "properties": {
+                "applicationGroupId": {
+                    "type": "integer"
+                },
                 "createdAt": {
                     "type": "string"
                 },
@@ -1786,9 +1342,6 @@
                 "name": {
                     "type": "string"
                 },
-                "serviceId": {
-                    "type": "integer"
-                },
                 "type": {
                     "type": "string"
                 },
@@ -1800,11 +1353,14 @@
         "domain.ApplicationCreateUpdateRequest": {
             "type": "object",
             "required": [
+                "applicationGroupId",
                 "name",
-                "serviceId",
                 "type"
             ],
             "properties": {
+                "applicationGroupId": {
+                    "type": "integer"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -1813,9 +1369,6 @@
                 },
                 "name": {
                     "type": "string"
-                },
-                "serviceId": {
-                    "type": "integer"
                 },
                 "type": {
                     "type": "string",
@@ -1823,29 +1376,6 @@
                         "SYSTEM",
                         "MOBILE"
                     ]
-                }
-            }
-        },
-        "domain.ApplicationSimple": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "tokens": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/domain.Token"
-                    }
-                },
-                "type": {
-                    "type": "string"
                 }
             }
         },
@@ -1870,15 +1400,6 @@
                     "type": "string"
                 },
                 "applicationId": {
-                    "type": "integer"
-                },
-                "domainId": {
-                    "type": "integer"
-                },
-                "serviceId": {
-                    "type": "integer"
-                },
-                "systemId": {
                     "type": "integer"
                 }
             }
@@ -1986,66 +1507,6 @@
                 }
             }
         },
-        "domain.Domain": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "systemId": {
-                    "type": "integer"
-                },
-                "updatedAt": {
-                    "type": "string"
-                }
-            }
-        },
-        "domain.DomainCreateUpdateRequest": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "domain.DomainWithService": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "services": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/domain.ServiceWithApps"
-                    }
-                }
-            }
-        },
         "domain.GetApplicationByTokenRequest": {
             "type": "object",
             "required": [
@@ -2119,70 +1580,6 @@
                 },
                 "value": {
                     "type": "boolean"
-                }
-            }
-        },
-        "domain.Service": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "domainId": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
-                }
-            }
-        },
-        "domain.ServiceCreateUpdateRequest": {
-            "type": "object",
-            "required": [
-                "domainId",
-                "name"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "domainId": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "domain.ServiceWithApps": {
-            "type": "object",
-            "properties": {
-                "apps": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/domain.ApplicationSimple"
-                    }
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
                 }
             }
         },

@@ -23,10 +23,9 @@ var (
 //	@host		localhost:9000
 //	@BasePath	/api/system
 
-//go:generate swag init --parseDependency
-//go:generate rm -f docs/swagger.yaml docs/docs.go
+//go:generate swag init -pd -ot json -eot json
 func main() {
-	boot := bootstrap.New(version, conf.Remote{}, routes.EndpointDescriptors(), cluster.GrpcTransport)
+	boot := bootstrap.New(version, conf.Remote{}, cluster.Endpoints(routes.EndpointDescriptors()), cluster.GrpcTransport)
 	app := boot.App
 	logger := app.Logger()
 

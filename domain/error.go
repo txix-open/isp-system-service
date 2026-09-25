@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/errors"
 )
 
 const (
@@ -13,20 +13,11 @@ const (
 
 	ErrCodeAppGroupNotFound      = 605
 	ErrCodeAppGroupDuplicateName = 606
-
-	ErrCodeSystemNotFound      = 607
-	ErrCodeDomainNotFound      = 608
-	ErrCodeDomainDuplicateName = 609
 )
 
 var (
-	ErrDomainNotFound      = errors.New("domain not found")
-	ErrDomainDuplicateName = errors.New("domain name already exist")
-
 	ErrAppGroupNotFound      = errors.New("application group not found")
 	ErrAppGroupDuplicateName = errors.New("application group name already exist")
-
-	ErrSystemNotFound = errors.New("system not found")
 
 	ErrApplicationNotFound      = errors.New("application not found")
 	ErrApplicationDuplicateName = errors.New("application name already exist")

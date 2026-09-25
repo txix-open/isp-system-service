@@ -5,7 +5,7 @@ import (
 	"isp-system-service/domain"
 	"isp-system-service/entity"
 
-	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/errors"
 )
 
 type AppGroup struct {
@@ -19,7 +19,7 @@ func NewAppGroup(repo AppGroupRepo) AppGroup {
 }
 
 func (s AppGroup) Create(ctx context.Context, req domain.CreateAppGroupRequest) (*domain.AppGroup, error) {
-	appGroup, err := s.repo.CreateAppGroup(ctx, req.Name, req.Description, 1)
+	appGroup, err := s.repo.CreateAppGroup(ctx, req.Name, req.Description)
 	if err != nil {
 		return nil, errors.WithMessage(err, "create appGroup")
 	}
