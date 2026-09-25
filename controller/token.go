@@ -6,7 +6,7 @@ import (
 
 	"isp-system-service/domain"
 
-	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/errors"
 	"github.com/txix-open/isp-kit/grpc/apierrors"
 	"google.golang.org/grpc/codes"
 )
@@ -62,20 +62,6 @@ func (c Token) Create(ctx context.Context, req domain.TokenCreateRequest) (*doma
 			codes.NotFound,
 			domain.ErrCodeApplicationNotFound,
 			fmt.Sprintf("application with id %d not found", req.AppId),
-			err,
-		)
-	case errors.Is(err, domain.ErrAppGroupNotFound):
-		return nil, apierrors.New(
-			codes.NotFound,
-			domain.ErrCodeAppGroupNotFound,
-			fmt.Sprintf("service for app_id id %d not found", req.AppId),
-			err,
-		)
-	case errors.Is(err, domain.ErrDomainNotFound):
-		return nil, apierrors.New(
-			codes.NotFound,
-			domain.ErrCodeDomainNotFound,
-			fmt.Sprintf("domain for app_id id %d not found", req.AppId),
 			err,
 		)
 	case err != nil:

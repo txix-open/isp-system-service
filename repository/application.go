@@ -9,10 +9,16 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/pkg/errors"
 	"github.com/txix-open/isp-kit/db"
 	"github.com/txix-open/isp-kit/db/query"
+	"github.com/txix-open/isp-kit/errors"
 	"github.com/txix-open/isp-kit/metrics/sql_metrics"
+)
+
+const (
+	applicationPkConstraintName         = "application_pkey"
+	applicationUniqueNameConstraintName = "uq_name_application_group_id"
+	applicationFkAppGroupConstraintName = "fk_application_group_id"
 )
 
 type Application struct {
@@ -87,26 +93,6 @@ func (r Application) GetApplicationByAppGroupIdList(ctx context.Context, appGrou
 	}
 
 	return result, nil
-}
-
-func (r Application) GetApplicationByNameAndAppGroupId(ctx context.Context, name string, serviceId int) (*entity.Application, error) {
-	ctx = sql_metrics.OperationLabelToContext(ctx, "Application.GetApplicationByNameAndAppGroupId")
-
-	q := `
-	SELECT id, name, description, application_group_id, type, created_at, updated_at
-	FROM application 
-	WHERE name = $1 AND application_group_id = $2
-	`
-	result := entity.Application{}
-	err := r.db.SelectRow(ctx, &result, q, name, serviceId)
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		return nil, nil // nolint:nilnil
-	case err != nil:
-		return nil, errors.WithMessagef(err, "exec query %s", q)
-	default:
-		return &result, nil
-	}
 }
 
 func (r Application) CreateApplication(

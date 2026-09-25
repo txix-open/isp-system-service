@@ -7,7 +7,7 @@ import (
 	"isp-system-service/domain"
 	"isp-system-service/entity"
 
-	"github.com/pkg/errors"
+	"github.com/txix-open/isp-kit/errors"
 )
 
 type TokenRep interface {
@@ -46,9 +46,6 @@ func (s Service) Authenticate(ctx context.Context, token string) (*domain.AuthDa
 
 	return &domain.AuthData{
 		AppName:       authData.AppName,
-		SystemId:      authData.SystemId,
-		DomainId:      authData.DomainId,
-		ServiceId:     authData.ApplicationGroupId,
 		ApplicationId: authData.AppId,
 	}, nil
 }

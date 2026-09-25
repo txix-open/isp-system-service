@@ -42,11 +42,8 @@ func (s *SecureSuite) SetupSuite() {
 	_, s.api = grpct.TestServer(s.test, config.Handler)
 
 	createdTime := time.Now().UTC()
-	InsertDomain(s.testDb, entity.Domain{
-		Id: 3, Name: "test_domain", SystemId: 1, CreatedAt: createdTime, UpdatedAt: createdTime,
-	})
 	InsertAppGroup(s.testDb, entity.AppGroup{
-		Id: 5, Name: "test_application_group", DomainId: 3, CreatedAt: createdTime, UpdatedAt: createdTime,
+		Id: 5, Name: "test_application_group", CreatedAt: createdTime, UpdatedAt: createdTime,
 	})
 	InsertApplication(s.testDb, entity.Application{
 		Id: 7, Name: "test_application", ApplicationGroupId: 5, CreatedAt: createdTime, UpdatedAt: createdTime,
@@ -72,9 +69,6 @@ func (s *SecureSuite) TestAuthenticate_Success() {
 		ErrorReason:   "",
 		AuthData: &domain.AuthData{
 			AppName:       "test_application",
-			SystemId:      1,
-			DomainId:      3,
-			ServiceId:     5,
 			ApplicationId: 7,
 		},
 	}, result)
@@ -114,9 +108,6 @@ func (s *SecureSuite) TestAuthenticate_NotExpired() {
 		ErrorReason:   "",
 		AuthData: &domain.AuthData{
 			AppName:       "test_application",
-			SystemId:      1,
-			DomainId:      3,
-			ServiceId:     5,
 			ApplicationId: 7,
 		},
 	}, result)

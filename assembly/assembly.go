@@ -7,12 +7,12 @@ import (
 
 	"isp-system-service/conf"
 
-	"github.com/pkg/errors"
 	"github.com/txix-open/isp-kit/app"
 	"github.com/txix-open/isp-kit/bootstrap"
 	"github.com/txix-open/isp-kit/cluster"
 	"github.com/txix-open/isp-kit/dbrx"
 	"github.com/txix-open/isp-kit/dbx"
+	"github.com/txix-open/isp-kit/errors"
 	"github.com/txix-open/isp-kit/grpc"
 	"github.com/txix-open/isp-kit/log"
 )
